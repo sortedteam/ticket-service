@@ -1,0 +1,13 @@
+title: Sorted Ticket Service
+description: Sorted Ticket Service
+version: 1.0
+termsOfServiceUrl: https://livesorted.com
+contact:
+  name: sorted
+  url: #
+  email: support@livesorted.com
+license: Copyright Licence
+licenseUrl: https://livesorted.com
+host_local: localhost:8640
+host_dev: ticket-dev.livesorted.com
+host_prod: ticket.livesorted.com

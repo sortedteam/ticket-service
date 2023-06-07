@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info" strict="true"
+               name="Log4jConfiguration">
+
+    <Appenders>
+        <Appender type="Console" name="SYSTEM_OUT">
+            <Layout type="PatternLayout"
+                    pattern="%d{dd/MM/yyyy HH:mm:ss.SSS} [%p\t] [%t\t] - %c{3} (Line - %L) - %m%n"/>
+        </Appender>
+
+        <CloudWatch name="CloudWatchAppender" logGroupName="/sorted-txn-dev/oms" logStreamName="oms-test-stream">
+            <Region>ap-south-1</Region>
+            <Layout>
+                <PatternLayout pattern="%d{dd/MM/yyyy HH:mm:ss.SSS} [%p\t] [%t\t] - %c{3} (Line - %L) - %m%n"/>
+            </Layout>
+            <AwsCredentialsProvider>
+                <DefaultAWSCredentialsProviderChain/>
+            </AwsCredentialsProvider>
+        </CloudWatch>
+    </Appenders>
+
+    <Loggers>
+        <Root level="debug">
+            <AppenderRef ref="STDOUT" level="info"/>
+        </Root>
+    </Loggers>
+
+
+</Configuration>
