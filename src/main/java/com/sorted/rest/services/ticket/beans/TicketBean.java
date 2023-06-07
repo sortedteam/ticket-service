@@ -47,4 +47,8 @@ public class TicketBean implements Serializable {
 	private Date createdAt;
 
 	private Date modifiedAt;
+
+	public static TicketBean newInstance() {
+		return new TicketBean();
+	}
 }

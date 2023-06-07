@@ -3,12 +3,14 @@ package com.sorted.rest.services.ticket.entity;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import lombok.Data;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.Type;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -25,23 +27,27 @@ public class TicketCategoryEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 
-	@Column
+	@Column(unique = true, nullable = false)
 	private String label;
 
-	@Column
+	@Column(nullable = false)
 	private String description;
 
-	@Column
-	private Integer appVisible;
+	@Column(nullable = false)
+	private Integer appVisible = 1;
 
-	@Column
-	private Integer isTerminal;
+	@Column(nullable = false)
+	private Integer isTerminal = 0;
 
 	@Column
 	private Integer parentId;
 
-	@Column
-	private Integer priority;
+	@Column(nullable = false)
+	private Integer priority = 1;
+
+	@Type(type = "jsonb")
+	@Column(columnDefinition = "jsonb", nullable = false)
+	private List<String> onCreateActions = new ArrayList<>();
 
 	@Column(name = "created_at", nullable = false, updatable = false)
 	@CreatedDate
@@ -55,16 +61,18 @@ public class TicketCategoryEntity {
 	@CreatedBy
 	private String createdBy;
 
-	@Column(name = "modified_by", nullable = false, updatable = true)
+	@Column(name = "modified_by", nullable = false)
 	@LastModifiedBy
 	private String modifiedBy;
 
 	@Column(name = "active", nullable = false)
 	private Integer active = 1;
 
-	@OneToMany(mappedBy = "categoryRoot", fetch = FetchType.LAZY)
-	private List<TicketEntity> ticketRoots;
-
 	@OneToMany(mappedBy = "categoryLeaf", fetch = FetchType.LAZY)
 	private List<TicketEntity> ticketLeafs;
+
+	public static TicketCategoryEntity newInstance() {
+		return new TicketCategoryEntity();
+	}
+
 }

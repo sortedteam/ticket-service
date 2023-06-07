@@ -27,10 +27,10 @@ public class TicketHistoryEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "ticket_id", updatable = false, insertable = false)
+	@Column(name = "ticket_id", updatable = false, insertable = false, nullable = false)
 	private Long ticketId;
 
-	@Column
+	@Column(nullable = false)
 	private String action;
 
 	@Type(type = "jsonb")
@@ -49,7 +49,7 @@ public class TicketHistoryEntity {
 	@CreatedBy
 	private String createdBy;
 
-	@Column(name = "modified_by", nullable = false, updatable = true)
+	@Column(name = "modified_by", nullable = false)
 	@LastModifiedBy
 	private String modifiedBy;
 
@@ -60,4 +60,8 @@ public class TicketHistoryEntity {
 	@JoinColumn(name = "ticket_id", nullable = false)
 	@JsonBackReference
 	private TicketEntity ticket;
+
+	public static TicketHistoryEntity newInstance() {
+		return new TicketHistoryEntity();
+	}
 }

@@ -13,9 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by mohit on 20.8.22.
- */
 @Service
 public class TicketCategoryService implements BaseService<TicketCategoryEntity> {
 
@@ -65,10 +62,24 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 		return getTicketCategoryNode(getVisibleTicketCategories(), id);
 	}
 
+	public TicketCategoryNode getTicketCategoryNodeByLabel(String label) {
+		return getTicketCategoryNodeLabel(getVisibleTicketCategories(), label);
+	}
+
 	private TicketCategoryNode getTicketCategoryNode(List<TicketCategoryEntity> categories, Integer id) {
 		Map<Integer, TicketCategoryNode> categoryMap = getTicketCategoriesMap(categories);
 		for (TicketCategoryNode ticketCategoryNode : categoryMap.values()) {
 			if (ticketCategoryNode.getId() == id) {
+				return ticketCategoryNode;
+			}
+		}
+		return null;
+	}
+
+	private TicketCategoryNode getTicketCategoryNodeLabel(List<TicketCategoryEntity> categories, String label) {
+		Map<Integer, TicketCategoryNode> categoryMap = getTicketCategoriesMap(categories);
+		for (TicketCategoryNode ticketCategoryNode : categoryMap.values()) {
+			if (ticketCategoryNode.getLabel().equals(label)) {
 				return ticketCategoryNode;
 			}
 		}

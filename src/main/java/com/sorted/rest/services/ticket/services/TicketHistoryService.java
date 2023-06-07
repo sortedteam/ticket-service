@@ -11,9 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Created by Abhishek on 20.8.22.
- */
 @Service
 public class TicketHistoryService implements BaseService<TicketHistoryEntity> {
 

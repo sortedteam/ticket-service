@@ -31,16 +31,16 @@ public class TicketEntity implements TicketEntityConstants {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column
+	@Column(nullable = false)
 	private String requesterEntityType;
 
-	@Column
+	@Column(nullable = false)
 	private String requesterEntityId;
 
-	@Column
+	@Column(nullable = false)
 	private String requesterEntityCategory;
 
-	@Column
+	@Column(nullable = false)
 	private String referenceId;
 
 	@Column(name = "category_root_id", insertable = false, updatable = false, nullable = false)
@@ -49,20 +49,20 @@ public class TicketEntity implements TicketEntityConstants {
 	@Column(name = "category_root_id", insertable = false, updatable = false, nullable = false)
 	private Integer categoryLeafId;
 
-	@Column
+	@Column(nullable = false)
 	private Integer priority;
 
-	@Column
+	@Column(nullable = false)
 	private String assignedTeam;
 
-	@Column
+	@Column(nullable = false)
 	private Date assignedAt;
 
 	@Type(type = "jsonb")
 	@Column(columnDefinition = "jsonb", nullable = false)
 	private List<String> attachments = new ArrayList<String>();
 
-	@Column
+	@Column(nullable = false)
 	private String status;
 
 	@Type(type = "jsonb")
@@ -93,10 +93,6 @@ public class TicketEntity implements TicketEntityConstants {
 	private Integer active = 1;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "category_root_id", referencedColumnName = "id", updatable = false)
-	private TicketCategoryEntity categoryRoot;
-
-	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_leaf_id", referencedColumnName = "id", updatable = false)
 	private TicketCategoryEntity categoryLeaf;
 
@@ -105,4 +101,8 @@ public class TicketEntity implements TicketEntityConstants {
 	@OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JsonManagedReference
 	private List<TicketHistoryEntity> history;
+
+	public static TicketEntity newInstance() {
+		return new TicketEntity();
+	}
 }

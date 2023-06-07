@@ -2,6 +2,8 @@ package com.sorted.rest.services.ticket.constants;
 
 public class TicketConstants {
 
+	public static final Integer TICKET_RAISING_USER_USERTYPE = 2;
+
 	public static final String TICKETS_TABLE_NAME = "tickets";
 
 	public static final String TICKET_HISTORY_TABLE_NAME = "ticket_histories";

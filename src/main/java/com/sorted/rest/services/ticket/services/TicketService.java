@@ -12,9 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-/**
- * Created by mohit on 20.6.20.
- */
 @Service
 public class TicketService implements BaseService<TicketEntity> {
 

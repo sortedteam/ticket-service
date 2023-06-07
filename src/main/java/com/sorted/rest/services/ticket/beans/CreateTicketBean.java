@@ -43,4 +43,8 @@ public class CreateTicketBean implements Serializable {
 
 	@NotNull
 	private ResolutionDetailsBean resolutionDetails = ResolutionDetailsBean.newInstance();
+
+	public static CreateTicketBean newInstance() {
+		return new CreateTicketBean();
+	}
 }

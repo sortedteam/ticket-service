@@ -37,4 +37,9 @@ public class TicketListViewBean implements Serializable {
 	private Date createdAt;
 
 	private Date modifiedAt;
+
+	public static TicketListViewBean newInstance() {
+		return new TicketListViewBean();
+	}
+
 }

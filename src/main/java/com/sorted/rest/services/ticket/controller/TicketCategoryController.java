@@ -17,11 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by mohit on 19.6.20.
- */
 @RestController
-@Api(tags = "Order Services", description = "Manage Order related services.")
+@Api(tags = "Ticket Categories Services", description = "Manage Ticket Categories related services.")
 public class TicketCategoryController implements BaseController {
 
 	AppLogger _LOGGER = LoggingManager.getLogger(TicketCategoryController.class);
@@ -34,19 +31,16 @@ public class TicketCategoryController implements BaseController {
 
 	@ApiOperation(value = "List all Ticket Categories", nickname = "getVisibleTicketCategories")
 	@GetMapping("/tickets/categories")
-	public ResponseEntity<List<TicketCategoryNode>> getVisibleTicketCategories(@RequestParam(required = false) Integer id) {
+	public ResponseEntity<List<TicketCategoryNode>> getVisibleTicketCategories(@RequestParam(required = false) String label) {
 		List<TicketCategoryNode> ticketCategoryNodes = new ArrayList<>();
-		if (id == null) {
+		if (label == null) {
 			ticketCategoryNodes = ticketCategoryService.getVisibleTicketCategoryNodes();
 		} else {
-			ticketCategoryNodes.add(ticketCategoryService.getTicketCategoryNodeById(id));
+			TicketCategoryNode ticketCategoryNode = ticketCategoryService.getTicketCategoryNodeByLabel(label);
+			if (ticketCategoryNode != null) {
+				ticketCategoryNodes.add(ticketCategoryNode);
+			}
 		}
-		//		String response = "[]";
-		//		try {
-		//			response = getMapper().getJacksonMapper().writeValueAsString(ticketCategoryNodes);
-		//		} catch (JsonProcessingException e) {
-		//			_LOGGER.error("Error while fetching ticket categories", e);
-		//		}
 		return ResponseEntity.ok(ticketCategoryNodes);
 	}
 

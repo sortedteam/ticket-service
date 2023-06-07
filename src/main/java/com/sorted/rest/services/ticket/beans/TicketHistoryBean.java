@@ -21,4 +21,8 @@ public class TicketHistoryBean implements Serializable {
 	private Date createdAt;
 
 	private Date modifiedAt;
+
+	public static TicketHistoryBean newInstance() {
+		return new TicketHistoryBean();
+	}
 }

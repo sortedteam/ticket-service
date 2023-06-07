@@ -40,4 +40,9 @@ public class UpdateTicketBean implements Serializable {
 
 	@NotNull
 	private ResolutionDetailsBean resolutionDetails = ResolutionDetailsBean.newInstance();
+
+	public static UpdateTicketBean newInstance() {
+		return new UpdateTicketBean();
+	}
+
 }
