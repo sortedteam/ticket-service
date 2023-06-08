@@ -40,8 +40,6 @@ public class TicketBean implements Serializable {
 
 	private ResolutionDetailsBean resolutionDetails = ResolutionDetailsBean.newInstance();
 
-	private List<TicketHistoryBean> history = new ArrayList<TicketHistoryBean>();
-
 	private TicketCategoryNode category;
 
 	private Date createdAt;

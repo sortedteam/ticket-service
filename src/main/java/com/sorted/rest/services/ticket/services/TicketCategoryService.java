@@ -8,10 +8,7 @@ import com.sorted.rest.services.ticket.repository.TicketCategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class TicketCategoryService implements BaseService<TicketCategoryEntity> {
@@ -23,7 +20,7 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 		return getTicketCategoryNodeList(getVisibleTicketCategories());
 	}
 
-	private List<TicketCategoryEntity> getVisibleTicketCategories() {
+	public List<TicketCategoryEntity> getVisibleTicketCategories() {
 		Map<String, Object> filters = new HashMap<>();
 		filters.put("appVisible", 1);
 		return findAllRecords(filters);
@@ -58,15 +55,11 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 		return rootTicketCategoryNodes;
 	}
 
-	public TicketCategoryNode getTicketCategoryNodeById(Integer id) {
-		return getTicketCategoryNode(getVisibleTicketCategories(), id);
-	}
-
 	public TicketCategoryNode getTicketCategoryNodeByLabel(String label) {
 		return getTicketCategoryNodeLabel(getVisibleTicketCategories(), label);
 	}
 
-	private TicketCategoryNode getTicketCategoryNode(List<TicketCategoryEntity> categories, Integer id) {
+	public TicketCategoryNode getTicketCategoryNodeById(List<TicketCategoryEntity> categories, Integer id) {
 		Map<Integer, TicketCategoryNode> categoryMap = getTicketCategoriesMap(categories);
 		for (TicketCategoryNode ticketCategoryNode : categoryMap.values()) {
 			if (ticketCategoryNode.getId() == id) {
@@ -82,6 +75,30 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 			if (ticketCategoryNode.getLabel().equals(label)) {
 				return ticketCategoryNode;
 			}
+		}
+		return null;
+	}
+
+	public TicketCategoryNode getRootToLeafPathUsingCategoryList(List<TicketCategoryEntity> ticketCategoryEntities, Integer rootId, Integer leafId) {
+		Map<Integer, TicketCategoryNode> categoryMap = getTicketCategoriesMap(ticketCategoryEntities);
+		TicketCategoryNode leafNode = categoryMap.get(leafId);
+		leafNode.resetChildren(Collections.emptyList());
+		if (rootId == leafId) {
+			return leafNode;
+		}
+		TicketCategoryNode rootNode = leafNode.getParent();
+		while (leafNode.getId() != rootId && leafNode != null) {
+			rootNode.resetChildren(Collections.singletonList(leafNode));
+			leafNode = rootNode;
+			rootNode = leafNode.getParent();
+		}
+		return leafNode;
+	}
+
+	public TicketCategoryEntity findById(Integer id) {
+		Optional<TicketCategoryEntity> resultOpt = ticketCategoryRepository.findById(id);
+		if (resultOpt.isPresent()) {
+			return resultOpt.get();
 		}
 		return null;
 	}

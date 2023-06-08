@@ -8,6 +8,6 @@ import org.springframework.stereotype.Repository;
  * The Interface OrderRepository.
  */
 @Repository
-public interface TicketCategoryRepository extends BaseCrudRepository<TicketCategoryEntity, Long> {
+public interface TicketCategoryRepository extends BaseCrudRepository<TicketCategoryEntity, Integer> {
 
 }

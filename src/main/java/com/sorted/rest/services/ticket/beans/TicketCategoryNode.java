@@ -66,4 +66,8 @@ public class TicketCategoryNode {
 		child.setParentId(this.id);
 		children.add(child);
 	}
+
+	public void resetChildren(List<TicketCategoryNode> children) {
+		this.children = children;
+	}
 }

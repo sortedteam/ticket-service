@@ -1,17 +1,12 @@
 package com.sorted.rest.services.ticket.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.sorted.rest.common.websupport.base.BaseEntity;
 import com.sorted.rest.services.ticket.beans.ResolutionDetailsBean;
 import com.sorted.rest.services.ticket.beans.TicketDetailsBean;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import lombok.Data;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Type;
-import org.hibernate.annotations.Where;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -22,7 +17,7 @@ import java.util.List;
 @Table(name = TicketConstants.TICKETS_TABLE_NAME)
 @DynamicUpdate
 @Data
-public class TicketEntity implements TicketEntityConstants {
+public class TicketEntity extends BaseEntity implements TicketEntityConstants {
 
 	private static final long serialVersionUID = -7538803140039235801L;
 
@@ -37,13 +32,13 @@ public class TicketEntity implements TicketEntityConstants {
 	@Column(nullable = false)
 	private String requesterEntityId;
 
-	@Column(nullable = false)
+	@Column
 	private String requesterEntityCategory;
 
 	@Column(nullable = false)
 	private String referenceId;
 
-	@Column(name = "category_root_id", insertable = false, updatable = false, nullable = false)
+	@Column(name = "category_root_id", nullable = false)
 	private Integer categoryRootId;
 
 	@Column(name = "category_root_id", insertable = false, updatable = false, nullable = false)
@@ -57,6 +52,9 @@ public class TicketEntity implements TicketEntityConstants {
 
 	@Column(nullable = false)
 	private Date assignedAt;
+
+	@Column
+	private String remarks = "Ticket Created";
 
 	@Type(type = "jsonb")
 	@Column(columnDefinition = "jsonb", nullable = false)
@@ -73,34 +71,9 @@ public class TicketEntity implements TicketEntityConstants {
 	@Column(columnDefinition = "jsonb", nullable = false)
 	private ResolutionDetailsBean resolutionDetails = ResolutionDetailsBean.newInstance();
 
-	@Column(name = "created_at", nullable = false, updatable = false)
-	@CreatedDate
-	private Date createdAt;
-
-	@Column(name = "modified_at", nullable = false)
-	@LastModifiedDate
-	private Date modifiedAt;
-
-	@Column(name = "created_by", nullable = false, updatable = false)
-	@CreatedBy
-	private String createdBy;
-
-	@Column(name = "modified_by", nullable = false)
-	@LastModifiedBy
-	private String modifiedBy;
-
-	@Column(name = "active", nullable = false)
-	private Integer active = 1;
-
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_leaf_id", referencedColumnName = "id", updatable = false)
 	private TicketCategoryEntity categoryLeaf;
-
-	@Where(clause = "active = 1")
-	@org.hibernate.annotations.OrderBy(clause = "created_at ASC")
-	@OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-	@JsonManagedReference
-	private List<TicketHistoryEntity> history;
 
 	public static TicketEntity newInstance() {
 		return new TicketEntity();

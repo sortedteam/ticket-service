@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.util.UUID;
 
 @ApiModel(description = "Resolution Details Bean")
 @Data
@@ -12,11 +13,13 @@ public class OrderDetailsBean implements Serializable {
 
 	private static final long serialVersionUID = 2102504245219017738L;
 
+	private Integer whId;
+
 	private String skuCode;
 
-	private String orderId;
+	private UUID orderId;
 
-	private String orderItemId;
+	private UUID orderItemId;
 
 	private Date deliveryDate;
 
@@ -29,6 +32,8 @@ public class OrderDetailsBean implements Serializable {
 	private Double deliveredQuantity;
 
 	private Double issueQuantity;
+
+	private Double returnedQuantity;
 
 	private Double resolvedQuantity;
 

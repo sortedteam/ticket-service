@@ -1,24 +1,20 @@
 package com.sorted.rest.services.ticket.entity;
 
+import com.sorted.rest.common.websupport.base.BaseEntity;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import lombok.Data;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Type;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Entity
 @Table(name = TicketConstants.TICKET_CATEGORY_TABLE_NAME)
 @DynamicUpdate
 @Data
-public class TicketCategoryEntity {
+public class TicketCategoryEntity extends BaseEntity {
 
 	private static final long serialVersionUID = -7538803140039235801L;
 
@@ -48,25 +44,6 @@ public class TicketCategoryEntity {
 	@Type(type = "jsonb")
 	@Column(columnDefinition = "jsonb", nullable = false)
 	private List<String> onCreateActions = new ArrayList<>();
-
-	@Column(name = "created_at", nullable = false, updatable = false)
-	@CreatedDate
-	private Date createdAt;
-
-	@Column(name = "modified_at", nullable = false)
-	@LastModifiedDate
-	private Date modifiedAt;
-
-	@Column(name = "created_by", nullable = false, updatable = false)
-	@CreatedBy
-	private String createdBy;
-
-	@Column(name = "modified_by", nullable = false)
-	@LastModifiedBy
-	private String modifiedBy;
-
-	@Column(name = "active", nullable = false)
-	private Integer active = 1;
 
 	@OneToMany(mappedBy = "categoryLeaf", fetch = FetchType.LAZY)
 	private List<TicketEntity> ticketLeafs;

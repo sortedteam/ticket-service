@@ -9,8 +9,13 @@ import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.repository.TicketRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 public class TicketService implements BaseService<TicketEntity> {
@@ -29,6 +34,18 @@ public class TicketService implements BaseService<TicketEntity> {
 			return resultOpt.get();
 		}
 		return null;
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	public TicketEntity save(TicketEntity entity) {
+		TicketEntity result = ticketRepository.save(entity);
+		return result;
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	public List<TicketEntity> saveAll(List<TicketEntity> entities) {
+		List<TicketEntity> result = StreamSupport.stream(ticketRepository.saveAll(entities).spliterator(), false).collect(Collectors.toList());
+		return result;
 	}
 
 	@Override
