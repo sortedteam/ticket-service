@@ -22,7 +22,7 @@ public class TicketHistoryEntity extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "ticket_id", updatable = false, insertable = false, nullable = false)
+	@Column(name = "ticket_id", nullable = false)
 	private Long ticketId;
 
 	@Column(nullable = false)
