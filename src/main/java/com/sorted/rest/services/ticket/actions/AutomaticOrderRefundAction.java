@@ -3,7 +3,6 @@ package com.sorted.rest.services.ticket.actions;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
-import com.sorted.rest.services.ticket.clients.ClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketResolutionTeam;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
@@ -20,9 +19,6 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 
 	@Autowired
 	private TicketHistoryService ticketHistoryService;
-
-	@Autowired
-	private ClientService clientService;
 
 	@Override
 	public Boolean isApplicable(TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {

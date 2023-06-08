@@ -7,6 +7,7 @@ import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketResolutionTeam;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.services.TicketHistoryService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -17,7 +18,8 @@ public class EscalateToCustomercareAction implements TicketActionsInterface {
 	// Escalate to customer care
 	static AppLogger _LOGGER = LoggingManager.getLogger(EscalateToCustomercareAction.class);
 
-	private TicketHistoryService ticketHistoryService = new TicketHistoryService();
+	@Autowired
+	private TicketHistoryService ticketHistoryService;
 
 	@Override
 	public Boolean isApplicable(TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {

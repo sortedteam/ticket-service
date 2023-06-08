@@ -1,10 +1,14 @@
 package com.sorted.rest.services.ticket.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Data;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
 public class TicketCategoryNode {
 
 	private Integer id;

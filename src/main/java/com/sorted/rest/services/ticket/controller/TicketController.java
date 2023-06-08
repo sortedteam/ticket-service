@@ -49,9 +49,6 @@ public class TicketController implements BaseController {
 	private TicketService ticketService;
 
 	@Autowired
-	private TicketHistoryService ticketHistoryService;
-
-	@Autowired
 	private TicketCategoryService ticketCategoryService;
 
 	@Autowired
@@ -65,9 +62,6 @@ public class TicketController implements BaseController {
 
 	@Autowired
 	private TicketActionUtils ticketActionUtils;
-
-	@Autowired
-	private TicketRepository ticketRepository;
 
 	@ApiOperation(value = "create a ticket", nickname = "createTicket")
 	@PostMapping(path = "/tickets/partner-app")
