@@ -45,6 +45,9 @@ public class TicketCategoryEntity extends BaseEntity {
 	@Column(columnDefinition = "jsonb", nullable = false)
 	private List<String> onCreateActions = new ArrayList<>();
 
+	@OneToMany(mappedBy = "categoryRoot", fetch = FetchType.LAZY)
+	private List<TicketEntity> ticketRoots;
+
 	@OneToMany(mappedBy = "categoryLeaf", fetch = FetchType.LAZY)
 	private List<TicketEntity> ticketLeafs;
 

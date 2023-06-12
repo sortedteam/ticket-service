@@ -4,10 +4,10 @@ import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.sql.Date;
+import java.util.Date;
 import java.util.UUID;
 
-@ApiModel(description = "Resolution Details Bean")
+@ApiModel(description = "Order Details Bean")
 @Data
 public class OrderDetailsBean implements Serializable {
 
@@ -19,23 +19,25 @@ public class OrderDetailsBean implements Serializable {
 
 	private UUID orderId;
 
-	private UUID orderItemId;
-
 	private Date deliveryDate;
 
 	private String deliverySlot;
 
 	private String uom;
 
-	private Double orderedQuantity;
+	private Double orderedQty;
 
-	private Double deliveredQuantity;
+	private Double deliveredQty;
 
-	private Double issueQuantity;
+	private Double issueQty;
 
-	private Double returnedQuantity;
+	private Double refundableQty;
 
-	private Double resolvedQuantity;
+	private Double returnQty;
+
+	private String returnRemarks;
+
+	private Double resolvedQty;
 
 	public static OrderDetailsBean newInstance() {
 		return new OrderDetailsBean();

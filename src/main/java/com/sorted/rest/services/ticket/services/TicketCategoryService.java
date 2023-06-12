@@ -20,6 +20,10 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 		return getTicketCategoryNodeList(getVisibleTicketCategories());
 	}
 
+	public TicketCategoryNode getTicketCategoryNodeByLabel(String label) {
+		return getTicketCategoryNodeLabel(getVisibleTicketCategories(), label);
+	}
+	
 	public List<TicketCategoryEntity> getVisibleTicketCategories() {
 		Map<String, Object> filters = new HashMap<>();
 		filters.put("appVisible", 1);
@@ -53,10 +57,6 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 			}
 		}
 		return rootTicketCategoryNodes;
-	}
-
-	public TicketCategoryNode getTicketCategoryNodeByLabel(String label) {
-		return getTicketCategoryNodeLabel(getVisibleTicketCategories(), label);
 	}
 
 	public TicketCategoryNode getTicketCategoryNodeById(List<TicketCategoryEntity> categories, Integer id) {

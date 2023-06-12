@@ -23,7 +23,7 @@ public class EscalateToWarehouseAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean isApplicable(TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		return true;
+		return !ticket.getAssignedTeam().equals(TicketResolutionTeam.WAREHOUSE.toString());
 	}
 
 	@Override

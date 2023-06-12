@@ -1,18 +1,23 @@
 package com.sorted.rest.services.ticket.clients;
 
+import com.sorted.rest.common.beans.ErrorBean;
+import com.sorted.rest.common.exceptions.ServerException;
+import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
+import com.sorted.rest.common.properties.Errors;
+import com.sorted.rest.services.ticket.beans.FranchiseOrderResponseBean;
 import com.sorted.rest.services.ticket.beans.UserServiceResponse;
+import com.sorted.rest.services.ticket.beans.WalletStatementBean;
+import com.sorted.rest.services.ticket.beans.WhSkuResponse;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
+import feign.FeignException;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class ClientService {
@@ -61,5 +66,47 @@ public class ClientService {
 					superset, defaultAudience), e);
 		}
 		return audience == null ? defaultAudience : audience;
+	}
+
+	public FranchiseOrderResponseBean getFranchiseOrderInfo(UUID orderId, String storeId) {
+		FranchiseOrderResponseBean orderResponseBean = null;
+		try {
+			Map<String, Object> headerMap = new HashMap<>();
+			headerMap.put("storeId", storeId);
+			orderResponseBean = orderClient.getFranchiseOrderInfo(headerMap, orderId);
+			return orderResponseBean;
+		} catch (Exception e) {
+			_LOGGER.error(String.format("Error while getting Franchise Order Info for orderId ", orderId), e);
+			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetch order data"));
+		}
+	}
+
+	public List<WhSkuResponse> getStoreSkuInventoryForBulkRequest(Set<String> skuCodes, String storeId) {
+		List<WhSkuResponse> storeItem = null;
+		try {
+			Map<String, Object> headerMap = new HashMap<>();
+			headerMap.put("rz-auth-key", RZ_AUTH_VALUE);
+			storeItem = wmsClient.getStoreSkuInventoryForBulkRequest(headerMap, skuCodes, storeId);
+		} catch (FeignException.FeignClientException f) {
+			if (f.status() == 404) {
+				throw new ValidationException(new ErrorBean("warehouse_not_found", String.format("no warehouse is mapped to StoreId = %s", storeId)));
+			} else {
+				_LOGGER.error("Error while fetching StoreInventory", f);
+				throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetch data from warehouse"));
+			}
+		} catch (Exception e) {
+			_LOGGER.error("Error while fetching StoreInventory", e);
+			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetch data from warehouse"));
+		}
+		return storeItem;
+	}
+
+	public List<WalletStatementBean> fetchWalletStatementByTxnDetail(String txnDetail) {
+		try {
+			return paymentClient.fetchWalletStatementByTxnDetail(txnDetail);
+		} catch (Exception e) {
+			_LOGGER.error("Error while Fetching wallet statement", e);
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching wallet statement."));
+		}
 	}
 }

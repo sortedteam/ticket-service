@@ -15,17 +15,16 @@ import java.util.Date;
 @Component
 public class AutomaticOrderRefundAction implements TicketActionsInterface {
 
-	static AppLogger _LOGGER = LoggingManager.getLogger(EscalateToCustomercareAction.class);
+	static AppLogger _LOGGER = LoggingManager.getLogger(AutomaticOrderRefundAction.class);
 
 	@Autowired
 	private TicketHistoryService ticketHistoryService;
 
 	@Override
 	public Boolean isApplicable(TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		try {
-			return false;
-		} catch (Exception e) {
-			_LOGGER.error(String.format("Error in checking application for action TestTicketActions for ticket :%s ", ticket), e);
+		if (ticket.getDetails().getOrderDetails() != null && ticket.getDetails().getOrderDetails().getIssueQty() != null && ticket.getDetails()
+				.getOrderDetails().getRefundableQty() != null) {
+			return ticket.getDetails().getOrderDetails().getRefundableQty().compareTo(ticket.getDetails().getOrderDetails().getIssueQty()) != -1;
 		}
 		return false;
 	}

@@ -1,5 +1,7 @@
 package com.sorted.rest.services.ticket.constants;
 
+import java.math.BigDecimal;
+
 public class TicketConstants {
 
 	public static final String TICKETS_TABLE_NAME = "tickets";
@@ -23,6 +25,12 @@ public class TicketConstants {
 	public static final String AUTOMATIC_ORDER_REFUND_REMARKS = "Automatic refund initiated";
 
 	public static final String ESCALATE_TO_WAREHOUSE_REMARKS = "Ticket escalated to warehouse executive";
+
+	public static final String NEW_TICKET_CREATED_REMARKS = "New Ticket Created";
+
+	public static final String NEW_TICKET_CREATED_ACTION = "New Ticket Created";
+
+	public static final BigDecimal DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR = BigDecimal.ONE;
 
 	public enum TicketStatus {
 
@@ -57,5 +65,28 @@ public class TicketConstants {
 		public int getValue() {
 			return value;
 		}
+	}
+
+	public enum FranchiseOrderStatus {
+
+		IN_CART(0), NEW_ORDER(1), ORDER_BILLED(2), OUT_FOR_DELIVERY(3), ORDER_DELIVERED(4), REFUND_REQUESTED(5), ORDER_REFUNDED(6), CANCELLED(7), FAILED(8);
+
+		private int value;
+
+		private FranchiseOrderStatus(int value) {
+			this.value = value;
+		}
+
+		public int getValue() {
+			return value;
+		}
+	}
+
+	public enum FranchiseOrderItemStatus {
+		PENDING, PACKED, NOT_AVAILABLE;
+	}
+
+	public enum TicketCategoryRoot {
+		ORDER_ISSUE, POS_ISSUE, PAYMENT_ISSUE, UNDELIVERED_ISSUE, PRICING_ISSUE, APP_ISSUE, SUGGESTION
 	}
 }

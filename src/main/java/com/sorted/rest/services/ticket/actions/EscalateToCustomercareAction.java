@@ -23,7 +23,7 @@ public class EscalateToCustomercareAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean isApplicable(TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		return true;
+		return !ticket.getAssignedTeam().equals(TicketResolutionTeam.CUSTOMERCARE.toString());
 	}
 
 	@Override

@@ -38,10 +38,10 @@ public class TicketEntity extends BaseEntity implements TicketEntityConstants {
 	@Column(nullable = false)
 	private String referenceId;
 
-	@Column(name = "category_root_id", nullable = false)
+	@Column(name = "category_root_id", insertable = false, updatable = false, nullable = false)
 	private Integer categoryRootId;
 
-	@Column(name = "category_root_id", insertable = false, updatable = false, nullable = false)
+	@Column(name = "category_leaf_id", insertable = false, updatable = false, nullable = false)
 	private Integer categoryLeafId;
 
 	@Column(nullable = false)
@@ -70,6 +70,10 @@ public class TicketEntity extends BaseEntity implements TicketEntityConstants {
 	@Type(type = "jsonb")
 	@Column(columnDefinition = "jsonb", nullable = false)
 	private ResolutionDetailsBean resolutionDetails = ResolutionDetailsBean.newInstance();
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "category_root_id", referencedColumnName = "id", updatable = false)
+	private TicketCategoryEntity categoryRoot;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_leaf_id", referencedColumnName = "id", updatable = false)
