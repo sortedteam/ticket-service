@@ -15,6 +15,8 @@ public class TicketRequestBean implements Serializable {
 
 	private UserDetail internalUserDetail;
 
+	private UserDetail requesterUserDetail;
+
 	private Map<String, WhSkuResponse> whSkuResponseMap;
 
 	private FranchiseOrderResponseBean orderResponse;

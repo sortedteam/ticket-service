@@ -41,7 +41,7 @@ public class TicketActionUtils {
 
 	public void invokeTicketCreateAction(TicketEntity ticket) {
 		TicketActionDetailsBean defaultActionDetails = TicketActionDetailsBean.newInstance();
-		defaultActionDetails.setUserDetail(ticketRequestUtils.getTicketRequest().getInternalUserDetail());
+		defaultActionDetails.setUserDetail(ticketRequestUtils.getTicketRequest().getRequesterUserDetail());
 		defaultActionDetails.setRemarks(TicketConstants.NEW_TICKET_CREATED_REMARKS);
 		ticketHistoryService.addTicketHistory(ticket.getId(), TicketConstants.NEW_TICKET_CREATED_ACTION, defaultActionDetails);
 	}

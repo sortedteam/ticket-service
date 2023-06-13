@@ -23,7 +23,7 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 	public TicketCategoryNode getTicketCategoryNodeByLabel(String label) {
 		return getTicketCategoryNodeLabel(getVisibleTicketCategories(), label);
 	}
-	
+
 	public List<TicketCategoryEntity> getVisibleTicketCategories() {
 		Map<String, Object> filters = new HashMap<>();
 		filters.put("appVisible", 1);
@@ -42,7 +42,9 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 			TicketCategoryNode currentTicketCategoryNode = categoryMap.get(category.getId());
 			if (parentId != null) {
 				TicketCategoryNode parentTicketCategoryNode = categoryMap.get(parentId);
-				parentTicketCategoryNode.addChild(currentTicketCategoryNode);
+				if (parentTicketCategoryNode != null) {
+					parentTicketCategoryNode.addChild(currentTicketCategoryNode);
+				}
 			}
 		}
 		return categoryMap;
@@ -57,16 +59,6 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 			}
 		}
 		return rootTicketCategoryNodes;
-	}
-
-	public TicketCategoryNode getTicketCategoryNodeById(List<TicketCategoryEntity> categories, Integer id) {
-		Map<Integer, TicketCategoryNode> categoryMap = getTicketCategoriesMap(categories);
-		for (TicketCategoryNode ticketCategoryNode : categoryMap.values()) {
-			if (ticketCategoryNode.getId() == id) {
-				return ticketCategoryNode;
-			}
-		}
-		return null;
 	}
 
 	private TicketCategoryNode getTicketCategoryNodeLabel(List<TicketCategoryEntity> categories, String label) {
@@ -93,14 +85,6 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 			rootNode = leafNode.getParent();
 		}
 		return leafNode;
-	}
-
-	public TicketCategoryEntity findById(Integer id) {
-		Optional<TicketCategoryEntity> resultOpt = ticketCategoryRepository.findById(id);
-		if (resultOpt.isPresent()) {
-			return resultOpt.get();
-		}
-		return null;
 	}
 
 	@Override

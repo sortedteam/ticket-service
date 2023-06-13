@@ -1,6 +1,7 @@
 package com.sorted.rest.services.ticket.utils;
 
 import com.sorted.rest.common.utils.DateUtils;
+import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.params.service.ParamService;
 import com.sorted.rest.services.ticket.beans.*;
 import com.sorted.rest.services.ticket.clients.ClientService;
@@ -48,7 +49,7 @@ public class TicketRequestUtils {
 	} // to do after API call finishes
 
 	public void populateTicketRequestAsPerCategoryRoot(List<TicketEntity> tickets) {
-		TicketRequestBean ticketRequestBean = getTicketRequest();
+		TicketRequestBean ticketRequestBean = new TicketRequestBean();
 		String categoryRootLabel = tickets.get(0).getCategoryRoot().getLabel();
 		String entityType = tickets.get(0).getRequesterEntityType();
 		if (entityType.equals(EntityType.STORE.toString())) {
@@ -111,6 +112,7 @@ public class TicketRequestUtils {
 			}
 		}
 		ticketRequestBean.setInternalUserDetail(userUtils.getUserDetail(internalAuthUserId));
+		ticketRequestBean.setRequesterUserDetail(userUtils.getUserDetail(SessionUtils.getAuthUserId()));
 		setTicketRequest(ticketRequestBean);
 	}
 
