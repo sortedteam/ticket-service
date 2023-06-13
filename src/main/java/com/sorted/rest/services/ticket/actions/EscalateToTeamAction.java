@@ -3,7 +3,6 @@ package com.sorted.rest.services.ticket.actions;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
-import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketResolutionTeam;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.services.TicketHistoryService;
@@ -13,25 +12,34 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 
 @Component
-public class EscalateToWarehouseAction implements TicketActionsInterface {
+public class EscalateToTeamAction implements TicketActionsInterface {
 
-	// Escalate to warehouse
-	static AppLogger _LOGGER = LoggingManager.getLogger(EscalateToWarehouseAction.class);
+	static AppLogger _LOGGER = LoggingManager.getLogger(EscalateToTeamAction.class);
 
 	@Autowired
 	private TicketHistoryService ticketHistoryService;
 
+	private String team;
+
+	private String remarks;
+
+	public void setTeamAndRemarks(TicketResolutionTeam ticketResolutionTeam, String ticketRemarks) {
+		team = ticketResolutionTeam.toString();
+		remarks = ticketRemarks;
+	}
+
 	@Override
 	public Boolean isApplicable(TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		return !ticket.getAssignedTeam().equals(TicketResolutionTeam.WAREHOUSE.toString());
+		return !ticket.getAssignedTeam().equals(team);
 	}
 
 	@Override
 	public Boolean apply(TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
 		Boolean terminate = true;
-		ticket.setAssignedTeam(TicketResolutionTeam.WAREHOUSE.toString());
+		ticket.setAssignedTeam(team);
 		ticket.setAssignedAt(new Date());
-		actionDetailsBean.setRemarks(TicketConstants.ESCALATE_TO_WAREHOUSE_REMARKS);
+		ticket.setRemarks(remarks);
+		actionDetailsBean.setRemarks(remarks);
 		ticketHistoryService.addTicketHistory(ticket.getId(), action, actionDetailsBean);
 		return terminate;
 	}

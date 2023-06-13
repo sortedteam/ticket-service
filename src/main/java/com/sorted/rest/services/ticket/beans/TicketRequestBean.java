@@ -21,6 +21,10 @@ public class TicketRequestBean implements Serializable {
 
 	private Map<String, FranchiseOrderItemResponseBean> orderItemSkuMap;
 
+	private StoreReturnResponseBean storeReturnResponse;
+
+	private Map<String, StoreReturnItemData> storeReturnItemSkuMap;
+
 	private BigDecimal storeCategoryRefundPermissibilityFactor = TicketConstants.DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR;
 
 	private List<WalletStatementBean> walletStatementBeans;

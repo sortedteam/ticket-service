@@ -6,23 +6,21 @@ import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.services.ticket.actions.AutomaticOrderRefundAction;
-import com.sorted.rest.services.ticket.actions.EscalateToCustomercareAction;
-import com.sorted.rest.services.ticket.actions.EscalateToWarehouseAction;
+import com.sorted.rest.services.ticket.actions.EscalateToTeamAction;
 import com.sorted.rest.services.ticket.actions.TicketActionsInterface;
 import com.sorted.rest.services.ticket.beans.*;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketCategoryRoot;
+import com.sorted.rest.services.ticket.constants.TicketConstants.TicketResolutionTeam;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.services.TicketHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 @Component
 public class TicketActionUtils {
@@ -33,52 +31,36 @@ public class TicketActionUtils {
 	private TicketHistoryService ticketHistoryService;
 
 	@Autowired
-	private UserUtils userUtils;
-
-	@Autowired
 	private TicketRequestUtils ticketRequestUtils;
 
-	@Value("${auth.id}")
-	private UUID internalAuthUserId;
-
 	@Autowired
-	private EscalateToCustomercareAction escalateToCustomercareAction;
-
-	@Autowired
-	private EscalateToWarehouseAction escalateToWarehouseAction;
+	private EscalateToTeamAction escalateToTeamAction;
 
 	@Autowired
 	private AutomaticOrderRefundAction automaticOrderRefundAction;
 
 	public void invokeTicketCreateAction(TicketEntity ticket) {
 		TicketActionDetailsBean defaultActionDetails = TicketActionDetailsBean.newInstance();
-		defaultActionDetails.setUserDetail(getInternalAuthUserDetails());
+		defaultActionDetails.setUserDetail(ticketRequestUtils.getTicketRequest().getInternalUserDetail());
 		defaultActionDetails.setRemarks(TicketConstants.NEW_TICKET_CREATED_REMARKS);
 		ticketHistoryService.addTicketHistory(ticket.getId(), TicketConstants.NEW_TICKET_CREATED_ACTION, defaultActionDetails);
-	}
-
-	private UserDetail getInternalAuthUserDetails() {
-		TicketRequestBean ticketRequestBean = ticketRequestUtils.getTicketRequest();
-		if (ticketRequestBean.getInternalUserDetail() == null) {
-			ticketRequestBean.setInternalUserDetail(userUtils.getUserDetail(internalAuthUserId));
-			ticketRequestUtils.setTicketRequest(ticketRequestBean);
-		}
-		return ticketRequestBean.getInternalUserDetail();
 	}
 
 	public void invokeTicketRaiseAction(TicketEntity ticket) {
 		List<String> actions = ticket.getCategoryLeaf().getOnCreateActions();
 		Boolean terminate = false;
 		TicketActionDetailsBean defaultActionDetails = TicketActionDetailsBean.newInstance();
-		defaultActionDetails.setUserDetail(getInternalAuthUserDetails());
+		defaultActionDetails.setUserDetail(ticketRequestUtils.getTicketRequest().getInternalUserDetail());
 		for (String action : actions) {
 			TicketActionsInterface ticketAction = null;
 			if (action.equals(TicketConstants.AUTOMATIC_ORDER_REFUND_ACTION)) {
 				ticketAction = automaticOrderRefundAction;
 			} else if (action.equals(TicketConstants.ESCALATE_TO_WAREHOUSE_ACTION)) {
-				ticketAction = escalateToWarehouseAction;
+				ticketAction = escalateToTeamAction;
+				escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.WAREHOUSE, TicketConstants.ESCALATE_TO_WAREHOUSE_REMARKS);
 			} else if (action.equals(TicketConstants.ESCALATE_TO_CUSTOMERCARE_ACTION)) {
-				ticketAction = escalateToCustomercareAction;
+				ticketAction = escalateToTeamAction;
+				escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE, TicketConstants.ESCALATE_TO_CUSTOMERCARE_REMARKS);
 			} else {
 				_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 				continue;
@@ -101,7 +83,8 @@ public class TicketActionUtils {
 
 	private void executeDefaultAction(TicketEntity ticket, TicketActionDetailsBean actionDetailsBean) {
 		String action = TicketConstants.ESCALATE_TO_CUSTOMERCARE_ACTION;
-		TicketActionsInterface ticketAction = escalateToCustomercareAction;
+		TicketActionsInterface ticketAction = escalateToTeamAction;
+		escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE, TicketConstants.ESCALATE_TO_CUSTOMERCARE_REMARKS);
 		try {
 			if (ticketAction.isApplicable(ticket, action, actionDetailsBean)) {
 				ticketAction.apply(ticket, action, TicketActionDetailsBean.newInstance());
@@ -130,6 +113,7 @@ public class TicketActionUtils {
 												orderResponseBean.getId()), null));
 							}
 							orderDetailsBean.setWhId(orderItemResponseBean.getWhId());
+							orderDetailsBean.setSkuCode(orderItemResponseBean.getSkuCode());
 							orderDetailsBean.setOrderId(orderItemResponseBean.getOrderId());
 							orderDetailsBean.setDeliveryDate(orderResponseBean.getDeliveryDate());
 							orderDetailsBean.setDeliverySlot(orderDetailsBean.getDeliverySlot());
@@ -151,8 +135,10 @@ public class TicketActionUtils {
 												.multiply(BigDecimal.valueOf(orderDetailsBean.getDeliveredQty()))
 												.multiply(ticketRequestBean.getStoreCategoryRefundPermissibilityFactor()).doubleValue());
 							}
-							orderDetailsBean.setReturnQty(null);
-							orderDetailsBean.setReturnRemarks(null);
+
+							StoreReturnItemData storeReturnItemResponse = ticketRequestBean.getStoreReturnItemSkuMap().get(orderDetailsBean.getSkuCode());
+							orderDetailsBean.setReturnQty(storeReturnItemResponse != null ? storeReturnItemResponse.getQuantity() : null);
+							orderDetailsBean.setReturnRemarks(storeReturnItemResponse != null ? storeReturnItemResponse.getRemarks() : null);
 							orderDetailsBean.setResolvedQty(null);
 							ticket.getDetails().setOrderDetails(orderDetailsBean);
 

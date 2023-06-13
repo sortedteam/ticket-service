@@ -15,6 +15,7 @@ import com.sorted.rest.services.ticket.beans.TicketBean;
 import com.sorted.rest.services.ticket.clients.ClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
+import com.sorted.rest.services.ticket.constants.TicketConstants.TicketPlatform;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketResolutionTeam;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
 import com.sorted.rest.services.ticket.entity.TicketCategoryEntity;
@@ -84,6 +85,7 @@ public class TicketController implements BaseController {
 			} else {
 				ticket.setStatus(TicketStatus.IN_PROGRESS.toString());
 			}
+			ticket.setPlatform(TicketPlatform.PARTNER_APP.toString());
 			ticket.setPriority(ticket.getCategoryLeaf().getPriority());
 			ticket.setRemarks(TicketConstants.NEW_TICKET_CREATED_REMARKS);
 			ticket.setAssignedTeam(TicketResolutionTeam.CUSTOMERCARE.toString());

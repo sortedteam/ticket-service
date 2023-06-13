@@ -36,6 +36,10 @@ public class TicketBean implements Serializable {
 
 	private String status;
 
+	private String platform;
+
+	private String remarks;
+
 	private TicketDetailsBean details = TicketDetailsBean.newInstance();
 
 	private ResolutionDetailsBean resolutionDetails = ResolutionDetailsBean.newInstance();

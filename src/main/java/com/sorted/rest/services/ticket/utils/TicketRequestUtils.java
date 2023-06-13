@@ -9,6 +9,7 @@ import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketCategoryRoot;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -24,6 +25,12 @@ public class TicketRequestUtils {
 
 	@Autowired
 	private ClientService clientService;
+
+	@Autowired
+	private UserUtils userUtils;
+
+	@Value("${auth.id}")
+	private UUID internalAuthUserId;
 
 	private static ThreadLocal<TicketRequestBean> MEMORY_THREAD_LOCAL = new ThreadLocal<>();
 
@@ -57,10 +64,20 @@ public class TicketRequestUtils {
 						orderItemSkuMap.put(orderItem.getSkuCode(), orderItem);
 					}
 					ticketRequestBean.setOrderItemSkuMap(orderItemSkuMap);
+
+					StoreReturnResponseBean storeReturnResponseBean = clientService.getStoreReturnByOrderId(tickets.get(0).getReferenceId());
+					ticketRequestBean.setStoreReturnResponse(storeReturnResponseBean);
+
+					Map<String, StoreReturnItemData> storeReturnItemSkuMap = new HashMap<>();
+					for (StoreReturnItemData storeReturnItemData : storeReturnResponseBean.getStoreReturnItemDataList()) {
+						// redo map if skuCode is not unique in storeReturnItemDataList
+						storeReturnItemSkuMap.put(storeReturnItemData.getSkuCode(), storeReturnItemData);
+					}
+					ticketRequestBean.setStoreReturnItemSkuMap(storeReturnItemSkuMap);
 				}
 				Set<String> skuCodes = tickets.stream().filter(ticket -> ticket.getDetails().getOrderDetails() != null)
-						.map(ticket -> ticket.getDetails().getOrderDetails().getSkuCode()).filter(skuCode -> StringUtils.isEmpty(skuCode))
-						.collect(Collectors.toSet());
+						.map(ticket -> ticket.getDetails().getOrderDetails().getSkuCode())
+						.filter(skuCode -> !StringUtils.isEmpty(skuCode) && !StringUtils.isEmpty(skuCode.trim())).collect(Collectors.toSet());
 				if (!skuCodes.isEmpty()) {
 					List<WhSkuResponse> whSkuResponse = clientService.getStoreSkuInventoryForBulkRequest(skuCodes, storeId);
 					Map<String, WhSkuResponse> whSkuResponseMap = new HashMap<>();
@@ -93,6 +110,7 @@ public class TicketRequestUtils {
 				}
 			}
 		}
+		ticketRequestBean.setInternalUserDetail(userUtils.getUserDetail(internalAuthUserId));
 		setTicketRequest(ticketRequestBean);
 	}
 

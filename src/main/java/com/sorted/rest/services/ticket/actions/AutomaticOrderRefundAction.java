@@ -35,6 +35,7 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 		try {
 			ticket.setAssignedTeam(TicketResolutionTeam.CUSTOMERCARE.toString());
 			ticket.setAssignedAt(new Date());
+			ticket.setRemarks(TicketConstants.AUTOMATIC_ORDER_REFUND_REMARKS);
 			actionDetailsBean.setRemarks(TicketConstants.AUTOMATIC_ORDER_REFUND_REMARKS);
 			ticketHistoryService.addTicketHistory(ticket.getId(), action, actionDetailsBean);
 			terminate = true;

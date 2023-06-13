@@ -86,7 +86,27 @@ public class TicketConstants {
 		PENDING, PACKED, NOT_AVAILABLE;
 	}
 
+	public enum StoreReturnStatus {
+
+		ISSUED(0), DRAFT(1), RECEIVED(2), CLOSED(3);
+
+		private int value;
+
+		private StoreReturnStatus(int value) {
+			this.value = value;
+		}
+
+		public int getValue() {
+			return value;
+		}
+	}
+
 	public enum TicketCategoryRoot {
 		ORDER_ISSUE, POS_ISSUE, PAYMENT_ISSUE, UNDELIVERED_ISSUE, PRICING_ISSUE, APP_ISSUE, SUGGESTION
+	}
+
+	public enum TicketPlatform {
+
+		PARTNER_APP, MIDDLE_MILE_APP, TICKET_MANAGEMENT_PORTAL
 	}
 }

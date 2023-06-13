@@ -53,8 +53,11 @@ public class TicketEntity extends BaseEntity implements TicketEntityConstants {
 	@Column(nullable = false)
 	private Date assignedAt;
 
+	@Column(nullable = false)
+	private String platform;
+
 	@Column
-	private String remarks = "Ticket Created";
+	private String remarks;
 
 	@Type(type = "jsonb")
 	@Column(columnDefinition = "jsonb", nullable = false)
