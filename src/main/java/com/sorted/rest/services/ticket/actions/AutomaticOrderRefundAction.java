@@ -22,9 +22,10 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean isApplicable(TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		if (ticket.getDetails().getOrderDetails() != null && ticket.getDetails().getOrderDetails().getIssueQty() != null && ticket.getDetails()
-				.getOrderDetails().getRefundableQty() != null) {
-			return ticket.getDetails().getOrderDetails().getRefundableQty().compareTo(ticket.getDetails().getOrderDetails().getIssueQty()) != -1;
+		if (ticket.getResolutionDetails().getOrderDetails() != null && ticket.getResolutionDetails().getOrderDetails()
+				.getIssueQty() != null && ticket.getResolutionDetails().getOrderDetails().getRefundableQty() != null) {
+			return ticket.getResolutionDetails().getOrderDetails().getRefundableQty()
+					.compareTo(ticket.getResolutionDetails().getOrderDetails().getIssueQty()) != -1;
 		}
 		return false;
 	}

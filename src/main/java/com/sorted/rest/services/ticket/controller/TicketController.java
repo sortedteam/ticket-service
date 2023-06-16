@@ -5,11 +5,12 @@ import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
-import com.sorted.rest.common.utils.DateUtils;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.common.websupport.base.BaseController;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.params.service.ParamService;
+import com.sorted.rest.services.ticket.beans.BackofficeCreateTicketRequest;
+import com.sorted.rest.services.ticket.beans.MiddleMileAppCreateTicketRequest;
 import com.sorted.rest.services.ticket.beans.PartnerAppCreateTicketRequest;
 import com.sorted.rest.services.ticket.beans.TicketBean;
 import com.sorted.rest.services.ticket.clients.ClientService;
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RestController
@@ -66,17 +68,15 @@ public class TicketController implements BaseController {
 	@Autowired
 	private TicketRequestUtils ticketRequestUtils;
 
-	@ApiOperation(value = "create a ticket", nickname = "createTicket")
+	@ApiOperation(value = "create tickets for partner app", nickname = "createTicketsForPartnerApp")
 	@PostMapping(path = "/tickets/partner-app")
 	@ResponseStatus(HttpStatus.CREATED)
 	@Transactional(propagation = Propagation.REQUIRED)
 	public List<TicketBean> createTicketsForPartnerApp(@RequestBody List<PartnerAppCreateTicketRequest> createTicketBeans) {
 		List<TicketEntity> tickets = getMapper().mapAsList(createTicketBeans, TicketEntity.class);
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getVisibleTicketCategories();
-		Map<Integer, TicketCategoryEntity> categoryMap = new HashMap<>();
-		for (TicketCategoryEntity category : ticketCategoryEntities) {
-			categoryMap.put(category.getId(), category);
-		}
+		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
+				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
 		validateCommonDetailsForPartnerAppRequest(tickets);
 		validateTicketCategories(tickets, categoryMap);
 		for (TicketEntity ticket : tickets) {
@@ -94,13 +94,14 @@ public class TicketController implements BaseController {
 		tickets = ticketService.saveAll(tickets);
 		populateTicketDetailsAndInvokeActions(tickets);
 		tickets = ticketService.saveAll(tickets);
+		return convertTicketEntitiesIntoBeans(tickets, ticketCategoryEntities);
+	}
+
+	private List<TicketBean> convertTicketEntitiesIntoBeans(List<TicketEntity> tickets, List<TicketCategoryEntity> ticketCategoryEntities) {
 		List<TicketBean> ticketBeans = getMapper().mapAsList(tickets, TicketBean.class);
 		for (TicketBean ticketBean : ticketBeans) {
 			ticketBean.setCategory(ticketCategoryService.getRootToLeafPathUsingCategoryList(ticketCategoryEntities, ticketBean.getCategoryRootId(),
 					ticketBean.getCategoryLeafId()));
-			ticketBean.setAssignedAt(DateUtils.convertDateUtcToIst(ticketBean.getAssignedAt()));
-			ticketBean.setCreatedAt(DateUtils.convertDateUtcToIst(ticketBean.getCreatedAt()));
-			ticketBean.setModifiedAt(DateUtils.convertDateUtcToIst(ticketBean.getModifiedAt()));
 		}
 		return ticketBeans;
 	}
@@ -135,16 +136,106 @@ public class TicketController implements BaseController {
 
 	}
 
-	private void populateTicketDetailsAndInvokeActions(List<TicketEntity> tickets) {
-		ticketRequestUtils.populateTicketRequestAsPerCategoryRoot(tickets);
-		ticketActionUtils.populateTicketDetailsAsPerCategoryRoot(tickets);
+	@ApiOperation(value = "create tickets for middle mile app", nickname = "createTicketsForMiddleMileApp")
+	@PostMapping(path = "/tickets/middle-mile-app")
+	@ResponseStatus(HttpStatus.CREATED)
+	@Transactional(propagation = Propagation.REQUIRED)
+	public List<TicketBean> createTicketsForMiddleMileApp(@RequestBody List<MiddleMileAppCreateTicketRequest> createTicketBeans) {
+		List<TicketEntity> tickets = getMapper().mapAsList(createTicketBeans, TicketEntity.class);
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getVisibleTicketCategories();
+		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
+				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
+		validateCommonDetailsForMiddleMileAppRequest(tickets);
+		validateTicketCategories(tickets, categoryMap);
 		for (TicketEntity ticket : tickets) {
-			ticketActionUtils.invokeTicketCreateAction(ticket);
-			if (ticket.getStatus().equals(TicketStatus.IN_PROGRESS.toString())) {
-				ticketActionUtils.invokeTicketRaiseAction(ticket);
+			if (ticket.getCategoryLeaf().getIsTerminal() != 1) {
+				ticket.setStatus(TicketStatus.DRAFT.toString());
+			} else {
+				ticket.setStatus(TicketStatus.IN_PROGRESS.toString());
+			}
+			ticket.setPlatform(TicketPlatform.MIDDLE_MILE_APP.toString());
+			ticket.setPriority(ticket.getCategoryLeaf().getPriority());
+			ticket.setRemarks(TicketConstants.NEW_TICKET_CREATED_REMARKS);
+			ticket.setAssignedTeam(TicketResolutionTeam.CUSTOMERCARE.toString());
+			ticket.setAssignedAt(new Date());
+		}
+		tickets = ticketService.saveAll(tickets);
+		populateTicketDetailsAndInvokeActions(tickets);
+		tickets = ticketService.saveAll(tickets);
+		return convertTicketEntitiesIntoBeans(tickets, ticketCategoryEntities);
+	}
+
+	private void validateCommonDetailsForMiddleMileAppRequest(List<TicketEntity> tickets) {
+		if (tickets == null || tickets.isEmpty()) {
+			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "No data given to create ticket", null));
+		}
+
+		String referenceId = tickets.get(0).getReferenceId();
+		String requesterEntityId = tickets.get(0).getRequesterEntityId();
+		String requesterEntityType = tickets.get(0).getRequesterEntityId();
+		Integer categoryRootId = tickets.get(0).getCategoryRootId();
+
+		for (TicketEntity ticket : tickets) {
+			if (referenceId != null && !ticket.getReferenceId().equals(referenceId)) {
+				throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket referenceId must be common for the group of tickets", null));
+			}
+			if (ticket.getCategoryRootId() != categoryRootId) {
+				throw new ValidationException(
+						ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket category root id must be common for the group of tickets", null));
+			}
+			if (!ticket.getRequesterEntityId().equals(requesterEntityId)) {
+				throw new ValidationException(
+						ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket requester entity id must be common for the group of tickets", null));
+			}
+			if (!ticket.getRequesterEntityType().equals(requesterEntityType)) {
+				throw new ValidationException(
+						ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket requester entity type must be common for the group of tickets", null));
 			}
 		}
-		ticketRequestUtils.clearTicketRequest();
+
+		String requesterEntityCategory = getStoreCategoryForTicket(requesterEntityId, requesterEntityType);
+
+		tickets.forEach(ticket -> {
+			ticket.setRequesterEntityId(requesterEntityId);
+			ticket.setRequesterEntityType(requesterEntityType);
+			ticket.setRequesterEntityCategory(requesterEntityCategory);
+		});
+
+	}
+
+	@ApiOperation(value = "create tickets for backoffice", nickname = "createTicketsForBackoffice")
+	@PostMapping(path = "/tickets/backoffice")
+	@ResponseStatus(HttpStatus.CREATED)
+	@Transactional(propagation = Propagation.REQUIRED)
+	public List<TicketBean> createTicketsForBackoffice(@RequestBody List<BackofficeCreateTicketRequest> createTicketBeans) {
+		List<TicketEntity> tickets = getMapper().mapAsList(createTicketBeans, TicketEntity.class);
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getVisibleTicketCategories();
+		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
+				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
+		validateCommonDetailsForBackofficeRequest(tickets);
+		validateTicketCategories(tickets, categoryMap);
+		for (TicketEntity ticket : tickets) {
+			if (ticket.getCategoryLeaf().getIsTerminal() != 1) {
+				ticket.setStatus(TicketStatus.DRAFT.toString());
+			} else {
+				ticket.setStatus(TicketStatus.IN_PROGRESS.toString());
+			}
+			ticket.setPlatform(TicketPlatform.BACKOFFICE.toString());
+			ticket.setRemarks(TicketConstants.NEW_TICKET_CREATED_REMARKS);
+			if (ticket.getPriority() == null) {
+				ticket.setPriority(ticket.getCategoryLeaf().getPriority());
+			}
+			if (ticket.getAssignedTeam() == null) {
+				ticket.setAssignedTeam(TicketResolutionTeam.CUSTOMERCARE.toString());
+			}
+			if (ticket.getAssignedAt() == null) {
+				ticket.setAssignedAt(new Date());
+			}
+		}
+		tickets = ticketService.saveAll(tickets);
+		populateTicketDetailsAndInvokeActions(tickets);
+		tickets = ticketService.saveAll(tickets);
+		return convertTicketEntitiesIntoBeans(tickets, ticketCategoryEntities);
 	}
 
 	private void validateCommonDetailsForBackofficeRequest(List<TicketEntity> tickets) {
@@ -207,6 +298,21 @@ public class TicketController implements BaseController {
 				ticket.setCategoryLeaf(categoryMap.get(ticket.getCategoryLeafId()));
 			}
 		}
+	}
+
+	private void populateTicketDetailsAndInvokeActions(List<TicketEntity> tickets) {
+		for (TicketEntity ticket : tickets) {
+			ticketActionUtils.invokeTicketCreateAction(ticket);
+			getMapper().mapSrcToDest(ticket.getDetails(), ticket.getResolutionDetails());
+		}
+		ticketRequestUtils.populateTicketRequestAsPerCategoryRoot(tickets);
+		ticketActionUtils.populateTicketResolutionAsPerCategoryRoot(tickets);
+		for (TicketEntity ticket : tickets) {
+			if (ticket.getStatus().equals(TicketStatus.IN_PROGRESS.toString())) {
+				ticketActionUtils.invokeTicketRaiseAction(ticket);
+			}
+		}
+		ticketRequestUtils.clearTicketRequest();
 	}
 
 	@ApiOperation(value = "upload files", nickname = "uploadFiles")

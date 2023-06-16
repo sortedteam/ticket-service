@@ -107,6 +107,6 @@ public class TicketConstants {
 
 	public enum TicketPlatform {
 
-		PARTNER_APP, MIDDLE_MILE_APP, TICKET_MANAGEMENT_PORTAL
+		PARTNER_APP, MIDDLE_MILE_APP, BACKOFFICE
 	}
 }

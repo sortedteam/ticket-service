@@ -2,7 +2,6 @@ package com.sorted.rest.services.ticket.beans;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -17,11 +16,7 @@ public class UpdateTicketBean implements Serializable {
 	@NotNull
 	private Long id;
 
-	@NotEmpty
 	private String referenceId;
-
-	@NotNull
-	private Integer categoryRootId;
 
 	@NotNull
 	private Integer categoryLeafId;

@@ -29,7 +29,7 @@ public class OrderDetailsBean implements Serializable {
 
 	private Double deliveredQty;
 
-	private Double issueQty;
+	private Double issueQty; //
 
 	private Double refundableQty;
 
@@ -37,7 +37,7 @@ public class OrderDetailsBean implements Serializable {
 
 	private String returnRemarks;
 
-	private Double resolvedQty;
+	private Double resolvedQty; //
 
 	public static OrderDetailsBean newInstance() {
 		return new OrderDetailsBean();

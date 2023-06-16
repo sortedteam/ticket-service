@@ -5,13 +5,13 @@ import lombok.Data;
 
 import java.io.Serializable;
 
-@ApiModel(description = "Payment Details Bean")
+@ApiModel(description = "Payment Details Request Bean")
 @Data
-public class PaymentDetailsBean extends WalletStatementBean implements Serializable {
+public class PaymentDetailsRequestBean implements Serializable {
 
 	private static final long serialVersionUID = 2102504245219017738L;
 
-	public static PaymentDetailsBean newInstance() {
-		return new PaymentDetailsBean();
+	public static PaymentDetailsRequestBean newInstance() {
+		return new PaymentDetailsRequestBean();
 	}
 }

@@ -1,95 +1,62 @@
 package com.sorted.rest.services.ticket.beans;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.sorted.rest.services.ticket.constants.TicketConstants;
 import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
 @ApiModel(description = "Franchise Order Response Bean extending the List Bean")
 @Data
-public class FranchiseOrderResponseBean extends FranchiseOrderListBean implements Serializable {
+public class FranchiseOrderResponseBean implements Serializable {
 
 	private static final long serialVersionUID = 2102504245219017738L;
 
-	@ApiModelProperty(value = "total mrp gross amount", allowEmptyValue = false)
-	@NotNull
-	private Double totalMrpGrossAmount;
+	private UUID id;
 
-	@ApiModelProperty(value = "total Sp Gross Amount", allowEmptyValue = false)
-	@NotNull
-	private Double totalSpGrossAmount;
+	private String displayOrderId;
 
-	@ApiModelProperty(value = "total item count", allowEmptyValue = false)
-	@NotNull
-	private Integer itemCount;
+	private String storeId;
 
-	@ApiModelProperty(value = "total final bill amount", allowEmptyValue = false)
-	@NotNull
+	private TicketConstants.FranchiseOrderStatus status;
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
+	private Date submittedAt;
+
 	private Double finalBillAmount;
 
-	@ApiModelProperty(value = "total discount amount", allowEmptyValue = false)
-	@NotNull
+	private String challanUrl;
+
+	private UUID parentOrderId;
+
+	private RefundParentOrderResponseBean parentOrder;
+
+	private String refundType;
+
+	private Date deliveryDate;
+
+	private Double totalMrpGrossAmount;
+
+	private Double totalSpGrossAmount;
+
 	private Double totalDiscountAmount;
 
-	@ApiModelProperty(value = "total tax amount", allowEmptyValue = false)
-	@NotNull
-	private Double totalTaxAmount;
-
-	@ApiModelProperty(value = "total extra fee amount", allowEmptyValue = false)
-	@NotNull
-	private Double totalExtraFeeAmount;
-
-	@ApiModelProperty(value = "refund amount ", allowEmptyValue = false)
-	@NotNull
 	private Double refundAmount;
 
-	@ApiModelProperty(value = "amount received ", allowEmptyValue = false)
-	@NotNull
 	private Double amountReceived;
 
-	@ApiModelProperty(value = "Order Items", allowEmptyValue = false)
-	@NotNull
-	private List<FranchiseOrderItemResponseBean> orderItems;
+	private List<FranchiseOrderItemResponseBean> orderItems = new ArrayList<>();
 
-	@ApiModelProperty(value = "Order Charges", allowEmptyValue = true)
-	private List<OrderCharges> orderCharges;
-
-	@ApiModelProperty(value = "estimated amount", allowEmptyValue = true)
 	private Double estimatedBillAmount;
 
-	@ApiModelProperty(value = "Is srp store", allowEmptyValue = false)
-	private Integer isSrpStore;
-
-	@ApiModelProperty(value = "category based Count", allowEmptyValue = true)
-	private Map<String, Long> categoryCount;
-
-	@ApiModelProperty(value = "Adjustment Details", allowEmptyValue = true)
-	private List<WalletStatementBean> adjustments;
-
-	@ApiModelProperty(value = "Total Adjustment", allowEmptyValue = true)
 	private Double totalAdjustment;
 
-	@ApiModelProperty(value = "Total Bill After Adjustment", allowEmptyValue = true)
 	private Double totalBillAfterAdjustment;
-
-	@ApiModelProperty(value = "valid Min Order Rule", allowEmptyValue = true)
-	private Boolean validMinOrderRule;
-
-	@ApiModelProperty(value = "Min Amount order Msg Home", allowEmptyValue = true)
-	private String minAmountMsgHome;
-
-	@ApiModelProperty(value = "Min Amount order Msg cart", allowEmptyValue = true)
-	private String minAmountMsgCart;
-
-	@ApiModelProperty(value = "Order Count", allowEmptyValue = true)
-	private Long orderCount;
-
-	@ApiModelProperty(value = "Offer Data", allowEmptyValue = true)
-	private OfferData offerData;
 
 	public static FranchiseOrderResponseBean newInstance() {
 		return new FranchiseOrderResponseBean();

@@ -13,9 +13,9 @@ public class TicketDetailsBean implements Serializable {
 
 	private String description;
 
-	private OrderDetailsBean orderDetails;
+	private OrderDetailsRequestBean orderDetails;
 
-	private PaymentDetailsBean paymentDetails;
+	private PaymentDetailsRequestBean paymentDetails;
 
 	public static TicketDetailsBean newInstance() {
 		return new TicketDetailsBean();

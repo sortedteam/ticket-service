@@ -5,7 +5,6 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Map;
 
 @Data
@@ -29,5 +28,5 @@ public class TicketRequestBean implements Serializable {
 
 	private BigDecimal storeCategoryRefundPermissibilityFactor = TicketConstants.DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR;
 
-	private List<WalletStatementBean> walletStatementBeans;
+	private WalletStatementBean walletStatementBean;
 }

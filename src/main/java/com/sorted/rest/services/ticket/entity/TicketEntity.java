@@ -36,7 +36,7 @@ public class TicketEntity extends BaseEntity implements TicketEntityConstants {
 	private String requesterEntityCategory;
 
 	@Column(nullable = false)
-	private String referenceId;
+	private String referenceId; // POS_ISSUE_20001_153940964
 
 	@Column(name = "category_root_id", insertable = false, updatable = false, nullable = false)
 	private Integer categoryRootId;

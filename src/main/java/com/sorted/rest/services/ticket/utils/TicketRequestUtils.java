@@ -1,6 +1,8 @@
 package com.sorted.rest.services.ticket.utils;
 
-import com.sorted.rest.common.utils.DateUtils;
+import com.sorted.rest.common.beans.ErrorBean;
+import com.sorted.rest.common.exceptions.ValidationException;
+import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.params.service.ParamService;
 import com.sorted.rest.services.ticket.beans.*;
@@ -10,7 +12,6 @@ import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketCategoryRoot;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -29,9 +30,6 @@ public class TicketRequestUtils {
 
 	@Autowired
 	private UserUtils userUtils;
-
-	@Value("${auth.id}")
-	private UUID internalAuthUserId;
 
 	private static ThreadLocal<TicketRequestBean> MEMORY_THREAD_LOCAL = new ThreadLocal<>();
 
@@ -55,31 +53,36 @@ public class TicketRequestUtils {
 		if (entityType.equals(EntityType.STORE.toString())) {
 			if (categoryRootLabel.equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
 				String storeId = tickets.get(0).getRequesterEntityId();
-				if (!StringUtils.isEmpty(tickets.get(0).getReferenceId())) {
-					UUID orderId = UUID.fromString(tickets.get(0).getReferenceId());
-					FranchiseOrderResponseBean orderResponseBean = clientService.getFranchiseOrderInfo(orderId, storeId);
-					ticketRequestBean.setOrderResponse(orderResponseBean);
-
-					Map<String, FranchiseOrderItemResponseBean> orderItemSkuMap = new HashMap<>();
-					for (FranchiseOrderItemResponseBean orderItem : orderResponseBean.getOrderItems()) {
-						orderItemSkuMap.put(orderItem.getSkuCode(), orderItem);
-					}
-					ticketRequestBean.setOrderItemSkuMap(orderItemSkuMap);
-
-					StoreReturnResponseBean storeReturnResponseBean = clientService.getStoreReturnByOrderId(tickets.get(0).getReferenceId());
-					ticketRequestBean.setStoreReturnResponse(storeReturnResponseBean);
-
-					Map<String, StoreReturnItemData> storeReturnItemSkuMap = new HashMap<>();
-					for (StoreReturnItemData storeReturnItemData : storeReturnResponseBean.getStoreReturnItemDataList()) {
-						// redo map if skuCode is not unique in storeReturnItemDataList
-						storeReturnItemSkuMap.put(storeReturnItemData.getSkuCode(), storeReturnItemData);
-					}
-					ticketRequestBean.setStoreReturnItemSkuMap(storeReturnItemSkuMap);
+				if (StringUtils.isEmpty(tickets.get(0).getReferenceId())) {
+					clearTicketRequest();
+					throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket reference id can not be empty", "referenceIdNotFound"));
 				}
-				Set<String> skuCodes = tickets.stream().filter(ticket -> ticket.getDetails().getOrderDetails() != null)
-						.map(ticket -> ticket.getDetails().getOrderDetails().getSkuCode())
+				UUID orderId = UUID.fromString(tickets.get(0).getReferenceId());
+				FranchiseOrderResponseBean orderResponseBean = clientService.getFranchiseOrderInfo(orderId, storeId);
+				ticketRequestBean.setOrderResponse(orderResponseBean);
+
+				Map<String, FranchiseOrderItemResponseBean> orderItemSkuMap = new HashMap<>();
+				for (FranchiseOrderItemResponseBean orderItem : orderResponseBean.getOrderItems()) {
+					orderItemSkuMap.put(orderItem.getSkuCode(), orderItem);
+				}
+				ticketRequestBean.setOrderItemSkuMap(orderItemSkuMap);
+
+				StoreReturnResponseBean storeReturnResponseBean = clientService.getStoreReturnByOrderId(tickets.get(0).getReferenceId());
+				ticketRequestBean.setStoreReturnResponse(storeReturnResponseBean);
+
+				Map<String, StoreReturnItemData> storeReturnItemSkuMap = new HashMap<>();
+				for (StoreReturnItemData storeReturnItemData : storeReturnResponseBean.getStoreReturnItemDataList()) {
+					// redo map if skuCode is not unique in storeReturnItemDataList
+					storeReturnItemSkuMap.put(storeReturnItemData.getSkuCode(), storeReturnItemData);
+				}
+				ticketRequestBean.setStoreReturnItemSkuMap(storeReturnItemSkuMap);
+
+				Set<String> skuCodes = tickets.stream().filter(ticket -> ticket.getResolutionDetails().getOrderDetails() != null)
+						.map(ticket -> ticket.getResolutionDetails().getOrderDetails().getSkuCode())
 						.filter(skuCode -> !StringUtils.isEmpty(skuCode) && !StringUtils.isEmpty(skuCode.trim())).collect(Collectors.toSet());
-				if (!skuCodes.isEmpty()) {
+				if (skuCodes.isEmpty()) {
+					ticketRequestBean.setWhSkuResponseMap(new HashMap<>());
+				} else {
 					List<WhSkuResponse> whSkuResponse = clientService.getStoreSkuInventoryForBulkRequest(skuCodes, storeId);
 					Map<String, WhSkuResponse> whSkuResponseMap = new HashMap<>();
 					for (WhSkuResponse whSku : whSkuResponse) {
@@ -98,20 +101,16 @@ public class TicketRequestUtils {
 					}
 				}
 			} else if (categoryRootLabel.equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {
-				if (tickets.get(0).getDetails().getPaymentDetails() != null && !StringUtils.isEmpty(
-						tickets.get(0).getDetails().getPaymentDetails().getTxnDetail())) {
-					List<WalletStatementBean> walletStatementBeans = clientService.fetchWalletStatementByTxnDetail(
-							tickets.get(0).getDetails().getPaymentDetails().getTxnDetail());
-					for (WalletStatementBean walletStatementBean : walletStatementBeans) {
-						if (walletStatementBean != null && walletStatementBean.getCreatedAt() != null) {
-							walletStatementBean.setCreatedAt(DateUtils.convertDateUtcToIst(walletStatementBean.getCreatedAt()));
-						}
-					}
-					ticketRequestBean.setWalletStatementBeans(walletStatementBeans);
+				if (StringUtils.isEmpty(tickets.get(0).getReferenceId())) {
+					clearTicketRequest();
+					throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket reference id can not be empty", "referenceIdNotFound"));
 				}
+				WalletStatementBean walletStatementBean = clientService.fetchWalletStatementById(Integer.parseInt(tickets.get(0).getReferenceId()));
+				//walletStatementBean.setCreatedAt(DateUtils.convertDateUtcToIst(walletStatementBean.getCreatedAt()));
+				ticketRequestBean.setWalletStatementBean(walletStatementBean);
 			}
 		}
-		ticketRequestBean.setInternalUserDetail(userUtils.getUserDetail(internalAuthUserId));
+		ticketRequestBean.setInternalUserDetail(userUtils.getInternalUserDetail());
 		ticketRequestBean.setRequesterUserDetail(userUtils.getUserDetail(SessionUtils.getAuthUserId()));
 		setTicketRequest(ticketRequestBean);
 	}

@@ -13,7 +13,11 @@ public class ResolutionDetailsBean implements Serializable {
 
 	private String description;
 
+	private String resolvedRemarks;
+
 	private OrderDetailsBean orderDetails;
+
+	private PaymentDetailsBean paymentDetails;
 
 	public static ResolutionDetailsBean newInstance() {
 		return new ResolutionDetailsBean();

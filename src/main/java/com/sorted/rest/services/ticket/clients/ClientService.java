@@ -88,9 +88,9 @@ public class ClientService {
 		}
 	}
 
-	public List<WalletStatementBean> fetchWalletStatementByTxnDetail(String txnDetail) {
+	public WalletStatementBean fetchWalletStatementById(Integer id) {
 		try {
-			return paymentClient.fetchWalletStatementByTxnDetail(txnDetail);
+			return paymentClient.fetchWalletStatementById(id);
 		} catch (Exception e) {
 			_LOGGER.error("Error while Fetching wallet statement", e);
 			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching wallet statement."));

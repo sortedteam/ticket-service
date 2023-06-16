@@ -1,5 +1,6 @@
 package com.sorted.rest.services.ticket.beans;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -30,6 +31,7 @@ public class TicketBean implements Serializable {
 
 	private String assignedTeam;
 
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
 	private Date assignedAt;
 
 	private List<String> attachments = new ArrayList<String>();
@@ -46,8 +48,10 @@ public class TicketBean implements Serializable {
 
 	private TicketCategoryNode category;
 
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
 	private Date createdAt;
 
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
 	private Date modifiedAt;
 
 	public static TicketBean newInstance() {

@@ -5,6 +5,7 @@ import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
+import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.actions.AutomaticOrderRefundAction;
 import com.sorted.rest.services.ticket.actions.EscalateToTeamAction;
 import com.sorted.rest.services.ticket.actions.TicketActionsInterface;
@@ -38,6 +39,9 @@ public class TicketActionUtils {
 
 	@Autowired
 	private AutomaticOrderRefundAction automaticOrderRefundAction;
+
+	@Autowired
+	private BaseMapper<?, ?> mapper;
 
 	public void invokeTicketCreateAction(TicketEntity ticket) {
 		TicketActionDetailsBean defaultActionDetails = TicketActionDetailsBean.newInstance();
@@ -94,15 +98,14 @@ public class TicketActionUtils {
 		}
 	}
 
-	public void populateTicketDetailsAsPerCategoryRoot(List<TicketEntity> tickets) {
+	public void populateTicketResolutionAsPerCategoryRoot(List<TicketEntity> tickets) {
 		TicketRequestBean ticketRequestBean = ticketRequestUtils.getTicketRequest();
 		String categoryRootLabel = tickets.get(0).getCategoryRoot().getLabel();
 		String entityType = tickets.get(0).getRequesterEntityType();
 		if (entityType.equals(EntityType.STORE.toString())) {
 			if (categoryRootLabel.equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
 				for (TicketEntity ticket : tickets) {
-					// set ticket details from order item response
-					OrderDetailsBean orderDetailsBean = ticket.getDetails().getOrderDetails();
+					OrderDetailsBean orderDetailsBean = ticket.getResolutionDetails().getOrderDetails();
 					if (orderDetailsBean != null && !StringUtils.isEmpty(orderDetailsBean.getSkuCode())) {
 						try {
 							FranchiseOrderResponseBean orderResponseBean = ticketRequestBean.getOrderResponse();
@@ -140,25 +143,22 @@ public class TicketActionUtils {
 							orderDetailsBean.setReturnQty(storeReturnItemResponse != null ? storeReturnItemResponse.getQuantity() : null);
 							orderDetailsBean.setReturnRemarks(storeReturnItemResponse != null ? storeReturnItemResponse.getRemarks() : null);
 							orderDetailsBean.setResolvedQty(null);
-							ticket.getDetails().setOrderDetails(orderDetailsBean);
-
+							ticket.getResolutionDetails().setOrderDetails(orderDetailsBean);
 						} catch (Exception e) {
 							_LOGGER.error(
 									String.format("Error in updating ticket details for ticket with orderId : %s and skuCode : %s ", ticket.getReferenceId(),
-											ticket.getDetails().getOrderDetails().getSkuCode()), e);
+											ticket.getResolutionDetails().getOrderDetails().getSkuCode()), e);
 						}
 					}
 				}
 			} else if (categoryRootLabel.equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {
 				for (TicketEntity ticket : tickets) {
-					PaymentDetailsBean paymentDetailsBean = ticket.getDetails().getPaymentDetails();
-					if (paymentDetailsBean != null && !StringUtils.isEmpty(paymentDetailsBean.getTxnDetail())) {
-						try {
-							paymentDetailsBean.setWalletStatementBeans(ticketRequestBean.getWalletStatementBeans());
-						} catch (Exception e) {
-							_LOGGER.error(String.format("Error in updating ticket details for ticket with txnDetail : %s ",
-									ticket.getDetails().getPaymentDetails().getTxnDetail()), e);
-						}
+					try {
+						PaymentDetailsBean paymentDetailsBean = mapper.mapSrcToDest(ticketRequestBean.getWalletStatementBean(),
+								PaymentDetailsBean.newInstance());
+						ticket.getResolutionDetails().setPaymentDetails(paymentDetailsBean);
+					} catch (Exception e) {
+						_LOGGER.error(String.format("Error in updating ticket details for ticket with walletStatementId : %s ", ticket.getReferenceId()), e);
 					}
 				}
 			}
