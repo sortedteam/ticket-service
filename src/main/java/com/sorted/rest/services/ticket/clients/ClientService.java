@@ -64,6 +64,23 @@ public class ClientService {
 		return audience == null ? defaultAudience : audience;
 	}
 
+	public StoreDataResponse getStoreDataFromId(String storeId) {
+		try {
+			StoreDataResponse response = storeClient.getStoreDataFromId(storeId).get(0);
+			if (response == null || response.getId() == null) {
+				throw new ValidationException(new ErrorBean("store_not_found", "We are unable to locate the store"));
+			}
+			return response;
+		} catch (Exception e) {
+			_LOGGER.error("Error while fetching StoreFromId", e);
+			if (e instanceof ValidationException) {
+				throw e;
+			} else {
+				throw new ValidationException(new ErrorBean("store_not_found", "Something went wrong. We are trying to place the order. Kindly try again."));
+			}
+		}
+	}
+
 	public FranchiseOrderResponseBean getFranchiseOrderInfo(UUID orderId, String storeId) {
 		FranchiseOrderResponseBean orderResponseBean = null;
 		try {

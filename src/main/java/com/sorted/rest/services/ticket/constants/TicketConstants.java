@@ -6,25 +6,13 @@ public class TicketConstants {
 
 	public static final String TICKETS_TABLE_NAME = "tickets";
 
+	public static final String TICKET_ITEMS_TABLE_NAME = "ticket_items";
+
 	public static final String TICKET_HISTORY_TABLE_NAME = "ticket_histories";
 
 	public static final String TICKET_CATEGORY_TABLE_NAME = "ticket_categories";
 
 	public static final Integer TICKET_RAISING_USER_USERTYPE = 2;
-
-	public static final String CUSTOMER_CARE_ROLE = "CUSTOMERCARE";
-
-	public static final String ESCALATE_TO_CUSTOMERCARE_ACTION = "ESCALATE_TO_CUSTOMERCARE";
-
-	public static final String AUTOMATIC_ORDER_REFUND_ACTION = "AUTOMATIC_ORDER_REFUND";
-
-	public static final String ESCALATE_TO_WAREHOUSE_ACTION = "ESCALATE_TO_WAREHOUSE";
-
-	public static final String ESCALATE_TO_CUSTOMERCARE_REMARKS = "Ticket escalated to customer care executive";
-
-	public static final String AUTOMATIC_ORDER_REFUND_REMARKS = "Automatic refund initiated";
-
-	public static final String ESCALATE_TO_WAREHOUSE_REMARKS = "Ticket escalated to warehouse executive";
 
 	public static final String NEW_TICKET_CREATED_REMARKS = "New Ticket Created";
 
@@ -34,7 +22,7 @@ public class TicketConstants {
 
 	public enum TicketStatus {
 
-		DRAFT, IN_PROGRESS, CLOSED
+		DRAFT, IN_PROGRESS, CLOSED, CANCELLED
 	}
 
 	public enum EntityType {
@@ -107,6 +95,40 @@ public class TicketConstants {
 
 	public enum TicketPlatform {
 
-		PARTNER_APP, MIDDLE_MILE_APP, BACKOFFICE
+		PARTNER_APP, MIDDLE_MILE_APP, IMS
+	}
+
+	public enum TicketCreateActions {
+
+		NEW_TICKET_CREATED("New Ticket Created"), DRAFT_TICKET_CREATED("Draft Ticket Created"), ESCALATE_TO_CUSTOMERCARE(
+				"Ticket escalated to customer care executive"), ESCALATE_TO_WAREHOUSE("Ticket escalated to warehouse executive"), AUTOMATIC_ORDER_REFUND(
+				"Automatic refund initiated");
+
+		private String remarks;
+
+		private TicketCreateActions(String remarks) {
+			this.remarks = remarks;
+		}
+
+		public String getRemarks() {
+			return remarks;
+		}
+	}
+
+	public enum TicketUpdateActions {
+
+		DRAFT_TICKET_UPDATED("Draft Ticket Updated"), PROCESS_ORDER_REFUND(
+				"Ticket closed with generating refund for the order for quantity %s against issue raised for %s %s"), CLOSED_WITH_REMARKS(
+				"Ticket closed with remarks %s"), CANCEL("Ticket cancelled with remarks %s");
+
+		private String remarks;
+
+		private TicketUpdateActions(String remarks) {
+			this.remarks = remarks;
+		}
+
+		public String getRemarks() {
+			return remarks;
+		}
 	}
 }

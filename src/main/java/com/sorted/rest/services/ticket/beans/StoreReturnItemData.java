@@ -20,4 +20,6 @@ public class StoreReturnItemData implements Serializable {
 	private String day;
 
 	private String remarks;
+
+	private String returnIssue;
 }

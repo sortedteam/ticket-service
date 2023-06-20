@@ -29,4 +29,6 @@ public class TicketRequestBean implements Serializable {
 	private BigDecimal storeCategoryRefundPermissibilityFactor = TicketConstants.DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR;
 
 	private WalletStatementBean walletStatementBean;
+
+	private StoreDataResponse storeDataResponse;
 }

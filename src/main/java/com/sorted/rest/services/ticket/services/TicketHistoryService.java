@@ -21,9 +21,10 @@ public class TicketHistoryService implements BaseService<TicketHistoryEntity> {
 	private TicketHistoryRepository ticketHistoryRepository;
 
 	@Transactional(propagation = Propagation.REQUIRED)
-	public TicketHistoryEntity addTicketHistory(Long ticketId, String action, TicketActionDetailsBean details) {
+	public TicketHistoryEntity addTicketHistory(Long ticketId, Long ticketItemId, String action, TicketActionDetailsBean details) {
 		TicketHistoryEntity historyEntity = TicketHistoryEntity.newInstance();
 		historyEntity.setTicketId(ticketId);
+		historyEntity.setTicketItemId(ticketItemId);
 		historyEntity.setAction(action);
 		historyEntity.setDetails(details);
 		historyEntity = save(historyEntity);

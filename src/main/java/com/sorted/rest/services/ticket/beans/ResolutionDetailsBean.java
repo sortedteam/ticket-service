@@ -15,7 +15,7 @@ public class ResolutionDetailsBean implements Serializable {
 
 	private String resolvedRemarks;
 
-	private OrderDetailsBean orderDetails;
+	private OrderItemDetailsBean orderDetails;
 
 	private PaymentDetailsBean paymentDetails;
 

@@ -1,7 +1,7 @@
 package com.sorted.rest.services.ticket.beans;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.sorted.rest.services.ticket.constants.TicketConstants;
+import com.sorted.rest.services.ticket.constants.TicketConstants.FranchiseOrderStatus;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
@@ -23,22 +23,18 @@ public class FranchiseOrderResponseBean implements Serializable {
 
 	private String storeId;
 
-	private TicketConstants.FranchiseOrderStatus status;
-
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
-	private Date submittedAt;
+	private FranchiseOrderStatus status;
 
 	private Double finalBillAmount;
 
 	private String challanUrl;
 
-	private UUID parentOrderId;
-
-	private RefundParentOrderResponseBean parentOrder;
-
-	private String refundType;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
+	private Date submittedAt;
 
 	private Date deliveryDate;
+
+	private String slot;
 
 	private Double totalMrpGrossAmount;
 

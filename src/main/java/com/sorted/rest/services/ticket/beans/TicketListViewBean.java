@@ -22,8 +22,6 @@ public class TicketListViewBean implements Serializable {
 
 	private Integer categoryRootId;
 
-	private Integer categoryLeafId;
-
 	private Integer priority;
 
 	private String assignedTeam;

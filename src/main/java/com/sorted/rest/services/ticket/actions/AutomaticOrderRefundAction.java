@@ -3,9 +3,7 @@ package com.sorted.rest.services.ticket.actions;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
-import com.sorted.rest.services.ticket.constants.TicketConstants;
-import com.sorted.rest.services.ticket.constants.TicketConstants.TicketResolutionTeam;
-import com.sorted.rest.services.ticket.entity.TicketEntity;
+import com.sorted.rest.services.ticket.entity.TicketItemEntity;
 import com.sorted.rest.services.ticket.services.TicketHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,29 +18,32 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 	@Autowired
 	private TicketHistoryService ticketHistoryService;
 
+	private String team;
+
+	private String remarks;
+
+	public void setTeamAndRemarks(String ticketResolutionTeam, String ticketRemarks) {
+		team = ticketResolutionTeam;
+		remarks = ticketRemarks;
+	}
+
 	@Override
-	public Boolean isApplicable(TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		if (ticket.getResolutionDetails().getOrderDetails() != null && ticket.getResolutionDetails().getOrderDetails()
-				.getIssueQty() != null && ticket.getResolutionDetails().getOrderDetails().getRefundableQty() != null) {
-			return ticket.getResolutionDetails().getOrderDetails().getRefundableQty()
-					.compareTo(ticket.getResolutionDetails().getOrderDetails().getIssueQty()) != -1;
+	public Boolean isApplicable(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
+		if (item.getResolutionDetails().getOrderDetails() != null && item.getResolutionDetails().getOrderDetails()
+				.getIssueQty() != null && item.getResolutionDetails().getOrderDetails().getRefundableQty() != null) {
+			return item.getResolutionDetails().getOrderDetails().getRefundableQty()
+					.compareTo(item.getResolutionDetails().getOrderDetails().getIssueQty()) != -1;
 		}
 		return false;
 	}
 
 	@Override
-	public Boolean apply(TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		Boolean terminate = false;
-		try {
-			ticket.setAssignedTeam(TicketResolutionTeam.CUSTOMERCARE.toString());
-			ticket.setAssignedAt(new Date());
-			ticket.setRemarks(TicketConstants.AUTOMATIC_ORDER_REFUND_REMARKS);
-			actionDetailsBean.setRemarks(TicketConstants.AUTOMATIC_ORDER_REFUND_REMARKS);
-			ticketHistoryService.addTicketHistory(ticket.getId(), action, actionDetailsBean);
-			terminate = true;
-		} catch (Exception e) {
-			_LOGGER.error(String.format("Error in applying for action TestTicketActions for ticket :%s ", ticket), e);
-		}
-		return terminate;
+	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
+		item.setAssignedTeam(team);
+		item.setAssignedAt(new Date());
+		item.setRemarks(remarks);
+		actionDetailsBean.setRemarks(remarks);
+		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);
+		return true;
 	}
 }

@@ -36,11 +36,11 @@ public class FranchiseOrderItemResponseBean implements Serializable {
 
 	private BigDecimal markedPrice;
 
-	private Double mrpGrossAmount = 0.0;
+	private Double mrpGrossAmount;
 
-	private Double spGrossAmount = 0.0;
+	private Double spGrossAmount;
 
-	private Double finalAmount = 0.0;
+	private Double finalAmount;
 
 	private FranchiseOrderItemStatus status;
 
@@ -51,6 +51,4 @@ public class FranchiseOrderItemResponseBean implements Serializable {
 	private String uom;
 
 	private Double prorataAmount;
-
-	private FranchiseRefundDetails refundDetails;
 }

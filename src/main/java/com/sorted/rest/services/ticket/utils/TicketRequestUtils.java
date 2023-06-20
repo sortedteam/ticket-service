@@ -1,8 +1,5 @@
 package com.sorted.rest.services.ticket.utils;
 
-import com.sorted.rest.common.beans.ErrorBean;
-import com.sorted.rest.common.exceptions.ValidationException;
-import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.params.service.ParamService;
 import com.sorted.rest.services.ticket.beans.*;
@@ -46,18 +43,15 @@ public class TicketRequestUtils {
 		MEMORY_THREAD_LOCAL.remove();
 	} // to do after API call finishes
 
-	public void populateTicketRequestAsPerCategoryRoot(List<TicketEntity> tickets) {
+	public void populateTicketRequestAsPerCategoryRoot(TicketEntity ticket) {
 		TicketRequestBean ticketRequestBean = new TicketRequestBean();
-		String categoryRootLabel = tickets.get(0).getCategoryRoot().getLabel();
-		String entityType = tickets.get(0).getRequesterEntityType();
+		String categoryRootLabel = ticket.getCategoryRoot().getLabel();
+		String entityType = ticket.getRequesterEntityType();
 		if (entityType.equals(EntityType.STORE.toString())) {
+			String storeId = ticket.getRequesterEntityId();
+			ticketRequestBean.setStoreDataResponse(clientService.getStoreDataFromId(storeId));
 			if (categoryRootLabel.equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
-				String storeId = tickets.get(0).getRequesterEntityId();
-				if (StringUtils.isEmpty(tickets.get(0).getReferenceId())) {
-					clearTicketRequest();
-					throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket reference id can not be empty", "referenceIdNotFound"));
-				}
-				UUID orderId = UUID.fromString(tickets.get(0).getReferenceId());
+				UUID orderId = UUID.fromString(ticket.getReferenceId());
 				FranchiseOrderResponseBean orderResponseBean = clientService.getFranchiseOrderInfo(orderId, storeId);
 				ticketRequestBean.setOrderResponse(orderResponseBean);
 
@@ -67,18 +61,20 @@ public class TicketRequestUtils {
 				}
 				ticketRequestBean.setOrderItemSkuMap(orderItemSkuMap);
 
-				StoreReturnResponseBean storeReturnResponseBean = clientService.getStoreReturnByOrderId(tickets.get(0).getReferenceId());
+				StoreReturnResponseBean storeReturnResponseBean = clientService.getStoreReturnByOrderId(ticket.getReferenceId());
 				ticketRequestBean.setStoreReturnResponse(storeReturnResponseBean);
 
 				Map<String, StoreReturnItemData> storeReturnItemSkuMap = new HashMap<>();
 				for (StoreReturnItemData storeReturnItemData : storeReturnResponseBean.getStoreReturnItemDataList()) {
-					// redo map if skuCode is not unique in storeReturnItemDataList
-					storeReturnItemSkuMap.put(storeReturnItemData.getSkuCode(), storeReturnItemData);
+					// if skuCode is not unique in storeReturnItemDataList, use the first one
+					if (!storeReturnItemSkuMap.containsKey(storeReturnItemData.getSkuCode())) {
+						storeReturnItemSkuMap.put(storeReturnItemData.getSkuCode(), storeReturnItemData);
+					}
 				}
 				ticketRequestBean.setStoreReturnItemSkuMap(storeReturnItemSkuMap);
 
-				Set<String> skuCodes = tickets.stream().filter(ticket -> ticket.getResolutionDetails().getOrderDetails() != null)
-						.map(ticket -> ticket.getResolutionDetails().getOrderDetails().getSkuCode())
+				Set<String> skuCodes = ticket.getItems().stream().filter(item -> item.getResolutionDetails().getOrderDetails() != null)
+						.map(item -> item.getResolutionDetails().getOrderDetails().getSkuCode())
 						.filter(skuCode -> !StringUtils.isEmpty(skuCode) && !StringUtils.isEmpty(skuCode.trim())).collect(Collectors.toSet());
 				if (skuCodes.isEmpty()) {
 					ticketRequestBean.setWhSkuResponseMap(new HashMap<>());
@@ -95,19 +91,16 @@ public class TicketRequestUtils {
 							.collect(Collectors.toMap(s -> s[0], s -> s.length > 1 ?
 									BigDecimal.valueOf(Double.valueOf(s[1])) :
 									TicketConstants.DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR));
-					String storeCategory = tickets.get(0).getRequesterEntityCategory();
+					String storeCategory = ticket.getRequesterEntityCategory();
 					if (storeCategory != null && storeCategoryRefundPermissibilityMap.containsKey(storeCategory)) {
 						ticketRequestBean.setStoreCategoryRefundPermissibilityFactor(storeCategoryRefundPermissibilityMap.get(storeCategory));
 					}
 				}
 			} else if (categoryRootLabel.equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {
-				if (StringUtils.isEmpty(tickets.get(0).getReferenceId())) {
-					clearTicketRequest();
-					throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket reference id can not be empty", "referenceIdNotFound"));
+				if (!StringUtils.isEmpty(ticket.getReferenceId())) {
+					WalletStatementBean walletStatementBean = clientService.fetchWalletStatementById(Integer.parseInt(ticket.getReferenceId()));
+					ticketRequestBean.setWalletStatementBean(walletStatementBean);
 				}
-				WalletStatementBean walletStatementBean = clientService.fetchWalletStatementById(Integer.parseInt(tickets.get(0).getReferenceId()));
-				//walletStatementBean.setCreatedAt(DateUtils.convertDateUtcToIst(walletStatementBean.getCreatedAt()));
-				ticketRequestBean.setWalletStatementBean(walletStatementBean);
 			}
 		}
 		ticketRequestBean.setInternalUserDetail(userUtils.getInternalUserDetail());

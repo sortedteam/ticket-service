@@ -4,8 +4,6 @@ import lombok.Data;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Data
@@ -16,25 +14,21 @@ public class UpdateTicketBean implements Serializable {
 	@NotNull
 	private Long id;
 
-	private String referenceId;
-
 	@NotNull
 	private Integer categoryLeafId;
+
+	@NotNull
+	private String action;
 
 	private Integer priority;
 
 	private String assignedTeam;
 
-	private Date assignedAt;
+	private List<String> attachments;
 
-	@NotNull
-	private List<String> attachments = new ArrayList<String>();
+	private String remarks;
 
-	@NotNull
-	private TicketDetailsBean details = TicketDetailsBean.newInstance();
-
-	@NotNull
-	private ResolutionDetailsBean resolutionDetails = ResolutionDetailsBean.newInstance();
+	private Double resolvedQuantity;
 
 	public static UpdateTicketBean newInstance() {
 		return new UpdateTicketBean();

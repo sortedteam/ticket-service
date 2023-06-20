@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 
 @Component
-public class EscalateToTeamAction implements TicketActionsInterface {
+public class ProcessOrderRefundAction implements TicketActionsInterface {
 
-	static AppLogger _LOGGER = LoggingManager.getLogger(EscalateToTeamAction.class);
+	static AppLogger _LOGGER = LoggingManager.getLogger(ProcessOrderRefundAction.class);
 
 	@Autowired
 	private TicketHistoryService ticketHistoryService;
@@ -29,17 +29,21 @@ public class EscalateToTeamAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean isApplicable(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		return !item.getAssignedTeam().equals(team);
+		if (item.getResolutionDetails().getOrderDetails() != null && item.getResolutionDetails().getOrderDetails()
+				.getIssueQty() != null && item.getResolutionDetails().getOrderDetails().getRefundableQty() != null) {
+			return item.getResolutionDetails().getOrderDetails().getRefundableQty()
+					.compareTo(item.getResolutionDetails().getOrderDetails().getIssueQty()) != -1;
+		}
+		return false;
 	}
 
 	@Override
 	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		Boolean terminate = true;
 		item.setAssignedTeam(team);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
 		actionDetailsBean.setRemarks(remarks);
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);
-		return terminate;
+		return true;
 	}
 }

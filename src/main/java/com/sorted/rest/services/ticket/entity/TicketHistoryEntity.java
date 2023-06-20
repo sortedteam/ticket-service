@@ -25,6 +25,9 @@ public class TicketHistoryEntity extends BaseEntity {
 	@Column(name = "ticket_id", nullable = false)
 	private Long ticketId;
 
+	@Column(name = "ticket_item_id", nullable = false)
+	private Long ticketItemId;
+
 	@Column(nullable = false)
 	private String action;
 

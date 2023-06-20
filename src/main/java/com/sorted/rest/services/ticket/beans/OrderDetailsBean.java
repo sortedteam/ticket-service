@@ -13,31 +13,19 @@ public class OrderDetailsBean implements Serializable {
 
 	private static final long serialVersionUID = 2102504245219017738L;
 
-	private Integer whId;
-
-	private String skuCode;
-
 	private UUID orderId;
+
+	private String displayOrderId;
+
+	private String orderStatus;
+
+	private Double finalOrderBillAmount;
+
+	private String challanUrl;
 
 	private Date deliveryDate;
 
 	private String deliverySlot;
-
-	private String uom;
-
-	private Double orderedQty;
-
-	private Double deliveredQty;
-
-	private Double issueQty; //
-
-	private Double refundableQty;
-
-	private Double returnQty;
-
-	private String returnRemarks;
-
-	private Double resolvedQty; //
 
 	public static OrderDetailsBean newInstance() {
 		return new OrderDetailsBean();
