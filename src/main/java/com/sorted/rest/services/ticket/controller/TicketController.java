@@ -292,8 +292,8 @@ public class TicketController implements BaseController {
 				if (StringUtils.isEmpty(ticket.getReferenceId())) {
 					throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket reference id can not be empty", "referenceIdNotFound"));
 				}
-				TicketEntity entity = ticketService.findByReferenceIdAndIsClosedInAndHasDraftInAndActive(ticket.getReferenceId(), List.of(false),
-						List.of(true, false), 1).get(0);
+				TicketEntity entity = ticketService.findByReferenceIdAndIsClosedInAndHasDraftInAndActive(ticket.getReferenceId(), List.of(0), List.of(0, 1), 1)
+						.get(0);
 				if (entity != null) {
 					Set<String> skuCodes = entity.getItems().stream().filter(item -> item.getResolutionDetails().getOrderDetails() != null)
 							.map(item -> item.getResolutionDetails().getOrderDetails().getSkuCode())
@@ -310,8 +310,8 @@ public class TicketController implements BaseController {
 				}
 			} else if (ticket.getCategoryRoot().getLabel().equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {
 				if (ticket.getReferenceId() != null) {
-					TicketEntity entity = ticketService.findByReferenceIdAndIsClosedInAndHasDraftInAndActive(ticket.getReferenceId(), List.of(false),
-							List.of(true, false), 1).get(0);
+					TicketEntity entity = ticketService.findByReferenceIdAndIsClosedInAndHasDraftInAndActive(ticket.getReferenceId(), List.of(1), List.of(0, 1),
+							1).get(0);
 					if (entity != null && !entity.getItems().isEmpty()) {
 						throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
 								String.format("Ticket already exists for payment referenceId : %s", ticket.getReferenceId()), "duplicateTicket"));

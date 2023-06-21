@@ -104,7 +104,7 @@ public class TicketService implements BaseService<TicketEntity> {
 		}
 	}
 
-	public List<TicketEntity> findByReferenceIdAndIsClosedInAndHasDraftInAndActive(String referenceId, List<Boolean> isClosed, List<Boolean> hasDraft,
+	public List<TicketEntity> findByReferenceIdAndIsClosedInAndHasDraftInAndActive(String referenceId, List<Integer> isClosed, List<Integer> hasDraft,
 			Integer active) {
 		List<TicketEntity> tickets = ticketRepository.findByReferenceIdAndIsClosedInAndHasDraftInAndActive(referenceId, isClosed, hasDraft, active);
 		if (referenceId != null) {
