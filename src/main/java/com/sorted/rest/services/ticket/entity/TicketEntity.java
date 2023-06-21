@@ -1,8 +1,6 @@
 package com.sorted.rest.services.ticket.entity;
 
 import com.sorted.rest.common.websupport.base.BaseEntity;
-import com.sorted.rest.services.ticket.beans.ResolutionDetailsBean;
-import com.sorted.rest.services.ticket.beans.TicketDetailsBean;
 import com.sorted.rest.services.ticket.beans.TicketMetadataBean;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import lombok.Data;
@@ -11,8 +9,6 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -38,61 +34,27 @@ public class TicketEntity extends BaseEntity implements TicketEntityConstants {
 	private String requesterEntityCategory;
 
 	@Column(unique = true)
-	private String referenceId; // POS_ISSUE_20001_153940964
+	private String referenceId;
 
 	@Column(name = "category_root_id", insertable = false, updatable = false, nullable = false)
 	private Integer categoryRootId;
 
-	@Column(name = "category_leaf_id", insertable = false, updatable = false, nullable = false)
-	private Integer categoryLeafId;
+	@Column(nullable = false)
+	private Integer isClosed;
 
 	@Column(nullable = false)
-	private Integer priority;
-
-	@Column(nullable = false)
-	private String assignedTeam;
-
-	@Column(nullable = false)
-	private Date assignedAt;
-
-	@Column(nullable = false)
-	private String platform;
-
-	@Column
-	private String remarks;
-
-	@Type(type = "jsonb")
-	@Column(columnDefinition = "jsonb", nullable = false)
-	private List<String> attachments = new ArrayList<String>();
-
-	@Column(nullable = false)
-	private String status;
-
-	@Column(nullable = false)
-	private Boolean isClosed;
-
-	@Column(nullable = false)
-	private Boolean hasDraft;
-
-	@Type(type = "jsonb")
-	@Column(columnDefinition = "jsonb", nullable = false)
-	private TicketDetailsBean details = TicketDetailsBean.newInstance();
-
-	@Type(type = "jsonb")
-	@Column(columnDefinition = "jsonb", nullable = false)
-	private ResolutionDetailsBean resolutionDetails = ResolutionDetailsBean.newInstance();
+	private Integer hasDraft;
 
 	@Type(type = "jsonb")
 	@Column(columnDefinition = "jsonb", nullable = false)
 	private TicketMetadataBean metadata = TicketMetadataBean.newInstance();
 
+	@Column(nullable = false)
+	private java.sql.Date lastAddedOn;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_root_id", referencedColumnName = "id", updatable = false)
 	private TicketCategoryEntity categoryRoot;
-
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "category_leaf_id", referencedColumnName = "id", updatable = false)
-	private TicketCategoryEntity categoryLeaf;
 
 	@Where(clause = "active = 1")
 	@org.hibernate.annotations.OrderBy(clause = "createdAt DESC")
@@ -100,7 +62,7 @@ public class TicketEntity extends BaseEntity implements TicketEntityConstants {
 	private List<TicketItemEntity> items;
 
 	@Transient
-	private Boolean hasNew;
+	private Boolean hasNew = false;
 
 	public static TicketEntity newInstance() {
 		return new TicketEntity();

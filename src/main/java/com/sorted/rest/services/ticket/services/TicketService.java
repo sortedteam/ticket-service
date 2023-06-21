@@ -15,6 +15,7 @@ import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
 import com.sorted.rest.services.ticket.repository.TicketRepository;
+import com.sorted.rest.services.ticket.utils.TicketActionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -39,6 +40,9 @@ public class TicketService implements BaseService<TicketEntity> {
 	@Autowired
 	private UploadService uploadService;
 
+	@Autowired
+	private TicketActionUtils ticketActionUtils;
+
 	AppLogger _LOGGER = LoggingManager.getLogger(TicketService.class);
 
 	public TicketEntity findById(Long id) {
@@ -51,19 +55,25 @@ public class TicketService implements BaseService<TicketEntity> {
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	public TicketEntity save(TicketEntity entity) {
-		Boolean isClosed = true;
-		Boolean hasDraft = false;
+		Integer isClosed = 1, isClosedOld = entity.getIsClosed();
+		Integer hasDraft = 0, hasDraftOld = entity.getHasDraft();
 		for (TicketItemEntity item : entity.getItems()) {
-			if (isClosed && !item.getStatus().equals(TicketStatus.CLOSED.toString())) {
-				isClosed = false;
+			if (isClosed == 1 && !item.getStatus().equals(TicketStatus.CLOSED.toString())) {
+				isClosed = 0;
 			}
-			if (!hasDraft && !item.getStatus().equals(TicketStatus.DRAFT.toString())) {
-				hasDraft = true;
+			if (hasDraft == 0 && item.getStatus().equals(TicketStatus.DRAFT.toString())) {
+				hasDraft = 1;
 			}
 		}
 		entity.setIsClosed(isClosed);
 		entity.setHasDraft(hasDraft);
+
+		for (TicketItemEntity item : entity.getItems()) {
+			item.setTicket(entity);
+		}
+
 		TicketEntity result = ticketRepository.save(entity);
+		ticketActionUtils.addParentTicketHistory(entity, entity.getHasDraft(), entity.getIsClosed());
 		return result;
 	}
 
@@ -94,8 +104,9 @@ public class TicketService implements BaseService<TicketEntity> {
 		}
 	}
 
-	public List<TicketEntity> findByReferenceIdAndStatusInAndActive(String referenceId, List<String> statuses, Integer active) {
-		List<TicketEntity> tickets = ticketRepository.findByReferenceIdAndStatusInAndActive(referenceId, statuses, active);
+	public List<TicketEntity> findByReferenceIdAndIsClosedInAndHasDraftInAndActive(String referenceId, List<Boolean> isClosed, List<Boolean> hasDraft,
+			Integer active) {
+		List<TicketEntity> tickets = ticketRepository.findByReferenceIdAndIsClosedInAndHasDraftInAndActive(referenceId, isClosed, hasDraft, active);
 		if (referenceId != null) {
 			if (tickets.isEmpty()) {
 				tickets.add(null);
@@ -104,7 +115,7 @@ public class TicketService implements BaseService<TicketEntity> {
 		return tickets;
 	}
 
-	public PageAndSortResult<TicketEntity> getAllSingularTicketsPaginated(Integer pageSize, Integer pageNo, Map<String, Object> filters,
+	public PageAndSortResult<TicketEntity> getAllTicketsPaginated(Integer pageSize, Integer pageNo, Map<String, Object> filters,
 			Map<String, PageAndSortRequest.SortDirection> sort) {
 		PageAndSortResult<TicketEntity> tickets = null;
 		try {

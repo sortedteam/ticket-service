@@ -53,7 +53,7 @@ public class TicketCategoryEntity extends BaseEntity {
 	private List<TicketEntity> ticketRoots;
 
 	@OneToMany(mappedBy = "categoryLeaf", fetch = FetchType.LAZY)
-	private List<TicketEntity> ticketLeafs;
+	private List<TicketItemEntity> ticketLeafs;
 
 	public static TicketCategoryEntity newInstance() {
 		return new TicketCategoryEntity();

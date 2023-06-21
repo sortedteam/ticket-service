@@ -30,17 +30,17 @@ public class TicketBean implements Serializable {
 	@JsonIgnore
 	private TicketCategoryBean categoryRoot;
 
+	private java.sql.Date lastAddedOn;
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
 	private Date createdAt;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
 	private Date modifiedAt;
 
-	private Date lastItemCreatedAt;
+	private Integer isClosed;
 
-	private Boolean isClosed;
-
-	private Boolean hasDraft;
+	private Integer hasDraft;
 
 	private List<TicketItemBean> items;
 

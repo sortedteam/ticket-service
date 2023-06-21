@@ -38,6 +38,14 @@ public class TicketConstants {
 		public int getValue() {
 			return value;
 		}
+
+		public static EntityType fromString(String val) {
+			for (EntityType value : EntityType.values()) {
+				if (value.toString().equals(val))
+					return value;
+			}
+			return null;
+		}
 	}
 
 	public enum TicketResolutionTeam {
@@ -90,7 +98,7 @@ public class TicketConstants {
 	}
 
 	public enum TicketCategoryRoot {
-		ORDER_ISSUE, POS_ISSUE, PAYMENT_ISSUE, UNDELIVERED_ISSUE, PRICING_ISSUE, APP_ISSUE, SUGGESTION
+		ORDER_ISSUE, POS_ISSUE, PAYMENT_ISSUE, PRICING_ISSUE, APP_ISSUE
 	}
 
 	public enum TicketPlatform {
@@ -124,6 +132,22 @@ public class TicketConstants {
 		private String remarks;
 
 		private TicketUpdateActions(String remarks) {
+			this.remarks = remarks;
+		}
+
+		public String getRemarks() {
+			return remarks;
+		}
+	}
+
+	public enum ParentTicketUpdateActions {
+
+		NEW_TICKET_ADDED("New ticket(s) added"), NEW_DRAFT_TICKET_ADDED("New ticket(s) added as Draft"), DRAFT_TICKET_MOVED(
+				"All draft ticket(s) moved"), ALL_TICKET_CLOSED("All ticket(s) closed");
+
+		private String remarks;
+
+		private ParentTicketUpdateActions(String remarks) {
 			this.remarks = remarks;
 		}
 

@@ -1,7 +1,6 @@
 package com.sorted.rest.services.ticket.beans;
 
 import lombok.Data;
-import org.hibernate.type.EntityType;
 
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
@@ -12,7 +11,7 @@ public class ImsCreateTicketRequest extends CreateTicketBean implements Serializ
 	private static final long serialVersionUID = -7538803140039235801L;
 
 	@NotEmpty
-	private EntityType requesterEntityType;
+	private String requesterEntityType;
 
 	@NotEmpty
 	private String requesterEntityId;

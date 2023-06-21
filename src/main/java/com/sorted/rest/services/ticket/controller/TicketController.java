@@ -1,6 +1,9 @@
 package com.sorted.rest.services.ticket.controller;
 
 import com.sorted.rest.common.beans.ErrorBean;
+import com.sorted.rest.common.dbsupport.pagination.PageAndSortRequest;
+import com.sorted.rest.common.dbsupport.pagination.PageAndSortRequest.SortDirection;
+import com.sorted.rest.common.dbsupport.pagination.PageAndSortResult;
 import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
@@ -31,6 +34,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -67,7 +74,7 @@ public class TicketController implements BaseController {
 	@PostMapping(path = "/tickets/partner-app")
 	@ResponseStatus(HttpStatus.CREATED)
 	@Transactional(propagation = Propagation.REQUIRED)
-	public TicketBean createTicketsForPartnerApp(@RequestBody PartnerAppCreateTicketRequest createTicketBean) {
+	public TicketBean createTicketsForPartnerApp(@Valid @RequestBody PartnerAppCreateTicketRequest createTicketBean) {
 		TicketEntity ticket = getMapper().mapSrcToDest(createTicketBean, TicketEntity.newInstance());
 		if (ticket == null) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "No data given to create ticket", null));
@@ -88,9 +95,13 @@ public class TicketController implements BaseController {
 		validateForDuplicateTickets(ticket);
 		ticket.setHasNew(true);
 		for (TicketItemEntity item : ticket.getItems()) {
-			if (item.getCategoryLeaf().getIsTerminal() != 1) {
+			if (item.getCategoryLeaf().getIsTerminal() == -1) {
+				throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
+						String.format("Can not save ticket with category : %s. Please retry with other category", item.getCategoryLeaf().getDescription()),
+						null));
+			} else if (item.getCategoryLeaf().getIsTerminal() == 0) {
 				item.setStatus(TicketStatus.DRAFT.toString());
-			} else {
+			} else if (item.getCategoryLeaf().getIsTerminal() == 1) {
 				item.setStatus(TicketStatus.IN_PROGRESS.toString());
 			}
 			item.setPlatform(TicketPlatform.PARTNER_APP.toString());
@@ -122,7 +133,13 @@ public class TicketController implements BaseController {
 	@PostMapping(path = "/tickets/middle-mile-app")
 	@ResponseStatus(HttpStatus.CREATED)
 	@Transactional(propagation = Propagation.REQUIRED)
-	public TicketBean createTicketsForMiddleMileApp(@RequestBody MiddleMileAppCreateTicketRequest createTicketBean) {
+	public TicketBean createTicketsForMiddleMileApp(@Valid @RequestBody MiddleMileAppCreateTicketRequest createTicketBean) {
+		if (EntityType.fromString(createTicketBean.getRequesterEntityType()) == null) {
+			throw new ValidationException(
+					ErrorBean.withError(Errors.INVALID_REQUEST, String.format("Invalid Entity Type : %s", createTicketBean.getRequesterEntityType()),
+							"invalidEntityType"));
+		}
+
 		TicketEntity ticket = getMapper().mapSrcToDest(createTicketBean, TicketEntity.newInstance());
 		if (ticket == null) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "No data given to create ticket", null));
@@ -164,7 +181,13 @@ public class TicketController implements BaseController {
 	@PostMapping(path = "/tickets/ims")
 	@ResponseStatus(HttpStatus.CREATED)
 	@Transactional(propagation = Propagation.REQUIRED)
-	public TicketBean createTicketsForIms(@RequestBody ImsCreateTicketRequest createTicketBean) {
+	public TicketBean createTicketsForIms(@Valid @RequestBody ImsCreateTicketRequest createTicketBean) {
+		if (EntityType.fromString(createTicketBean.getRequesterEntityType()) == null) {
+			throw new ValidationException(
+					ErrorBean.withError(Errors.INVALID_REQUEST, String.format("Invalid Entity Type : %s", createTicketBean.getRequesterEntityType()),
+							"invalidEntityType"));
+		}
+
 		TicketEntity ticket = getMapper().mapSrcToDest(createTicketBean, TicketEntity.newInstance());
 		if (ticket == null) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "No data given to create ticket", null));
@@ -203,9 +226,9 @@ public class TicketController implements BaseController {
 	}
 
 	private String getStoreCategoryForTicket(String storeId, String entityType) {
-		List<String> storeCategoryForTicketParam = Arrays.stream(paramService.getParam("STORE_CATEGORY_FOR_TICKET", "Green|").split("\\|"))
+		List<String> storeCategoryForTicketParam = Arrays.stream(paramService.getParam("STORE_CATEGORY_FOR_TICKET", "Good|").split("\\|"))
 				.collect(Collectors.toList());
-		String requesterEntityCategory = clientService.getFilteredOrDefaultAudience(storeId, entityType,
+		String requesterEntityCategory = clientService.getFilteredOrDefaultAudience(entityType, storeId,
 				Arrays.stream(storeCategoryForTicketParam.get(1).split(",")).filter(s -> !StringUtils.isEmpty(s) && !StringUtils.isEmpty(s.trim()))
 						.map(String::trim).distinct().collect(Collectors.toList()), storeCategoryForTicketParam.get(0));
 		return requesterEntityCategory;
@@ -233,15 +256,20 @@ public class TicketController implements BaseController {
 			ticketRequestUtils.populateTicketRequestAsPerCategoryRoot(ticket);
 			ticketActionUtils.populateTicketResolutionAsPerCategoryRoot(ticket);
 			if (ticket.getHasNew()) {
+				ticket.setLastAddedOn(java.sql.Date.valueOf(LocalDate.now(ZoneId.of("Asia/Kolkata"))));
 				ticket = ticketService.save(ticket);
 			}
 			for (TicketItemEntity item : ticket.getItems()) {
 				if (item.getIsNew()) {
 					ticketActionUtils.invokeTicketCreateAction(item, ticket.getId());
 				} else if (item.getWasDraft()) {
-					if (item.getCategoryLeaf().getIsTerminal() != 1) {
+					if (item.getCategoryLeaf().getIsTerminal() == -1) {
+						throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
+								String.format("Can not save ticket with category : %s. Please retry with other category",
+										item.getCategoryLeaf().getDescription()), null));
+					} else if (item.getCategoryLeaf().getIsTerminal() == 0) {
 						item.setStatus(TicketStatus.DRAFT.toString());
-					} else {
+					} else if (item.getCategoryLeaf().getIsTerminal() == 1) {
 						item.setStatus(TicketStatus.IN_PROGRESS.toString());
 					}
 					ticketActionUtils.invokeDraftTicketUpdateAction(item, ticket.getId());
@@ -264,8 +292,8 @@ public class TicketController implements BaseController {
 				if (StringUtils.isEmpty(ticket.getReferenceId())) {
 					throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket reference id can not be empty", "referenceIdNotFound"));
 				}
-				TicketEntity entity = ticketService.findByReferenceIdAndStatusInAndActive(ticket.getReferenceId(),
-						List.of(TicketStatus.DRAFT.toString(), TicketStatus.IN_PROGRESS.toString()), 1).get(0);
+				TicketEntity entity = ticketService.findByReferenceIdAndIsClosedInAndHasDraftInAndActive(ticket.getReferenceId(), List.of(false),
+						List.of(true, false), 1).get(0);
 				if (entity != null) {
 					Set<String> skuCodes = entity.getItems().stream().filter(item -> item.getResolutionDetails().getOrderDetails() != null)
 							.map(item -> item.getResolutionDetails().getOrderDetails().getSkuCode())
@@ -280,6 +308,15 @@ public class TicketController implements BaseController {
 					}
 					ticket.setId(entity.getId());
 				}
+			} else if (ticket.getCategoryRoot().getLabel().equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {
+				if (ticket.getReferenceId() != null) {
+					TicketEntity entity = ticketService.findByReferenceIdAndIsClosedInAndHasDraftInAndActive(ticket.getReferenceId(), List.of(false),
+							List.of(true, false), 1).get(0);
+					if (entity != null && !entity.getItems().isEmpty()) {
+						throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
+								String.format("Ticket already exists for payment referenceId : %s", ticket.getReferenceId()), "duplicateTicket"));
+					}
+				}
 			}
 		}
 
@@ -289,23 +326,23 @@ public class TicketController implements BaseController {
 	@PutMapping(path = "/tickets/draft/ims")
 	@ResponseStatus(HttpStatus.CREATED)
 	@Transactional(propagation = Propagation.REQUIRED)
-	public TicketBean updateTicketFromDraftForIms(@RequestBody UpdateTicketFromDraftBean updateTicketBean) {
+	public TicketBean updateTicketFromDraftForIms(@Valid @RequestBody UpdateTicketFromDraftBean updateTicketBean) {
 		TicketEntity ticket = ticketService.findById(updateTicketBean.getTicketId());
 		if (ticket == null) {
 			throw new ValidationException(
 					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket with id : %s", updateTicketBean.getTicketId()), null));
 		}
 		Optional<TicketItemEntity> itemOptional = ticket.getItems().stream().filter(i -> i.getId() == updateTicketBean.getId()).findFirst();
-		if (!itemOptional.isPresent()) {
-			throw new ValidationException(
-					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket item with id : %s", updateTicketBean.getId()), null));
+		if (!itemOptional.isPresent() || !itemOptional.get().getStatus().equals(TicketStatus.DRAFT.toString())) {
+			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND,
+					String.format("No data found for ticket item  in draft status with id : %s", updateTicketBean.getId()), null));
 		}
 		TicketItemEntity item = itemOptional.get();
 		ticket.setItems(Collections.singletonList(item));
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
 		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
-		if (updateTicketBean.getCategoryLeafId() != null && updateTicketBean.getCategoryLeafId() != ticket.getCategoryLeafId()) {
+		if (updateTicketBean.getCategoryLeafId() != null && updateTicketBean.getCategoryLeafId() != item.getCategoryLeafId()) {
 			TicketCategoryEntity categoryLeaf = categoryMap.get(updateTicketBean.getCategoryLeafId());
 			if (categoryLeaf == null) {
 				throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
@@ -313,7 +350,7 @@ public class TicketController implements BaseController {
 			}
 			item.setCategoryLeafId(updateTicketBean.getCategoryLeafId());
 			item.setCategoryLeaf(categoryLeaf);
-			item.setPriority(ticket.getCategoryLeaf().getPriority());
+			item.setPriority(item.getCategoryLeaf().getPriority());
 		}
 		if (updateTicketBean.getAttachments() != null && !updateTicketBean.getAttachments().isEmpty()) {
 			item.setAttachments(Stream.concat(item.getAttachments().stream(), updateTicketBean.getAttachments().stream()).collect(Collectors.toList()));
@@ -332,7 +369,7 @@ public class TicketController implements BaseController {
 	@PutMapping(path = "/tickets/ims")
 	@ResponseStatus(HttpStatus.CREATED)
 	@Transactional(propagation = Propagation.REQUIRED)
-	public TicketBean updateTicketForIms(@RequestBody UpdateTicketBean updateTicketBean) {
+	public TicketBean updateTicketForIms(@Valid @RequestBody UpdateTicketBean updateTicketBean) {
 		TicketEntity ticket = ticketService.findById(updateTicketBean.getId());
 		if (ticket == null) {
 			throw new ValidationException(
@@ -348,24 +385,49 @@ public class TicketController implements BaseController {
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
 		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
-		if (updateTicketBean.getCategoryLeafId() != null && updateTicketBean.getCategoryLeafId() != ticket.getCategoryLeafId()) {
+		if (updateTicketBean.getCategoryLeafId() != null && updateTicketBean.getCategoryLeafId() != item.getCategoryLeafId()) {
 			TicketCategoryEntity ticketCategoryLeaf = categoryMap.get(updateTicketBean.getCategoryLeafId());
 			if (ticketCategoryLeaf == null) {
 				throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
 						String.format("No data found for ticket category with id : %s", updateTicketBean.getCategoryLeafId()), null));
 			}
-			ticket.setCategoryLeafId(updateTicketBean.getCategoryLeafId());
-			ticket.setCategoryLeaf(ticketCategoryLeaf);
-			item.setPriority(ticket.getCategoryLeaf().getPriority());
+			item.setCategoryLeafId(updateTicketBean.getCategoryLeafId());
+			item.setCategoryLeaf(ticketCategoryLeaf);
+			item.setPriority(item.getCategoryLeaf().getPriority());
 		}
 		if (updateTicketBean.getAttachments() != null && !updateTicketBean.getAttachments().isEmpty()) {
-			ticket.setAttachments(Stream.concat(ticket.getAttachments().stream(), updateTicketBean.getAttachments().stream()).collect(Collectors.toList()));
+			item.setAttachments(Stream.concat(item.getAttachments().stream(), updateTicketBean.getAttachments().stream()).collect(Collectors.toList()));
 		}
 
 		ticketActionUtils.invokeTicketUpdateAction(item, ticket.getId(), updateTicketBean);
 		ticket.setItems(Collections.singletonList(item));
 		ticket = ticketService.save(ticket);
 		return convertTicketEntityIntoTicketBean(ticket, ticketCategoryEntities);
+	}
+
+	@ApiOperation(value = "fetch paginated lists of tickets for ims", nickname = "fetchTicketsIms")
+	@GetMapping(path = "/tickets/ims")
+	public PageAndSortResult<TicketBean> fetchTicketsIms(@RequestParam(defaultValue = "1") Integer pageNo, @RequestParam(defaultValue = "25") Integer pageSize,
+			@RequestParam(required = false) String sortBy, @RequestParam(required = false) PageAndSortRequest.SortDirection sortDirection,
+			HttpServletRequest request) {
+		Map<String, SortDirection> sort = null;
+		if (sortBy != null) {
+			sort = buildSortMap(sortBy, sortDirection);
+		} else {
+			sort = new LinkedHashMap<>();
+			sort.put("lastAddedOn", PageAndSortRequest.SortDirection.DESC);
+			sort.put("modifiedAt", PageAndSortRequest.SortDirection.DESC);
+		}
+		final Map<String, Object> params = getSearchParams(request, TicketEntity.class);
+		PageAndSortResult<TicketEntity> tickets = ticketService.getAllTicketsPaginated(pageSize, pageNo, params, sort);
+		PageAndSortResult<TicketBean> response = prepareResponsePageData(tickets, TicketBean.class);
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		for (TicketBean ticketBean : response.getData()) {
+			for (TicketItemBean itemBean : ticketBean.getItems()) {
+				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+			}
+		}
+		return response;
 	}
 
 	/*
@@ -397,41 +459,6 @@ public class TicketController implements BaseController {
 		populateTicketDetailsAndInvokeActions(tickets);
 		tickets = ticketService.saveAll(tickets);
 		return convertTicketEntitiesIntoBeans(tickets, ticketCategoryEntities);
-	}
-
-	@ApiOperation(value = "fetch paginated lists of tickets", nickname = "fetchTicketsSingularListView")
-	@GetMapping(path = "/tickets/singular")
-	public PageAndSortResult<TicketBean> fetchTicketsSingularListView(@RequestParam(defaultValue = "1") Integer pageNo,
-			@RequestParam(defaultValue = "25") Integer pageSize, @RequestParam(required = false) String sortBy,
-			@RequestParam(required = false) PageAndSortRequest.SortDirection sortDirection, HttpServletRequest request,
-			@RequestParam(required = false) List<String> statusIn, @RequestParam(required = false) List<Integer> categoryRootIn) {
-		Map<String, SortDirection> sort = null;
-		if (sortBy != null) {
-			sort = buildSortMap(sortBy, sortDirection);
-		} else {
-			sort = new LinkedHashMap<>();
-			sort.put("modifiedAt", PageAndSortRequest.SortDirection.DESC);
-		}
-		final Map<String, Object> params = getSearchParams(request, TicketEntity.class);
-		if (statusIn != null && !statusIn.isEmpty()) {
-			params.put("status", statusIn);
-		}
-		if (categoryRootIn != null && !categoryRootIn.isEmpty()) {
-			params.put("categoryRootId", categoryRootIn);
-		}
-		if (params.containsKey("statusIn")) {
-			params.remove("statusIn");
-		}
-		if (params.containsKey("categoryRootIn")) {
-			params.remove("categoryRootIn");
-		}
-		PageAndSortResult<TicketEntity> tickets = ticketService.getAllSingularTicketsPaginated(pageSize, pageNo, params, sort);
-		PageAndSortResult<TicketBean> response = prepareResponsePageData(tickets, TicketBean.class);
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
-		for (TicketBean ticketBean : response.getData()) {
-			setTicketActionsAndCategory(ticketBean, ticketCategoryEntities);
-		}
-		return response;
 	}
 
 

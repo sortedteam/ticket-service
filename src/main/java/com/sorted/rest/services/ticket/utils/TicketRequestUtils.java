@@ -73,8 +73,8 @@ public class TicketRequestUtils {
 				}
 				ticketRequestBean.setStoreReturnItemSkuMap(storeReturnItemSkuMap);
 
-				Set<String> skuCodes = ticket.getItems().stream().filter(item -> item.getResolutionDetails().getOrderDetails() != null)
-						.map(item -> item.getResolutionDetails().getOrderDetails().getSkuCode())
+				Set<String> skuCodes = ticket.getItems().stream().filter(item -> item.getDetails().getOrderDetails() != null)
+						.map(item -> item.getDetails().getOrderDetails().getSkuCode())
 						.filter(skuCode -> !StringUtils.isEmpty(skuCode) && !StringUtils.isEmpty(skuCode.trim())).collect(Collectors.toSet());
 				if (skuCodes.isEmpty()) {
 					ticketRequestBean.setWhSkuResponseMap(new HashMap<>());

@@ -102,11 +102,11 @@ public class TicketActionUtils {
 		String categoryRootLabel = ticket.getCategoryRoot().getLabel();
 		String entityType = ticket.getRequesterEntityType();
 		if (entityType.equals(EntityType.STORE.toString())) {
+			TicketMetadataBean ticketMetadata = ticket.getMetadata();
+			ticketMetadata.setStoreDetails(mapper.mapSrcToDest(ticketRequestBean.getStoreDataResponse(), StoreDetailsBean.newInstance()));
 			if (categoryRootLabel.equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
 				FranchiseOrderResponseBean orderResponseBean = ticketRequestBean.getOrderResponse();
 
-				TicketMetadataBean ticketMetadata = ticket.getMetadata();
-				ticketMetadata.setStoreDetails(mapper.mapSrcToDest(ticketRequestBean.getStoreDataResponse(), StoreDetailsBean.newInstance()));
 				OrderDetailsBean orderDetailsBean = OrderDetailsBean.newInstance();
 				orderDetailsBean.setOrderId(orderResponseBean.getId());
 				orderDetailsBean.setDisplayOrderId(orderResponseBean.getDisplayOrderId());
@@ -116,7 +116,6 @@ public class TicketActionUtils {
 				orderDetailsBean.setDeliveryDate(orderResponseBean.getDeliveryDate());
 				orderDetailsBean.setDeliverySlot(orderResponseBean.getSlot());
 				ticketMetadata.setOrderDetails(orderDetailsBean);
-				ticket.setMetadata(ticketMetadata);
 
 				for (TicketItemEntity item : ticket.getItems()) {
 					item.setResolutionDetails(mapper.mapSrcToDest(item.getDetails(), ResolutionDetailsBean.newInstance()));
@@ -171,6 +170,7 @@ public class TicketActionUtils {
 					item.getResolutionDetails().setPaymentDetails(paymentDetailsBean);
 				}
 			}
+			ticket.setMetadata(ticketMetadata);
 		}
 	}
 
@@ -197,6 +197,24 @@ public class TicketActionUtils {
 
 		if (ticketAction.isApplicable(item, ticketId, action, actionDetailsBean)) {
 			ticketAction.apply(item, ticketId, action, actionDetailsBean);
+		}
+	}
+
+	public void addParentTicketHistory(TicketEntity ticket, Integer hasDraft, Integer isClosed) {
+		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
+		actionDetailsBean.setUserDetail(ticketRequestUtils.getTicketRequest().getRequesterUserDetail());
+		if (hasDraft == 0 && ticket.getHasDraft() == 1) {
+			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_DRAFT_TICKET_ADDED.getRemarks());
+			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_DRAFT_TICKET_ADDED.toString(), actionDetailsBean);
+		} else if (ticket.getHasNew()) {
+			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_TICKET_ADDED.getRemarks());
+			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_TICKET_ADDED.toString(), actionDetailsBean);
+		} else if (hasDraft == 1 && ticket.getHasDraft() == 0) {
+			actionDetailsBean.setRemarks(ParentTicketUpdateActions.DRAFT_TICKET_MOVED.getRemarks());
+			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.DRAFT_TICKET_MOVED.toString(), actionDetailsBean);
+		} else if (isClosed == 0 && ticket.getIsClosed() == 0) {
+			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_TICKET_CLOSED.getRemarks());
+			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_TICKET_CLOSED.toString(), actionDetailsBean);
 		}
 	}
 }

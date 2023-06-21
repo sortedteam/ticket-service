@@ -17,7 +17,7 @@ import java.util.List;
 @Table(name = TicketConstants.TICKET_ITEMS_TABLE_NAME)
 @DynamicUpdate
 @Data
-public class TicketItemEntity extends BaseEntity implements TicketEntityConstants {
+public class TicketItemEntity extends BaseEntity {
 
 	private static final long serialVersionUID = -7538803140039235801L;
 
