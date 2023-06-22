@@ -28,7 +28,8 @@ public class TicketRequestBean implements Serializable {
 
 	private BigDecimal storeCategoryRefundPermissibilityFactor = TicketConstants.DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR;
 
-	private WalletStatementBean walletStatementBean;
-
 	private StoreDataResponse storeDataResponse;
+
+	//	todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
+	//	private WalletStatementBean walletStatementBean;
 }

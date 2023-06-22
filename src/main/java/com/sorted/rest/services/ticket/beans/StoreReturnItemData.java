@@ -14,6 +14,8 @@ public class StoreReturnItemData implements Serializable {
 
 	private Double quantity;
 
+	private Double refundQuantity;
+
 	@JsonProperty("sku_code")
 	private String skuCode;
 
@@ -21,5 +23,5 @@ public class StoreReturnItemData implements Serializable {
 
 	private String remarks;
 
-	private String returnIssue;
+	private String refundSuggestion;
 }

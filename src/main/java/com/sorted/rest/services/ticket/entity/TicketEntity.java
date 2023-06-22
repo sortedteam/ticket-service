@@ -1,5 +1,6 @@
 package com.sorted.rest.services.ticket.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.sorted.rest.common.websupport.base.BaseEntity;
 import com.sorted.rest.services.ticket.beans.TicketMetadataBean;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
@@ -59,10 +60,14 @@ public class TicketEntity extends BaseEntity implements TicketEntityConstants {
 	@Where(clause = "active = 1")
 	@org.hibernate.annotations.OrderBy(clause = "createdAt DESC")
 	@OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@JsonManagedReference
 	private List<TicketItemEntity> items;
 
 	@Transient
 	private Boolean hasNew = false;
+
+	@Transient
+	private Boolean hadDraft = false;
 
 	public static TicketEntity newInstance() {
 		return new TicketEntity();

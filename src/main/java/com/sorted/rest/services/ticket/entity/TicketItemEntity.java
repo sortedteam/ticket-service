@@ -1,5 +1,6 @@
 package com.sorted.rest.services.ticket.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.sorted.rest.common.websupport.base.BaseEntity;
 import com.sorted.rest.services.ticket.beans.ResolutionDetailsBean;
 import com.sorted.rest.services.ticket.beans.TicketDetailsBean;
@@ -67,14 +68,9 @@ public class TicketItemEntity extends BaseEntity {
 	private TicketCategoryEntity categoryLeaf;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "ticket_id", referencedColumnName = "id", nullable = false)
+	@JoinColumn(name = "ticket_id", referencedColumnName = "id", insertable = false, updatable = false, nullable = false)
+	@JsonBackReference
 	private TicketEntity ticket;
-
-	@Transient
-	private Boolean isNew = false;
-
-	@Transient
-	private Boolean wasDraft = false;
 
 	public static TicketItemEntity newInstance() {
 		return new TicketItemEntity();

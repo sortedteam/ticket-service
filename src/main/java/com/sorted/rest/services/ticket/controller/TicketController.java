@@ -109,7 +109,6 @@ public class TicketController implements BaseController {
 			item.setAssignedTeam(TicketResolutionTeam.CUSTOMERCARE.toString());
 			item.setAssignedAt(new Date());
 			item.setRemarks(TicketCreateActions.NEW_TICKET_CREATED.getRemarks());
-			item.setIsNew(true);
 		}
 		populateTicketDetailsAndInvokeCreateActions(ticket);
 		ticket = ticketService.save(ticket);
@@ -120,6 +119,9 @@ public class TicketController implements BaseController {
 		TicketBean ticketBean = getMapper().mapSrcToDest(ticket, TicketBean.newInstance());
 		for (TicketItemBean itemBean : ticketBean.getItems()) {
 			setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+			if (ticketBean.getLastCreatedAt() == null || ticketBean.getLastCreatedAt().toInstant().isBefore(itemBean.getCreatedAt().toInstant())) {
+				ticketBean.setLastCreatedAt(itemBean.getCreatedAt());
+			}
 		}
 		return ticketBean;
 	}
@@ -160,9 +162,13 @@ public class TicketController implements BaseController {
 		validateForDuplicateTickets(ticket);
 		ticket.setHasNew(true);
 		for (TicketItemEntity item : ticket.getItems()) {
-			if (item.getCategoryLeaf().getIsTerminal() != 1) {
+			if (item.getCategoryLeaf().getIsTerminal() == -1) {
+				throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
+						String.format("Can not save ticket with category : %s. Please retry with other category", item.getCategoryLeaf().getDescription()),
+						null));
+			} else if (item.getCategoryLeaf().getIsTerminal() == 0) {
 				item.setStatus(TicketStatus.DRAFT.toString());
-			} else {
+			} else if (item.getCategoryLeaf().getIsTerminal() == 1) {
 				item.setStatus(TicketStatus.IN_PROGRESS.toString());
 			}
 			item.setPlatform(TicketPlatform.MIDDLE_MILE_APP.toString());
@@ -170,7 +176,6 @@ public class TicketController implements BaseController {
 			item.setAssignedTeam(TicketResolutionTeam.CUSTOMERCARE.toString());
 			item.setAssignedAt(new Date());
 			item.setRemarks(TicketCreateActions.NEW_TICKET_CREATED.getRemarks());
-			item.setIsNew(true);
 		}
 		populateTicketDetailsAndInvokeCreateActions(ticket);
 		ticket = ticketService.save(ticket);
@@ -208,9 +213,13 @@ public class TicketController implements BaseController {
 		validateForDuplicateTickets(ticket);
 		ticket.setHasNew(true);
 		for (TicketItemEntity item : ticket.getItems()) {
-			if (item.getCategoryLeaf().getIsTerminal() != 1) {
+			if (item.getCategoryLeaf().getIsTerminal() == -1) {
+				throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
+						String.format("Can not save ticket with category : %s. Please retry with other category", item.getCategoryLeaf().getDescription()),
+						null));
+			} else if (item.getCategoryLeaf().getIsTerminal() == 0) {
 				item.setStatus(TicketStatus.DRAFT.toString());
-			} else {
+			} else if (item.getCategoryLeaf().getIsTerminal() == 1) {
 				item.setStatus(TicketStatus.IN_PROGRESS.toString());
 			}
 			item.setPlatform(TicketPlatform.IMS.toString());
@@ -218,7 +227,6 @@ public class TicketController implements BaseController {
 			item.setAssignedTeam(TicketResolutionTeam.CUSTOMERCARE.toString());
 			item.setAssignedAt(new Date());
 			item.setRemarks(TicketCreateActions.NEW_TICKET_CREATED.getRemarks());
-			item.setIsNew(true);
 		}
 		populateTicketDetailsAndInvokeCreateActions(ticket);
 		ticket = ticketService.save(ticket);
@@ -255,14 +263,15 @@ public class TicketController implements BaseController {
 		try {
 			ticketRequestUtils.populateTicketRequestAsPerCategoryRoot(ticket);
 			ticketActionUtils.populateTicketResolutionAsPerCategoryRoot(ticket);
-			if (ticket.getHasNew()) {
+			Boolean hasNew = ticket.getHasNew(), hadDraft = ticket.getHadDraft();
+			if (hasNew) {
 				ticket.setLastAddedOn(java.sql.Date.valueOf(LocalDate.now(ZoneId.of("Asia/Kolkata"))));
 				ticket = ticketService.save(ticket);
 			}
 			for (TicketItemEntity item : ticket.getItems()) {
-				if (item.getIsNew()) {
+				if (hasNew) {
 					ticketActionUtils.invokeTicketCreateAction(item, ticket.getId());
-				} else if (item.getWasDraft()) {
+				} else if (hadDraft) {
 					if (item.getCategoryLeaf().getIsTerminal() == -1) {
 						throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
 								String.format("Can not save ticket with category : %s. Please retry with other category",
@@ -279,6 +288,7 @@ public class TicketController implements BaseController {
 					ticketActionUtils.invokeTicketRaiseAction(item, ticket.getId());
 				}
 			}
+			ticket.setHasNew(false);
 		} catch (Exception e) {
 			ticketRequestUtils.clearTicketRequest();
 			throw e;
@@ -292,10 +302,11 @@ public class TicketController implements BaseController {
 				if (StringUtils.isEmpty(ticket.getReferenceId())) {
 					throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket reference id can not be empty", "referenceIdNotFound"));
 				}
-				TicketEntity entity = ticketService.findByReferenceIdAndIsClosedInAndHasDraftInAndActive(ticket.getReferenceId(), List.of(0), List.of(0, 1), 1)
-						.get(0);
+				TicketEntity entity = ticketService.findByReferenceIdAndIsClosedInAndHasDraftInAndActive(ticket.getReferenceId(), List.of(0, 1), List.of(0, 1),
+						1).get(0);
 				if (entity != null) {
-					Set<String> skuCodes = entity.getItems().stream().filter(item -> item.getResolutionDetails().getOrderDetails() != null)
+					Set<String> skuCodes = entity.getItems().stream()
+							.filter(item -> !item.getStatus().equals(TicketStatus.CLOSED.toString()) && item.getResolutionDetails().getOrderDetails() != null)
 							.map(item -> item.getResolutionDetails().getOrderDetails().getSkuCode())
 							.filter(skuCode -> !StringUtils.isEmpty(skuCode) && !StringUtils.isEmpty(skuCode.trim())).collect(Collectors.toSet());
 					for (TicketItemEntity item : ticket.getItems()) {
@@ -305,18 +316,21 @@ public class TicketController implements BaseController {
 									String.format("Ticket already exists for orderId : %s and skuCode : %s", ticket.getReferenceId(),
 											item.getDetails().getOrderDetails().getSkuCode()), "duplicateTicket"));
 						}
+						item.setTicket(entity);
 					}
-					ticket.setId(entity.getId());
+					entity.setItems(ticket.getItems());
+					ticket = entity;
 				}
-			} else if (ticket.getCategoryRoot().getLabel().equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {
-				if (ticket.getReferenceId() != null) {
-					TicketEntity entity = ticketService.findByReferenceIdAndIsClosedInAndHasDraftInAndActive(ticket.getReferenceId(), List.of(1), List.of(0, 1),
-							1).get(0);
-					if (entity != null && !entity.getItems().isEmpty()) {
-						throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
-								String.format("Ticket already exists for payment referenceId : %s", ticket.getReferenceId()), "duplicateTicket"));
-					}
-				}
+				//			todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
+				//			} else if (ticket.getCategoryRoot().getLabel().equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {
+				//				if (ticket.getReferenceId() != null) {
+				//					TicketEntity entity = ticketService.findByReferenceIdAndIsClosedInAndHasDraftInAndActive(ticket.getReferenceId(), List.of(0, 1), List.of(0, 1),
+				//							1).get(0);
+				//					if (entity != null && !entity.getItems().isEmpty()) {
+				//						throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
+				//								String.format("Ticket already exists for payment referenceId : %s", ticket.getReferenceId()), "duplicateTicket"));
+				//					}
+				//				}
 			}
 		}
 
@@ -358,7 +372,7 @@ public class TicketController implements BaseController {
 		if (updateTicketBean.getDetails() != null) {
 			item.setDetails(getMapper().mapSrcToDest(updateTicketBean.getDetails(), TicketDetailsBean.newInstance()));
 		}
-		item.setWasDraft(true);
+		ticket.setHadDraft(true);
 		populateTicketDetailsAndInvokeCreateActions(ticket);
 		ticket.setItems(Collections.singletonList(item));
 		ticket = ticketService.save(ticket);

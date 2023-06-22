@@ -38,11 +38,15 @@ public class OrderItemDetailsBean implements Serializable {
 
 	private Double returnQty;
 
+	private Double returnRefundQty;
+
 	private String returnRemarks;
 
-	private String returnIssue;
+	private String returnRefundSuggestion;
 
 	private Double resolvedQty;
+
+	private Boolean isAutoRefundEligible = false;
 
 	public static OrderItemDetailsBean newInstance() {
 		return new OrderItemDetailsBean();

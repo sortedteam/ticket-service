@@ -158,17 +158,18 @@ public class TicketActionUtils {
 						StoreReturnItemData storeReturnItemResponse = ticketRequestBean.getStoreReturnItemSkuMap().get(orderItemDetailsBean.getSkuCode());
 						orderItemDetailsBean.setReturnQty(storeReturnItemResponse != null ? storeReturnItemResponse.getQuantity() : null);
 						orderItemDetailsBean.setReturnRemarks(storeReturnItemResponse != null ? storeReturnItemResponse.getRemarks() : null);
-						orderItemDetailsBean.setReturnIssue(storeReturnItemResponse != null ? storeReturnItemResponse.getReturnIssue() : null);
+						orderItemDetailsBean.setReturnRefundSuggestion(storeReturnItemResponse != null ? storeReturnItemResponse.getRefundSuggestion() : null);
+						orderItemDetailsBean.setReturnRefundQty(storeReturnItemResponse != null ? storeReturnItemResponse.getRefundQuantity() : null);
 						orderItemDetailsBean.setResolvedQty(null);
 						item.getResolutionDetails().setOrderDetails(orderItemDetailsBean);
-
 					}
 				}
-			} else if (categoryRootLabel.equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {
-				for (TicketItemEntity item : ticket.getItems()) {
-					PaymentDetailsBean paymentDetailsBean = mapper.mapSrcToDest(ticketRequestBean.getWalletStatementBean(), PaymentDetailsBean.newInstance());
-					item.getResolutionDetails().setPaymentDetails(paymentDetailsBean);
-				}
+				//			todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
+				//			} else if (categoryRootLabel.equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {
+				//				for (TicketItemEntity item : ticket.getItems()) {
+				//					PaymentDetailsBean paymentDetailsBean = mapper.mapSrcToDest(ticketRequestBean.getWalletStatementBean(), PaymentDetailsBean.newInstance());
+				//					item.getResolutionDetails().setPaymentDetails(paymentDetailsBean);
+				//				}
 			}
 			ticket.setMetadata(ticketMetadata);
 		}
@@ -200,19 +201,19 @@ public class TicketActionUtils {
 		}
 	}
 
-	public void addParentTicketHistory(TicketEntity ticket, Integer hasDraft, Integer isClosed) {
+	public void addParentTicketHistory(TicketEntity ticket, Boolean hasNew, Integer hasDraft, Integer isClosed) {
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 		actionDetailsBean.setUserDetail(ticketRequestUtils.getTicketRequest().getRequesterUserDetail());
-		if (hasDraft == 0 && ticket.getHasDraft() == 1) {
+		if ((hasDraft == null || hasDraft == 0) && ticket.getHasDraft() == 1) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_DRAFT_TICKET_ADDED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_DRAFT_TICKET_ADDED.toString(), actionDetailsBean);
-		} else if (ticket.getHasNew()) {
+		} else if (hasNew) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_TICKET_ADDED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_TICKET_ADDED.toString(), actionDetailsBean);
 		} else if (hasDraft == 1 && ticket.getHasDraft() == 0) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.DRAFT_TICKET_MOVED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.DRAFT_TICKET_MOVED.toString(), actionDetailsBean);
-		} else if (isClosed == 0 && ticket.getIsClosed() == 0) {
+		} else if (isClosed == 0 && ticket.getIsClosed() == 1) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_TICKET_CLOSED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_TICKET_CLOSED.toString(), actionDetailsBean);
 		}

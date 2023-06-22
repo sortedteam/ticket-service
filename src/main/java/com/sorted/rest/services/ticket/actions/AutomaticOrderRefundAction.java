@@ -39,6 +39,7 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
+		item.getResolutionDetails().getOrderDetails().setIsAutoRefundEligible(true);
 		item.setAssignedTeam(team);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);

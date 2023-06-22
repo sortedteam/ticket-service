@@ -96,11 +96,12 @@ public class TicketRequestUtils {
 						ticketRequestBean.setStoreCategoryRefundPermissibilityFactor(storeCategoryRefundPermissibilityMap.get(storeCategory));
 					}
 				}
-			} else if (categoryRootLabel.equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {
-				if (!StringUtils.isEmpty(ticket.getReferenceId())) {
-					WalletStatementBean walletStatementBean = clientService.fetchWalletStatementById(Integer.parseInt(ticket.getReferenceId()));
-					ticketRequestBean.setWalletStatementBean(walletStatementBean);
-				}
+				//			todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
+				//			} else if (categoryRootLabel.equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {
+				//				if (!StringUtils.isEmpty(ticket.getReferenceId())) {
+				//					WalletStatementBean walletStatementBean = clientService.fetchWalletStatementById(Integer.parseInt(ticket.getReferenceId()));
+				//					ticketRequestBean.setWalletStatementBean(walletStatementBean);
+				//				}
 			}
 		}
 		ticketRequestBean.setInternalUserDetail(userUtils.getInternalUserDetail());

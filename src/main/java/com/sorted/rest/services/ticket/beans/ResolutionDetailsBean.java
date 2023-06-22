@@ -17,7 +17,8 @@ public class ResolutionDetailsBean implements Serializable {
 
 	private OrderItemDetailsBean orderDetails;
 
-	private PaymentDetailsBean paymentDetails;
+	//	todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
+	//	private PaymentDetailsBean paymentDetails;
 
 	public static ResolutionDetailsBean newInstance() {
 		return new ResolutionDetailsBean();

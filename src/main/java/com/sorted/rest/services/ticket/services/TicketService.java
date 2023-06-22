@@ -55,6 +55,7 @@ public class TicketService implements BaseService<TicketEntity> {
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	public TicketEntity save(TicketEntity entity) {
+		Boolean hasNew = entity.getHasNew();
 		Integer isClosed = 1, isClosedOld = entity.getIsClosed();
 		Integer hasDraft = 0, hasDraftOld = entity.getHasDraft();
 		for (TicketItemEntity item : entity.getItems()) {
@@ -72,9 +73,9 @@ public class TicketService implements BaseService<TicketEntity> {
 			item.setTicket(entity);
 		}
 
-		TicketEntity result = ticketRepository.save(entity);
-		ticketActionUtils.addParentTicketHistory(entity, entity.getHasDraft(), entity.getIsClosed());
-		return result;
+		entity = ticketRepository.save(entity);
+		ticketActionUtils.addParentTicketHistory(entity, hasNew, hasDraftOld, isClosedOld);
+		return entity;
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
