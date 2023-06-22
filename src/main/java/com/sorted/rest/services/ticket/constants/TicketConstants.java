@@ -142,8 +142,8 @@ public class TicketConstants {
 
 	public enum ParentTicketUpdateActions {
 
-		NEW_TICKET_ADDED("New ticket(s) added"), NEW_DRAFT_TICKET_ADDED("New ticket(s) added as Draft"), DRAFT_TICKET_MOVED(
-				"All draft ticket(s) moved"), ALL_TICKET_CLOSED("All ticket(s) closed");
+		NEW_PARENT_CREATED("New parent ticket created"), NEW_TICKET_ADDED("New ticket(s) added"), NEW_DRAFT_TICKET_ADDED(
+				"New ticket(s) added as Draft"), ALL_DRAFT_TICKET_MOVED("All draft ticket(s) moved"), ALL_TICKET_CLOSED("All ticket(s) closed");
 
 		private String remarks;
 

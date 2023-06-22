@@ -27,7 +27,7 @@ public class TicketItemEntity extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "ticket_id", insertable = false, updatable = false, nullable = false)
+	@Column(name = "ticket_id", insertable = false, updatable = false)
 	private Long ticketId;
 
 	@Column(name = "category_leaf_id", insertable = false, updatable = false, nullable = false)
@@ -68,9 +68,15 @@ public class TicketItemEntity extends BaseEntity {
 	private TicketCategoryEntity categoryLeaf;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "ticket_id", referencedColumnName = "id", insertable = false, updatable = false, nullable = false)
+	@JoinColumn(name = "ticket_id", referencedColumnName = "id")
 	@JsonBackReference
 	private TicketEntity ticket;
+
+	@Transient
+	private Boolean isNew = false;
+
+	@Transient
+	private Boolean wasDraft = false;
 
 	public static TicketItemEntity newInstance() {
 		return new TicketItemEntity();

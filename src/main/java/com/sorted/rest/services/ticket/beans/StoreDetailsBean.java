@@ -1,9 +1,9 @@
 package com.sorted.rest.services.ticket.beans;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 @Data
 public class StoreDetailsBean implements Serializable {
@@ -12,7 +12,6 @@ public class StoreDetailsBean implements Serializable {
 
 	private String name;
 
-	@JsonProperty("store_id")
 	private String storeId;
 
 	private String contactNumber;
@@ -22,6 +21,8 @@ public class StoreDetailsBean implements Serializable {
 	private String status;
 
 	private Boolean isActive;
+
+	private BigDecimal refundPermissibilityFactor;
 
 	public static StoreDetailsBean newInstance() {
 		return new StoreDetailsBean();

@@ -1,10 +1,8 @@
 package com.sorted.rest.services.ticket.beans;
 
-import com.sorted.rest.services.ticket.constants.TicketConstants;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.Map;
 
 @Data
@@ -25,8 +23,6 @@ public class TicketRequestBean implements Serializable {
 	private StoreReturnResponseBean storeReturnResponse;
 
 	private Map<String, StoreReturnItemData> storeReturnItemSkuMap;
-
-	private BigDecimal storeCategoryRefundPermissibilityFactor = TicketConstants.DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR;
 
 	private StoreDataResponse storeDataResponse;
 

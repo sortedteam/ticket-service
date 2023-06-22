@@ -8,6 +8,7 @@ import com.sorted.rest.services.ticket.services.TicketHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Component
@@ -29,10 +30,22 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean isApplicable(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		if (item.getResolutionDetails().getOrderDetails() != null && item.getResolutionDetails().getOrderDetails()
-				.getIssueQty() != null && item.getResolutionDetails().getOrderDetails().getRefundableQty() != null) {
-			return item.getResolutionDetails().getOrderDetails().getRefundableQty()
-					.compareTo(item.getResolutionDetails().getOrderDetails().getIssueQty()) != -1;
+		if (item.getResolutionDetails().getOrderDetails() != null) {
+
+			item.getResolutionDetails().getOrderDetails().setIsRefundEligible(true);
+			if (item.getResolutionDetails().getOrderDetails().getProrataAmount() != null && item.getResolutionDetails().getOrderDetails()
+					.getDeliveredQty() != null && item.getResolutionDetails().getOrderDetails().getIssueQty() != null) {
+				item.getResolutionDetails().getOrderDetails().setRefundAmount(
+						BigDecimal.valueOf(item.getResolutionDetails().getOrderDetails().getProrataAmount())
+								.divide(BigDecimal.valueOf(item.getResolutionDetails().getOrderDetails().getDeliveredQty()))
+								.multiply(BigDecimal.valueOf(item.getResolutionDetails().getOrderDetails().getIssueQty())).doubleValue());
+			}
+
+			if (item.getResolutionDetails().getOrderDetails().getIssueQty() != null && item.getResolutionDetails().getOrderDetails()
+					.getRefundableQty() != null) {
+				return item.getResolutionDetails().getOrderDetails().getRefundableQty()
+						.compareTo(item.getResolutionDetails().getOrderDetails().getIssueQty()) != -1;
+			}
 		}
 		return false;
 	}

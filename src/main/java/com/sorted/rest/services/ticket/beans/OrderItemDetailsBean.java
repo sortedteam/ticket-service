@@ -24,6 +24,8 @@ public class OrderItemDetailsBean implements Serializable {
 
 	private Double prorataAmount;
 
+	private Double refundAmount;
+
 	private String itemStatus;
 
 	private String uom;
@@ -45,6 +47,8 @@ public class OrderItemDetailsBean implements Serializable {
 	private String returnRefundSuggestion;
 
 	private Double resolvedQty;
+
+	private Boolean isRefundEligible = false;
 
 	private Boolean isAutoRefundEligible = false;
 

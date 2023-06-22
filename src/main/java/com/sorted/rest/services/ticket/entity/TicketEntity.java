@@ -1,15 +1,18 @@
 package com.sorted.rest.services.ticket.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.sorted.rest.common.utils.CollectionUtils;
 import com.sorted.rest.common.websupport.base.BaseEntity;
 import com.sorted.rest.services.ticket.beans.TicketMetadataBean;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import lombok.Data;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.OrderBy;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -46,6 +49,9 @@ public class TicketEntity extends BaseEntity implements TicketEntityConstants {
 	@Column(nullable = false)
 	private Integer hasDraft;
 
+	@Column(nullable = false)
+	private Integer hasPending;
+
 	@Type(type = "jsonb")
 	@Column(columnDefinition = "jsonb", nullable = false)
 	private TicketMetadataBean metadata = TicketMetadataBean.newInstance();
@@ -58,7 +64,7 @@ public class TicketEntity extends BaseEntity implements TicketEntityConstants {
 	private TicketCategoryEntity categoryRoot;
 
 	@Where(clause = "active = 1")
-	@org.hibernate.annotations.OrderBy(clause = "createdAt DESC")
+	@OrderBy(clause = "createdAt DESC")
 	@OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JsonManagedReference
 	private List<TicketItemEntity> items;
@@ -68,6 +74,13 @@ public class TicketEntity extends BaseEntity implements TicketEntityConstants {
 
 	@Transient
 	private Boolean hadDraft = false;
+
+	public void addTicketItems(List<TicketItemEntity> newItems) {
+		if (CollectionUtils.isEmpty(items)) {
+			items = new ArrayList<>();
+		}
+		items.addAll(newItems);
+	}
 
 	public static TicketEntity newInstance() {
 		return new TicketEntity();
