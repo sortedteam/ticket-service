@@ -284,6 +284,7 @@ public class TicketController implements BaseController {
 			if (requestTicket.getId() == null) {
 				requestTicket.setLastAddedOn(java.sql.Date.valueOf(LocalDate.now(ZoneId.of("Asia/Kolkata"))));
 				requestTicket = ticketService.saveNewParentTicket(requestTicket);
+				ticketActionUtils.addParentTicketHistory(requestTicket, hasNew, null, null);
 			}
 
 			if (hasNew) {
@@ -292,7 +293,6 @@ public class TicketController implements BaseController {
 				}
 				requestTicket.setLastAddedOn(java.sql.Date.valueOf(LocalDate.now(ZoneId.of("Asia/Kolkata"))));
 				requestTicketItems = ticketItemService.saveAll(requestTicketItems);
-				ticketActionUtils.addParentTicketHistory(requestTicket, true, null, null);
 			}
 			for (TicketItemEntity item : requestTicketItems) {
 				if (hasNew) {
