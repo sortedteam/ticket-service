@@ -14,9 +14,7 @@ public class TicketConstants {
 
 	public static final Integer TICKET_RAISING_USER_USERTYPE = 2;
 
-	public static final String NEW_TICKET_CREATED_REMARKS = "New Ticket Created";
-
-	public static final String NEW_TICKET_CREATED_ACTION = "New Ticket Created";
+	public static final String CLOSED_TICKET_ASSIGNED_TEAM = "NA";
 
 	public static final BigDecimal DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR = BigDecimal.ONE;
 
@@ -126,8 +124,8 @@ public class TicketConstants {
 	public enum TicketUpdateActions {
 
 		DRAFT_TICKET_UPDATED("Draft Ticket Updated"), PROCESS_ORDER_REFUND(
-				"Ticket closed with generating refund for the order for quantity %s against issue raised for %s %s"), CLOSED_WITH_REMARKS(
-				"Ticket closed with remarks %s"), CANCEL("Ticket cancelled with remarks %s");
+				"Ticket closed after generating refund for the order for quantity %s against issue raised for %s %s"), CLOSE_WITH_REMARKS(
+				"Ticket closed with remarks %s"), CANCEL_WITH_REMARKS("Ticket cancelled with remarks %s");
 
 		private String remarks;
 

@@ -15,6 +15,9 @@ public class UpdateTicketBean implements Serializable {
 	private Long id;
 
 	@NotNull
+	private Long itemId;
+
+	@NotNull
 	private Integer categoryLeafId;
 
 	@NotNull

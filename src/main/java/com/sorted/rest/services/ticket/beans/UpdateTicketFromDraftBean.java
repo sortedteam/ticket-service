@@ -16,13 +16,13 @@ public class UpdateTicketFromDraftBean implements Serializable {
 	private Long id;
 
 	@NotNull
-	private Long ticketId;
+	private Long itemId;
 
 	@NotNull
 	private Integer categoryLeafId;
 
 	@NotNull
-	private List<String> attachments = new ArrayList<String>();
+	private List<String> attachments = new ArrayList<>();
 
 	@NotNull
 	private TicketDetailsBean details = TicketDetailsBean.newInstance();

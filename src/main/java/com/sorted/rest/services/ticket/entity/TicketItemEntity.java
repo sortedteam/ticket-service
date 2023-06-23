@@ -50,7 +50,7 @@ public class TicketItemEntity extends BaseEntity {
 
 	@Type(type = "jsonb")
 	@Column(columnDefinition = "jsonb", nullable = false)
-	private List<String> attachments = new ArrayList<String>();
+	private List<String> attachments = new ArrayList<>();
 
 	@Column(nullable = false)
 	private String status;
@@ -71,12 +71,6 @@ public class TicketItemEntity extends BaseEntity {
 	@JoinColumn(name = "ticket_id", referencedColumnName = "id")
 	@JsonBackReference
 	private TicketEntity ticket;
-
-	@Transient
-	private Boolean isNew = false;
-
-	@Transient
-	private Boolean wasDraft = false;
 
 	public static TicketItemEntity newInstance() {
 		return new TicketItemEntity();

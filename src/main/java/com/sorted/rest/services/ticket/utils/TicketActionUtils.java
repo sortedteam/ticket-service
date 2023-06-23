@@ -6,9 +6,7 @@ import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.services.common.mapper.BaseMapper;
-import com.sorted.rest.services.ticket.actions.AutomaticOrderRefundAction;
-import com.sorted.rest.services.ticket.actions.EscalateToTeamAction;
-import com.sorted.rest.services.ticket.actions.TicketActionsInterface;
+import com.sorted.rest.services.ticket.actions.*;
 import com.sorted.rest.services.ticket.beans.*;
 import com.sorted.rest.services.ticket.constants.TicketConstants.*;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
@@ -19,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,13 +39,29 @@ public class TicketActionUtils {
 	private AutomaticOrderRefundAction automaticOrderRefundAction;
 
 	@Autowired
+	private ProcessOrderRefundAction processOrderRefundAction;
+
+	@Autowired
+	private CloseTicketAction closeTicketAction;
+
+	@Autowired
+	private CancelTicketAction cancelTicketAction;
+
+	@Autowired
 	private BaseMapper<?, ?> mapper;
 
 	public void invokeTicketCreateAction(TicketItemEntity item, Long ticketId) {
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 		actionDetailsBean.setUserDetail(ticketRequestUtils.getTicketRequest().getRequesterUserDetail());
-		actionDetailsBean.setRemarks(TicketCreateActions.NEW_TICKET_CREATED.getRemarks());
-		ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketCreateActions.NEW_TICKET_CREATED.toString(), actionDetailsBean);
+		if (item.getStatus().equals(TicketStatus.IN_PROGRESS.toString())) {
+			item.setRemarks(TicketCreateActions.NEW_TICKET_CREATED.getRemarks());
+			actionDetailsBean.setRemarks(TicketCreateActions.NEW_TICKET_CREATED.getRemarks());
+			ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketCreateActions.NEW_TICKET_CREATED.toString(), actionDetailsBean);
+		} else if (item.getStatus().equals(TicketStatus.DRAFT.toString())) {
+			item.setRemarks(TicketCreateActions.DRAFT_TICKET_CREATED.getRemarks());
+			actionDetailsBean.setRemarks(TicketCreateActions.DRAFT_TICKET_CREATED.getRemarks());
+			ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketCreateActions.DRAFT_TICKET_CREATED.toString(), actionDetailsBean);
+		}
 	}
 
 	public void invokeDraftTicketUpdateAction(TicketItemEntity item, Long ticketId) {
@@ -76,6 +91,7 @@ public class TicketActionUtils {
 				escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(), TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.getRemarks());
 			} else {
 				_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
+				continue;
 			}
 			if (ticketAction.isApplicable(item, ticketId, action, actionDetailsBean)) {
 				if (ticketAction.apply(item, ticketId, action, actionDetailsBean)) {
@@ -159,7 +175,8 @@ public class TicketActionUtils {
 							orderItemDetailsBean.setRefundableQty(
 									BigDecimal.valueOf(whSkuResponse.getPermissibleRefundQuantity()).divide(BigDecimal.valueOf(100d))
 											.multiply(BigDecimal.valueOf(orderItemDetailsBean.getDeliveredQty()))
-											.multiply(requestTicket.getMetadata().getStoreDetails().getRefundPermissibilityFactor()).doubleValue());
+											.multiply(requestTicket.getMetadata().getStoreDetails().getRefundPermissibilityFactor())
+											.setScale(4, RoundingMode.HALF_UP).doubleValue());
 						}
 
 						StoreReturnItemData storeReturnItemResponse = ticketRequestBean.getStoreReturnItemSkuMap().get(orderItemDetailsBean.getSkuCode());
@@ -184,26 +201,29 @@ public class TicketActionUtils {
 
 	public void invokeTicketUpdateAction(TicketItemEntity item, Long ticketId, UpdateTicketBean updateTicketBean) {
 		String action = updateTicketBean.getAction();
-		Boolean terminate = false;
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 		actionDetailsBean.setUserDetail(ticketRequestUtils.getTicketRequest().getRequesterUserDetail());
 
 		TicketActionsInterface ticketAction = null;
 		if (action.equals(TicketUpdateActions.PROCESS_ORDER_REFUND.toString())) {
-			ticketAction = automaticOrderRefundAction;
-			automaticOrderRefundAction.setTeamAndRemarks(null,
-					String.format(TicketUpdateActions.PROCESS_ORDER_REFUND.getRemarks(), updateTicketBean.getResolvedQuantity(),
-							(item.getResolutionDetails().getOrderDetails() != null && item.getResolutionDetails().getOrderDetails().getIssueQty() != null) ?
-									item.getResolutionDetails().getOrderDetails().getIssueQty() :
-									"NA",
-							(item.getResolutionDetails().getOrderDetails() != null && item.getResolutionDetails().getOrderDetails().getUom() != null) ?
-									item.getResolutionDetails().getOrderDetails().getUom() :
-									"NA"));
+			ticketAction = processOrderRefundAction;
+			processOrderRefundAction.setRemarks(String.format(TicketUpdateActions.PROCESS_ORDER_REFUND.getRemarks(), updateTicketBean.getResolvedQuantity(),
+					(item.getResolutionDetails().getOrderDetails() != null && item.getResolutionDetails().getOrderDetails().getIssueQty() != null) ?
+							item.getResolutionDetails().getOrderDetails().getIssueQty() :
+							"NA", (item.getResolutionDetails().getOrderDetails() != null && item.getResolutionDetails().getOrderDetails().getUom() != null) ?
+							item.getResolutionDetails().getOrderDetails().getUom() :
+							"NA"));
+		} else if (action.equals(TicketUpdateActions.CLOSE_WITH_REMARKS.toString())) {
+			ticketAction = closeTicketAction;
+			closeTicketAction.setRemarks(String.format(TicketUpdateActions.CLOSE_WITH_REMARKS.getRemarks(), updateTicketBean.getRemarks()));
+		} else if (action.equals(TicketUpdateActions.CANCEL_WITH_REMARKS.toString())) {
+			ticketAction = cancelTicketAction;
+			cancelTicketAction.setRemarks(String.format(TicketUpdateActions.CANCEL_WITH_REMARKS.getRemarks(), updateTicketBean.getRemarks()));
 		} else {
 			_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 		}
 
-		if (ticketAction.isApplicable(item, ticketId, action, actionDetailsBean)) {
+		if (ticketAction != null && ticketAction.isApplicable(item, ticketId, action, actionDetailsBean)) {
 			ticketAction.apply(item, ticketId, action, actionDetailsBean);
 		}
 	}
@@ -220,10 +240,10 @@ public class TicketActionUtils {
 		} else if (hasNew) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_TICKET_ADDED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_TICKET_ADDED.toString(), actionDetailsBean);
-		} else if (hadDraft == 1 && ticket.getHasDraft() == 0) {
+		} else if (hadDraft != null && hadDraft == 0 && ticket.getHasDraft() == 0) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_DRAFT_TICKET_MOVED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_DRAFT_TICKET_MOVED.toString(), actionDetailsBean);
-		} else if (wasClosed == 0 && ticket.getIsClosed() == 1) {
+		} else if (wasClosed != null && wasClosed == 0 && ticket.getIsClosed() == 1) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_TICKET_CLOSED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_TICKET_CLOSED.toString(), actionDetailsBean);
 		}

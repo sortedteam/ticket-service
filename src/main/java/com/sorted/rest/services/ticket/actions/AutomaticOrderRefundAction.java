@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 
 @Component
@@ -38,7 +39,8 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 				item.getResolutionDetails().getOrderDetails().setRefundAmount(
 						BigDecimal.valueOf(item.getResolutionDetails().getOrderDetails().getProrataAmount())
 								.divide(BigDecimal.valueOf(item.getResolutionDetails().getOrderDetails().getDeliveredQty()))
-								.multiply(BigDecimal.valueOf(item.getResolutionDetails().getOrderDetails().getIssueQty())).doubleValue());
+								.multiply(BigDecimal.valueOf(item.getResolutionDetails().getOrderDetails().getIssueQty())).setScale(2, RoundingMode.HALF_UP)
+								.doubleValue());
 			}
 
 			if (item.getResolutionDetails().getOrderDetails().getIssueQty() != null && item.getResolutionDetails().getOrderDetails()

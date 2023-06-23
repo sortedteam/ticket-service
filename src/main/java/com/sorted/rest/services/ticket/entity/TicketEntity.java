@@ -73,7 +73,7 @@ public class TicketEntity extends BaseEntity implements TicketEntityConstants {
 	private Boolean hasNew = false;
 
 	@Transient
-	private Boolean hadDraft = false;
+	private Boolean hasUpdatedDraft = false;
 
 	public void addTicketItems(List<TicketItemEntity> newItems) {
 		if (CollectionUtils.isEmpty(items)) {

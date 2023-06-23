@@ -3,6 +3,8 @@ package com.sorted.rest.services.ticket.actions;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
+import com.sorted.rest.services.ticket.constants.TicketConstants;
+import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
 import com.sorted.rest.services.ticket.services.TicketHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +20,9 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 	@Autowired
 	private TicketHistoryService ticketHistoryService;
 
-	private String team;
-
 	private String remarks;
 
-	public void setTeamAndRemarks(String ticketResolutionTeam, String ticketRemarks) {
-		team = ticketResolutionTeam;
+	public void setRemarks(String ticketRemarks) {
 		remarks = ticketRemarks;
 	}
 
@@ -39,9 +38,10 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		item.setAssignedTeam(team);
+		item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
+		item.setStatus(TicketStatus.CLOSED.toString());
 		actionDetailsBean.setRemarks(remarks);
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);
 		return true;
