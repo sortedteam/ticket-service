@@ -6,7 +6,6 @@ import com.sorted.rest.services.ticket.beans.*;
 import com.sorted.rest.services.ticket.clients.ClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
-import com.sorted.rest.services.ticket.constants.TicketConstants.StoreReturnStatus;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketCategoryRoot;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
@@ -68,7 +67,7 @@ public class TicketRequestUtils {
 
 				StoreReturnResponseBean storeReturnResponseBean = clientService.getStoreReturnByOrderId(requestTicket.getReferenceId());
 				Map<String, StoreReturnItemData> storeReturnItemSkuMap = new HashMap<>();
-				if (storeReturnResponseBean.getStatus().equals(StoreReturnStatus.RECEIVED)) {
+				if (storeReturnResponseBean != null) {
 					ticketRequestBean.setStoreReturnResponse(storeReturnResponseBean);
 					for (StoreReturnItemData storeReturnItemData : storeReturnResponseBean.getStoreReturnItemDataList()) {
 						// if skuCode is not unique in storeReturnItemDataList, use the first one

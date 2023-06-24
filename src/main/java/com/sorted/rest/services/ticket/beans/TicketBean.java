@@ -45,6 +45,8 @@ public class TicketBean implements Serializable {
 
 	private Integer hasDraft;
 
+	private Integer hasPending;
+
 	private List<TicketItemBean> items;
 
 	public static TicketBean newInstance() {
