@@ -5,6 +5,7 @@ import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
+import com.sorted.rest.services.ticket.constants.TicketConstants.TicketUpdateActions;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
 import com.sorted.rest.services.ticket.services.TicketHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ public class CancelTicketAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
+		setRemarks(String.format(TicketUpdateActions.CANCEL_WITH_REMARKS.getRemarks(), remarks));
 		item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);

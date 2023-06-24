@@ -54,6 +54,8 @@ public class FranchiseOrderResponseBean implements Serializable {
 
 	private Double totalBillAfterAdjustment;
 
+	private UUID parentOrderId;
+
 	public static FranchiseOrderResponseBean newInstance() {
 		return new FranchiseOrderResponseBean();
 	}

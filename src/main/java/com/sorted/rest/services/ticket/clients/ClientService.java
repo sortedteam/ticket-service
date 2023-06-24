@@ -89,7 +89,7 @@ public class ClientService {
 			orderResponseBean = orderClient.getFranchiseOrderInfo(headerMap, orderId);
 			return orderResponseBean;
 		} catch (Exception e) {
-			_LOGGER.error(String.format("Error while getting Franchise Order Info for orderId ", orderId), e);
+			_LOGGER.error(String.format("Error while getting Franchise Order Info for orderId : %s", orderId), e);
 			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetch order data"));
 		}
 	}
@@ -124,4 +124,14 @@ public class ClientService {
 			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetch data from warehouse"));
 		}
 	}
+
+	public FranchiseOrderResponseBean imsProcessFranchiseRefundOrder(ImsFranchiseOrderRefundBean request) {
+		try {
+			return orderClient.imsProcessFranchiseRefundOrder(request);
+		} catch (Exception e) {
+			_LOGGER.error(String.format("Error while getting processing Refund Order for ticket item id : %s", request.getTicketItemId()), e);
+			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetch order data"));
+		}
+	}
+
 }

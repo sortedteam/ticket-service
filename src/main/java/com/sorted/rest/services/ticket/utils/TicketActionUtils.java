@@ -207,24 +207,23 @@ public class TicketActionUtils {
 		TicketActionsInterface ticketAction = null;
 		if (action.equals(TicketUpdateActions.PROCESS_ORDER_REFUND.toString())) {
 			ticketAction = processOrderRefundAction;
-			processOrderRefundAction.setRemarks(String.format(TicketUpdateActions.PROCESS_ORDER_REFUND.getRemarks(), updateTicketBean.getResolvedQuantity(),
-					(item.getResolutionDetails().getOrderDetails() != null && item.getResolutionDetails().getOrderDetails().getIssueQty() != null) ?
-							item.getResolutionDetails().getOrderDetails().getIssueQty() :
-							"NA", (item.getResolutionDetails().getOrderDetails() != null && item.getResolutionDetails().getOrderDetails().getUom() != null) ?
-							item.getResolutionDetails().getOrderDetails().getUom() :
-							"NA"));
+			processOrderRefundAction.setResolvedQuantity(updateTicketBean.getResolvedQuantity());
+			processOrderRefundAction.setRemarks(updateTicketBean.getRemarks());
 		} else if (action.equals(TicketUpdateActions.CLOSE_WITH_REMARKS.toString())) {
 			ticketAction = closeTicketAction;
-			closeTicketAction.setRemarks(String.format(TicketUpdateActions.CLOSE_WITH_REMARKS.getRemarks(), updateTicketBean.getRemarks()));
+			closeTicketAction.setRemarks(updateTicketBean.getRemarks());
 		} else if (action.equals(TicketUpdateActions.CANCEL_WITH_REMARKS.toString())) {
 			ticketAction = cancelTicketAction;
-			cancelTicketAction.setRemarks(String.format(TicketUpdateActions.CANCEL_WITH_REMARKS.getRemarks(), updateTicketBean.getRemarks()));
+			cancelTicketAction.setRemarks(updateTicketBean.getRemarks());
 		} else {
 			_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 		}
 
 		if (ticketAction != null && ticketAction.isApplicable(item, ticketId, action, actionDetailsBean)) {
 			ticketAction.apply(item, ticketId, action, actionDetailsBean);
+		} else {
+			throw new ValidationException(
+					ErrorBean.withError(Errors.INVALID_REQUEST, String.format("Ticket can not be updated with action : %s", action), null));
 		}
 	}
 
