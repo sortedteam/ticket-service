@@ -16,6 +16,8 @@ public class TicketConstants {
 
 	public static final String CLOSED_TICKET_ASSIGNED_TEAM = "NA";
 
+	public static final String INTERNAL_USER_NAME = "Internal User";
+
 	public static final String STORE_RETURN_TICKET_DESCRIPTION = "Ticket created via store return";
 
 	public static final BigDecimal DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR = BigDecimal.ONE;

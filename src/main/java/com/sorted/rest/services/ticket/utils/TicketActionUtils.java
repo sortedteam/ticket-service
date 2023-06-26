@@ -195,7 +195,7 @@ public class TicketActionUtils {
 					}
 				}
 				for (TicketItemEntity item : requestTicketItems) {
-					updateStoreReturnInfo(item, requestTicket.getId(),
+					invokeUpdateStoreReturnInfoAction(item, requestTicket.getId(),
 							ticketRequestBean.getStoreReturnItemSkuMap().get(item.getResolutionDetails().getOrderDetails().getSkuCode()));
 				}
 				//			todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
@@ -239,7 +239,7 @@ public class TicketActionUtils {
 
 	public void addParentTicketHistory(TicketEntity ticket, Boolean hasNew, Integer hadDraft, Integer wasClosed) {
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
-		actionDetailsBean.setUserDetail(ticketRequestUtils.getTicketRequest().getRequesterUserDetail());
+		actionDetailsBean.setUserDetail(setRequesterDetails());
 		if (hadDraft == null && wasClosed == null && ticket.getHasNew()) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_PARENT_CREATED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_PARENT_CREATED.toString(), actionDetailsBean);
@@ -264,7 +264,7 @@ public class TicketActionUtils {
 				userUtils.getUserDetail(SessionUtils.getAuthUserId());
 	}
 
-	public void updateStoreReturnInfo(TicketItemEntity item, Long ticketId, StoreReturnItemData storeReturnItemResponse) {
+	public void invokeUpdateStoreReturnInfoAction(TicketItemEntity item, Long ticketId, StoreReturnItemData storeReturnItemResponse) {
 		if (storeReturnItemResponse == null) {
 			return;
 		}

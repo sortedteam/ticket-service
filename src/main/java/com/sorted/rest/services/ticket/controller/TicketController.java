@@ -14,6 +14,7 @@ import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.params.service.ParamService;
 import com.sorted.rest.services.ticket.beans.*;
 import com.sorted.rest.services.ticket.clients.ClientService;
+import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.*;
 import com.sorted.rest.services.ticket.entity.TicketCategoryEntity;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
@@ -417,102 +418,100 @@ public class TicketController implements BaseController {
 		return response;
 	}
 
-	/*
 	@ApiOperation(value = "create or update tickets for store return", nickname = "createOrUpdateTicketsForStoreReturn")
 	@PostMapping(path = "/tickets/store-return")
 	@ResponseStatus(HttpStatus.CREATED)
 	@Transactional(propagation = Propagation.REQUIRED)
-	public List<TicketBean> createOrUpdateTicketsForStoreReturn(@RequestBody StoreReturnTicketRequest storeReturnTicketRequest) {
-		String requesterEntityId = storeReturnTicketRequest.getStoreId();
-		if (requesterEntityId == null) {
-			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Store id not given", null));
-		}
-
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
-
-		TicketEntity requestTicket = TicketEntity.newInstance();
-
-		String requesterEntityType = EntityType.STORE.toString();
-
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getVisibleTicketCategories();
-		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
-				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
-		validateCommonDetailsForPartnerAppRequest(tickets);
-		validateAndSetTicketCategories(tickets, categoryMap);
-		validateForDuplicateTickets(tickets);
-		for (TicketEntity ticket : tickets) {
-			if (ticket.getCategoryLeaf().getIsTerminal() != 1) {
-				ticket.setStatus(TicketStatus.DRAFT.toString());
-			} else {
-				ticket.setStatus(TicketStatus.IN_PROGRESS.toString());
-			}
-			ticket.setPlatform(TicketPlatform.PARTNER_APP.toString());
-			ticket.setPriority(ticket.getCategoryLeaf().getPriority());
-			ticket.setRemarks(TicketConstants.NEW_TICKET_CREATED_REMARKS);
-			ticket.setAssignedTeam(TicketResolutionTeam.CUSTOMERCARE.toString());
-			ticket.setAssignedAt(new Date());
-		}
-
-		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
-				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
-		validateAndSetTicketCategories(requestTicket, categoryMap);
-		TicketEntity existingTicket = getParentAndValidateForDuplicateTickets(requestTicket);
-		List<TicketItemEntity> requestTicketItems = requestTicket.getItems();
-		populateNewTicketItems(existingTicket, requestTicket, requestTicketItems, TicketPlatform.IMS);
-		populateTicketDetailsAndInvokeCreateActions(requestTicket, requestTicketItems);
-		requestTicket = ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
-		return convertTicketEntityIntoTicketBean(requestTicket, ticketCategoryEntities);
-	}
-
-	private TicketEntity createTicketForStoreReturn(StoreReturnTicketRequest request, List<TicketCategoryEntity> ticketCategoryEntities) {
+	public TicketBean createOrUpdateTicketsForStoreReturn(@RequestBody StoreReturnTicketRequest request) {
 		if (request.getStoreId() == null) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Store id not given", null));
 		}
 		if (request.getOrderId() == null) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Order id not given", null));
 		}
+
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
 		Map<String, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getLabel, Function.identity(), (o1, o2) -> o1, HashMap::new));
 		if (!categoryMap.containsKey(TicketCategoryRoot.ORDER_ISSUE.toString())) {
 			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Order issue ticket category not found", null));
 		}
 		TicketCategoryEntity category = categoryMap.get(TicketCategoryRoot.ORDER_ISSUE.toString());
+		Map<String, TicketItemEntity> ticketItemSkuMap = new HashMap<>();
+		TicketEntity ticket = ticketService.findByReferenceIdAndCategoryRootId(request.getOrderId(), category.getId()).get(0);
 
-		TicketEntity requestTicket = TicketEntity.newInstance();
-		requestTicket.setReferenceId(request.getOrderId());
-		requestTicket.setRequesterEntityId(request.getStoreId());
-		requestTicket.setRequesterEntityType(EntityType.STORE.toString());
-		requestTicket.setRequesterEntityCategory(getStoreCategoryForTicket(request.getStoreId(), EntityType.STORE.toString()));
-		requestTicket.setCategoryRootId(category.getId());
-		requestTicket.setCategoryRoot(category);
-		List<TicketItemEntity> requestTicketItems = new ArrayList<>();
+		if (ticket == null) {
+			ticket = createTicketForStoreReturn(request, category);
+		} else {
+			ticketItemSkuMap = ticket.getItems().stream()
+					.filter(item -> !item.getStatus().equals(TicketStatus.CLOSED.toString()) && item.getDetails().getOrderDetails() != null && item.getDetails()
+							.getOrderDetails().getSkuCode() != null)
+					.collect(Collectors.toMap(item -> item.getDetails().getOrderDetails().getSkuCode(), Function.identity(), (o1, o2) -> o1, HashMap::new));
+		}
+
+		List<TicketItemEntity> insertTicketItems = new ArrayList<>();
+		List<TicketItemEntity> updateTicketItems = new ArrayList<>();
 
 		for (StoreReturnItemData requestItem : request.getStoreReturnItemDataList()) {
-			TicketDetailsBean ticketDetailsBean = TicketDetailsBean.newInstance();
-			ticketDetailsBean.setDescription(TicketConstants.STORE_RETURN_TICKET_DESCRIPTION);
-			OrderDetailsRequestBean orderDetailsRequestBean = OrderDetailsRequestBean.newInstance();
-			orderDetailsRequestBean.setSkuCode(requestItem.getSkuCode());
-			orderDetailsRequestBean.setIssueQty(requestItem.getQuantity());
-			ticketDetailsBean.setOrderDetails(orderDetailsRequestBean);
-
-			TicketItemEntity ticketItem = TicketItemEntity.newInstance();
-			ticketItem.setDetails(ticketDetailsBean);
-			ticketItem.setCategoryLeafId(category.getId());
-			ticketItem.setCategoryLeaf(category);
-			ticketItem.setStatus(getTicketStatus(ticketItem.getCategoryLeaf().getIsTerminal(), ticketItem.getCategoryLeaf().getDescription()));
-			ticketItem.setPlatform(TicketPlatform.STORE_RETURN.toString());
-			ticketItem.setPriority(ticketItem.getCategoryLeaf().getPriority());
-			ticketItem.setAssignedTeam(TicketResolutionTeam.CUSTOMERCARE.toString());
-			ticketItem.setAssignedAt(new Date());
-			requestTicketItems.add(ticketItem);
+			if (ticketItemSkuMap.containsKey(requestItem.getSkuCode())) {
+				updateTicketItems.add(ticketItemSkuMap.get(requestItem.getSkuCode()));
+			} else {
+				TicketItemEntity ticketItem = createTicketItemForStoreReturn(requestItem, category);
+				insertTicketItems.add(ticketItem);
+			}
 		}
-		TicketEntity dbEntity = ticketService.findByReferenceIdAndCategoryRootId(requestTicket.getReferenceId(), requestTicket.getCategoryRootId()).get(0);
 
+		ticket.setHasNew(!insertTicketItems.isEmpty());
+		if (ticket.getHasNew() || ticket.getId() == null) {
+			populateTicketDetailsAndInvokeCreateActions(ticket, insertTicketItems);
+		}
 
+		ticketItemSkuMap = Stream.concat(updateTicketItems.stream(), insertTicketItems.stream())
+				.collect(Collectors.toMap(item -> item.getDetails().getOrderDetails().getSkuCode(), Function.identity(), (o1, o2) -> o1, HashMap::new));
 
+		for (StoreReturnItemData requestItem : request.getStoreReturnItemDataList()) {
+			if (ticketItemSkuMap.containsKey(requestItem.getSkuCode())) {
+				ticketActionUtils.invokeUpdateStoreReturnInfoAction(ticketItemSkuMap.get(requestItem.getSkuCode()), ticket.getId(), requestItem);
+			}
+		}
+
+		ticket.addTicketItems(insertTicketItems);
+		for (TicketItemEntity item : ticket.getItems()) {
+			item.setTicket(ticket);
+		}
+		ticket = ticketService.saveTicketWithUpdatedItems(ticket);
+		return convertTicketEntityIntoTicketBean(ticket, ticketCategoryEntities);
 	}
 
-	 */
+	private TicketEntity createTicketForStoreReturn(StoreReturnTicketRequest request, TicketCategoryEntity category) {
+		TicketEntity ticket = TicketEntity.newInstance();
+		ticket.setReferenceId(request.getOrderId());
+		ticket.setRequesterEntityId(request.getStoreId());
+		ticket.setRequesterEntityType(EntityType.STORE.toString());
+		ticket.setRequesterEntityCategory(getStoreCategoryForTicket(request.getStoreId(), EntityType.STORE.toString()));
+		ticket.setCategoryRoot(category);
+		return ticket;
+	}
+
+	private TicketItemEntity createTicketItemForStoreReturn(StoreReturnItemData requestItem, TicketCategoryEntity category) {
+		TicketDetailsBean ticketDetailsBean = TicketDetailsBean.newInstance();
+		ticketDetailsBean.setDescription(TicketConstants.STORE_RETURN_TICKET_DESCRIPTION);
+		OrderDetailsRequestBean orderDetailsRequestBean = OrderDetailsRequestBean.newInstance();
+		orderDetailsRequestBean.setSkuCode(requestItem.getSkuCode());
+		orderDetailsRequestBean.setIssueQty(requestItem.getQuantity());
+		ticketDetailsBean.setOrderDetails(orderDetailsRequestBean);
+
+		TicketItemEntity ticketItem = TicketItemEntity.newInstance();
+		ticketItem.setDetails(ticketDetailsBean);
+		ticketItem.setCategoryLeafId(category.getId());
+		ticketItem.setCategoryLeaf(category);
+		ticketItem.setStatus(getTicketStatus(ticketItem.getCategoryLeaf().getIsTerminal(), ticketItem.getCategoryLeaf().getDescription()));
+		ticketItem.setPlatform(TicketPlatform.STORE_RETURN.toString());
+		ticketItem.setPriority(ticketItem.getCategoryLeaf().getPriority());
+		ticketItem.setAssignedTeam(TicketResolutionTeam.CUSTOMERCARE.toString());
+		ticketItem.setAssignedAt(new Date());
+		return ticketItem;
+	}
 
 	@ApiOperation(value = "upload files", nickname = "uploadFiles")
 	@PostMapping(path = "/tickets/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

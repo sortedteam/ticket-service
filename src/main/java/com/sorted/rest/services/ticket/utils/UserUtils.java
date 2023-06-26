@@ -6,6 +6,7 @@ import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.services.ticket.beans.UserDetail;
 import com.sorted.rest.services.ticket.beans.UserServiceResponse;
 import com.sorted.rest.services.ticket.clients.ClientService;
+import com.sorted.rest.services.ticket.constants.TicketConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -22,18 +23,19 @@ public class UserUtils {
 	private UUID internalAuthUserId;
 
 	public UserDetail getInternalUserDetail() {
-		UserServiceResponse entity = clientService.getUserDetailsFromCustomerId(internalAuthUserId);
-		if (entity == null)
-			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "User details not found", ""));
 		UserDetail userDetail = UserDetail.newInstance();
-		userDetail.setName(entity.getName());
-		userDetail.setPhone(entity.getPhoneNumber());
-		userDetail.setEmail(entity.getEmail());
-		userDetail.setId(entity.getId());
+		userDetail.setId(internalAuthUserId.toString());
+		userDetail.setName(TicketConstants.INTERNAL_USER_NAME);
+		userDetail.setPhone(null);
+		userDetail.setEmail(null);
 		return userDetail;
 	}
 
 	public UserDetail getUserDetail(UUID userId) {
+		if (userId.equals(internalAuthUserId)) {
+			return getInternalUserDetail();
+		}
+
 		UserServiceResponse entity = clientService.getUserDetailsFromCustomerId(userId);
 		if (entity == null)
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "User details not found", ""));

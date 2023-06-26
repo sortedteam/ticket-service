@@ -64,7 +64,7 @@ public class TicketItemEntity extends BaseEntity {
 	private ResolutionDetailsBean resolutionDetails = ResolutionDetailsBean.newInstance();
 
 	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	@JoinColumn(name = "category_leaf_id", referencedColumnName = "id", updatable = false)
+	@JoinColumn(name = "category_leaf_id", referencedColumnName = "id")
 	private TicketCategoryEntity categoryLeaf;
 
 	@ManyToOne(fetch = FetchType.LAZY)
