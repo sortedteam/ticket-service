@@ -72,6 +72,9 @@ public class TicketItemEntity extends BaseEntity {
 	@JsonBackReference
 	private TicketEntity ticket;
 
+	@Transient
+	private List<String> newAttachments = new ArrayList<>();
+
 	public static TicketItemEntity newInstance() {
 		return new TicketItemEntity();
 	}

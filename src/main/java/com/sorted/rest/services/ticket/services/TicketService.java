@@ -123,13 +123,14 @@ public class TicketService implements BaseService<TicketEntity> {
 
 	public List<TicketEntity> findByReferenceIdAndCategoryRootId(String referenceId, Integer categoryRootId) {
 		List<TicketEntity> tickets = new ArrayList<>();
-		tickets.add(null);
-
 		if (referenceId != null) {
 			Map<String, Object> filters = new HashMap();
 			filters.put("referenceId", referenceId);
 			filters.put("categoryRootId", categoryRootId);
 			tickets = findAllRecords(filters);
+		}
+		if (tickets.isEmpty()) {
+			tickets.add(null);
 		}
 		return tickets;
 	}

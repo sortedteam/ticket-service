@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class EscalateToTeamAction implements TicketActionsInterface {
@@ -21,6 +22,12 @@ public class EscalateToTeamAction implements TicketActionsInterface {
 	private String team;
 
 	private String remarks;
+
+	private List<String> attachments;
+
+	public void setAttachments(List<String> ticketAttachments) {
+		attachments = ticketAttachments;
+	}
 
 	public void setTeamAndRemarks(String ticketResolutionTeam, String ticketRemarks) {
 		team = ticketResolutionTeam;
@@ -39,6 +46,7 @@ public class EscalateToTeamAction implements TicketActionsInterface {
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
 		actionDetailsBean.setRemarks(remarks);
+		actionDetailsBean.setAttachments(attachments);
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);
 		return terminate;
 	}

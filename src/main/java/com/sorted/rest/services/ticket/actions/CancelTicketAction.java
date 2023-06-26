@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class CancelTicketAction implements TicketActionsInterface {
@@ -22,6 +23,12 @@ public class CancelTicketAction implements TicketActionsInterface {
 	private TicketHistoryService ticketHistoryService;
 
 	private String remarks;
+
+	private List<String> attachments;
+
+	public void setAttachments(List<String> ticketAttachments) {
+		attachments = ticketAttachments;
+	}
 
 	public void setRemarks(String ticketRemarks) {
 		remarks = ticketRemarks;
@@ -40,6 +47,7 @@ public class CancelTicketAction implements TicketActionsInterface {
 		item.setRemarks(remarks);
 		item.setStatus(TicketStatus.CANCELLED.toString());
 		actionDetailsBean.setRemarks(remarks);
+		actionDetailsBean.setAttachments(attachments);
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);
 		return true;
 	}

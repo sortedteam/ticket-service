@@ -48,7 +48,7 @@ public class OrderItemDetailsBean implements Serializable {
 
 	private Double resolvedQty;
 
-	private Boolean isRefundEligible = false;
+	private Boolean isReturnIssue = false;
 
 	private Boolean isAutoRefundEligible = false;
 

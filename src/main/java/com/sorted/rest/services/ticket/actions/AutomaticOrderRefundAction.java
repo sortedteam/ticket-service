@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class AutomaticOrderRefundAction implements TicketActionsInterface {
@@ -24,6 +25,12 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 
 	private String remarks;
 
+	private List<String> attachments;
+
+	public void setAttachments(List<String> ticketAttachments) {
+		attachments = ticketAttachments;
+	}
+
 	public void setTeamAndRemarks(String ticketResolutionTeam, String ticketRemarks) {
 		team = ticketResolutionTeam;
 		remarks = ticketRemarks;
@@ -33,7 +40,7 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 	public Boolean isApplicable(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
 		if (item.getResolutionDetails().getOrderDetails() != null) {
 
-			item.getResolutionDetails().getOrderDetails().setIsRefundEligible(true);
+			item.getResolutionDetails().getOrderDetails().setIsReturnIssue(true);
 			if (item.getResolutionDetails().getOrderDetails().getProrataAmount() != null && item.getResolutionDetails().getOrderDetails()
 					.getDeliveredQty() != null && item.getResolutionDetails().getOrderDetails().getIssueQty() != null) {
 				item.getResolutionDetails().getOrderDetails().setRefundAmount(
@@ -59,6 +66,7 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
 		actionDetailsBean.setRemarks(remarks);
+		actionDetailsBean.setAttachments(attachments);
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);
 		return true;
 	}

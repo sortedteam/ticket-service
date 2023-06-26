@@ -63,10 +63,12 @@ public class TicketActionUtils {
 		actionDetailsBean.setUserDetail(setRequesterDetails());
 		if (item.getStatus().equals(TicketStatus.IN_PROGRESS.toString())) {
 			item.setRemarks(TicketCreateActions.NEW_TICKET_CREATED.getRemarks());
+			actionDetailsBean.setAttachments(item.getAttachments());
 			actionDetailsBean.setRemarks(TicketCreateActions.NEW_TICKET_CREATED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketCreateActions.NEW_TICKET_CREATED.toString(), actionDetailsBean);
 		} else if (item.getStatus().equals(TicketStatus.DRAFT.toString())) {
 			item.setRemarks(TicketCreateActions.DRAFT_TICKET_CREATED.getRemarks());
+			actionDetailsBean.setAttachments(item.getAttachments());
 			actionDetailsBean.setRemarks(TicketCreateActions.DRAFT_TICKET_CREATED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketCreateActions.DRAFT_TICKET_CREATED.toString(), actionDetailsBean);
 		}
@@ -76,6 +78,7 @@ public class TicketActionUtils {
 		item.setRemarks(TicketUpdateActions.DRAFT_TICKET_UPDATED.getRemarks());
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 		actionDetailsBean.setUserDetail(setRequesterDetails());
+		actionDetailsBean.setAttachments(item.getNewAttachments());
 		actionDetailsBean.setRemarks(TicketUpdateActions.DRAFT_TICKET_UPDATED.getRemarks());
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketUpdateActions.DRAFT_TICKET_UPDATED.toString(), actionDetailsBean);
 	}
@@ -91,12 +94,13 @@ public class TicketActionUtils {
 				ticketAction = automaticOrderRefundAction;
 				automaticOrderRefundAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(),
 						TicketCreateActions.AUTOMATIC_ORDER_REFUND.getRemarks());
-			} else if (action.equals(TicketCreateActions.ESCALATE_TO_WAREHOUSE.toString())) {
-				ticketAction = escalateToTeamAction;
-				escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.WAREHOUSE.toString(), TicketCreateActions.ESCALATE_TO_WAREHOUSE.getRemarks());
-			} else if (action.equals(TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.toString())) {
-				ticketAction = escalateToTeamAction;
-				escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(), TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.getRemarks());
+				//			todo: tickets escalation not allowed in V1, add in subsequent releases
+				//			} else if (action.equals(TicketCreateActions.ESCALATE_TO_WAREHOUSE.toString())) {
+				//				ticketAction = escalateToTeamAction;
+				//				escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.WAREHOUSE.toString(), TicketCreateActions.ESCALATE_TO_WAREHOUSE.getRemarks());
+				//			} else if (action.equals(TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.toString())) {
+				//				ticketAction = escalateToTeamAction;
+				//				escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(), TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.getRemarks());
 			} else {
 				_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 				continue;
@@ -108,18 +112,19 @@ public class TicketActionUtils {
 				}
 			}
 		}
-		if (!terminate) {
-			executeDefaultAction(item, ticketId, actionDetailsBean);
-		}
-	}
+		//		todo: tickets escalation not allowed in V1, add in subsequent releases
+		//		if (!terminate) {
+		//			executeDefaultAction(item, ticketId, actionDetailsBean);
+		//		}
+		//	}
 
-	private void executeDefaultAction(TicketItemEntity item, Long ticketId, TicketActionDetailsBean actionDetailsBean) {
-		String action = TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.toString();
-		TicketActionsInterface ticketAction = escalateToTeamAction;
-		escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(), TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.getRemarks());
-		if (ticketAction.isApplicable(item, ticketId, action, actionDetailsBean)) {
-			ticketAction.apply(item, ticketId, action, TicketActionDetailsBean.newInstance());
-		}
+		//	private void executeDefaultAction(TicketItemEntity item, Long ticketId, TicketActionDetailsBean actionDetailsBean) {
+		//		String action = TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.toString();
+		//		TicketActionsInterface ticketAction = escalateToTeamAction;
+		//		escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(), TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.getRemarks());
+		//		if (ticketAction.isApplicable(item, ticketId, action, actionDetailsBean)) {
+		//			ticketAction.apply(item, ticketId, action, TicketActionDetailsBean.newInstance());
+		//		}
 	}
 
 	public void populateTicketResolutionAsPerCategoryRoot(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems) {
@@ -217,13 +222,16 @@ public class TicketActionUtils {
 		TicketActionsInterface ticketAction = null;
 		if (action.equals(TicketUpdateActions.PROCESS_ORDER_REFUND.toString())) {
 			ticketAction = processOrderRefundAction;
+			processOrderRefundAction.setAttachments(updateTicketBean.getAttachments());
 			processOrderRefundAction.setResolvedQuantity(updateTicketBean.getResolvedQuantity());
 			processOrderRefundAction.setRemarks(updateTicketBean.getRemarks());
 		} else if (action.equals(TicketUpdateActions.CLOSE_WITH_REMARKS.toString())) {
 			ticketAction = closeTicketAction;
+			closeTicketAction.setAttachments(updateTicketBean.getAttachments());
 			closeTicketAction.setRemarks(updateTicketBean.getRemarks());
 		} else if (action.equals(TicketUpdateActions.CANCEL_WITH_REMARKS.toString())) {
 			ticketAction = cancelTicketAction;
+			cancelTicketAction.setAttachments(updateTicketBean.getAttachments());
 			cancelTicketAction.setRemarks(updateTicketBean.getRemarks());
 		} else {
 			_LOGGER.info(String.format("Invalid ticketAction : %s ", action));

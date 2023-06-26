@@ -101,12 +101,19 @@ public class TicketController implements BaseController {
 		validateAndSetTicketCategories(requestTicket, categoryMap);
 		TicketEntity existingTicket = getParentAndValidateForDuplicateTickets(requestTicket);
 		List<TicketItemEntity> requestTicketItems = requestTicket.getItems();
-		populateNewTicketItems(existingTicket, requestTicket, requestTicketItems, TicketPlatform.IMS);
+		if (existingTicket != null) {
+			requestTicket = existingTicket;
+		} else {
+			requestTicket.setItems(null);
+		}
+		requestTicket.setHasNew(true);
+		populateNewTicketItems(requestTicketItems, TicketPlatform.IMS);
 		populateTicketDetailsAndInvokeCreateActions(requestTicket, requestTicketItems);
 		requestTicket = ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
 		return convertTicketEntityIntoTicketBean(requestTicket, ticketCategoryEntities);
 	}
 
+	// todo: API not in use, to be integrated in subsequent releases
 	@ApiOperation(value = "create tickets for partner app", nickname = "createTicketsForPartnerApp")
 	@PostMapping(path = "/tickets/partner-app")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -133,12 +140,19 @@ public class TicketController implements BaseController {
 		validateAndSetTicketCategories(requestTicket, categoryMap);
 		TicketEntity existingTicket = getParentAndValidateForDuplicateTickets(requestTicket);
 		List<TicketItemEntity> requestTicketItems = requestTicket.getItems();
-		populateNewTicketItems(existingTicket, requestTicket, requestTicketItems, TicketPlatform.PARTNER_APP);
+		if (existingTicket != null) {
+			requestTicket = existingTicket;
+		} else {
+			requestTicket.setItems(null);
+		}
+		requestTicket.setHasNew(true);
+		populateNewTicketItems(requestTicketItems, TicketPlatform.PARTNER_APP);
 		populateTicketDetailsAndInvokeCreateActions(requestTicket, requestTicketItems);
 		requestTicket = ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
 		return convertTicketEntityIntoTicketBean(requestTicket, ticketCategoryEntities);
 	}
 
+	// todo: API not in use, to be integrated in subsequent releases
 	@ApiOperation(value = "create tickets for middle mile app", nickname = "createTicketsForMiddleMileApp")
 	@PostMapping(path = "/tickets/middle-mile-app")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -165,7 +179,13 @@ public class TicketController implements BaseController {
 		validateAndSetTicketCategories(requestTicket, categoryMap);
 		TicketEntity existingTicket = getParentAndValidateForDuplicateTickets(requestTicket);
 		List<TicketItemEntity> requestTicketItems = requestTicket.getItems();
-		populateNewTicketItems(existingTicket, requestTicket, requestTicketItems, TicketPlatform.MIDDLE_MILE_APP);
+		if (existingTicket != null) {
+			requestTicket = existingTicket;
+		} else {
+			requestTicket.setItems(null);
+		}
+		requestTicket.setHasNew(true);
+		populateNewTicketItems(requestTicketItems, TicketPlatform.MIDDLE_MILE_APP);
 		populateTicketDetailsAndInvokeCreateActions(requestTicket, requestTicketItems);
 		requestTicket = ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
 		return convertTicketEntityIntoTicketBean(requestTicket, ticketCategoryEntities);
@@ -232,14 +252,7 @@ public class TicketController implements BaseController {
 		return dbEntity;
 	}
 
-	private void populateNewTicketItems(TicketEntity existingTicket, TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems,
-			TicketPlatform platform) {
-		if (existingTicket != null) {
-			requestTicket = existingTicket;
-		} else {
-			requestTicket.setItems(null);
-		}
-		requestTicket.setHasNew(true);
+	private void populateNewTicketItems(List<TicketItemEntity> requestTicketItems, TicketPlatform platform) {
 		for (TicketItemEntity item : requestTicketItems) {
 			item.setStatus(getTicketStatus(item.getCategoryLeaf().getIsTerminal(), item.getCategoryLeaf().getDescription()));
 			item.setPlatform(platform.toString());
@@ -344,6 +357,7 @@ public class TicketController implements BaseController {
 			item.setStatus(getTicketStatus(item.getCategoryLeaf().getIsTerminal(), item.getCategoryLeaf().getDescription()));
 		}
 		if (updateTicketBean.getAttachments() != null && !updateTicketBean.getAttachments().isEmpty()) {
+			item.setNewAttachments(updateTicketBean.getAttachments());
 			item.setAttachments(Stream.concat(item.getAttachments().stream(), updateTicketBean.getAttachments().stream()).collect(Collectors.toList()));
 		}
 		ticket.setHasUpdatedDraft(true);
