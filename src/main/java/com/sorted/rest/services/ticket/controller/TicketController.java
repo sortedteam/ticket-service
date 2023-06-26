@@ -464,7 +464,7 @@ public class TicketController implements BaseController {
 		List<TicketItemEntity> insertTicketItems = new ArrayList<>();
 		List<TicketItemEntity> updateTicketItems = new ArrayList<>();
 
-		for (StoreReturnItemData requestItem : request.getStoreReturnItemDataList()) {
+		for (StoreReturnItemData requestItem : request.getItems()) {
 			if (ticketItemSkuMap.containsKey(requestItem.getSkuCode())) {
 				updateTicketItems.add(ticketItemSkuMap.get(requestItem.getSkuCode()));
 			} else {
@@ -481,7 +481,7 @@ public class TicketController implements BaseController {
 		ticketItemSkuMap = Stream.concat(updateTicketItems.stream(), insertTicketItems.stream())
 				.collect(Collectors.toMap(item -> item.getDetails().getOrderDetails().getSkuCode(), Function.identity(), (o1, o2) -> o1, HashMap::new));
 
-		for (StoreReturnItemData requestItem : request.getStoreReturnItemDataList()) {
+		for (StoreReturnItemData requestItem : request.getItems()) {
 			if (ticketItemSkuMap.containsKey(requestItem.getSkuCode())) {
 				ticketActionUtils.invokeUpdateStoreReturnInfoAction(ticketItemSkuMap.get(requestItem.getSkuCode()), ticket.getId(), requestItem);
 			}

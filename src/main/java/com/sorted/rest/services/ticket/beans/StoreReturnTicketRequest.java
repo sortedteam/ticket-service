@@ -21,7 +21,7 @@ public class StoreReturnTicketRequest implements Serializable {
 	private String orderId;
 
 	@Valid
-	private List<StoreReturnItemData> storeReturnItemDataList;
+	private List<StoreReturnItemData> items;
 
 	public static StoreReturnTicketRequest newInstance() {
 		return new StoreReturnTicketRequest();

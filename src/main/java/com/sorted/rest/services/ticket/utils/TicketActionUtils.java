@@ -257,7 +257,7 @@ public class TicketActionUtils {
 		} else if (hasNew) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_TICKET_ADDED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_TICKET_ADDED.toString(), actionDetailsBean);
-		} else if (hadDraft != null && hadDraft == 0 && ticket.getHasDraft() == 0) {
+		} else if (hadDraft != null && hadDraft == 1 && ticket.getHasDraft() == 0) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_DRAFT_TICKET_MOVED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_DRAFT_TICKET_MOVED.toString(), actionDetailsBean);
 		} else if (wasClosed != null && wasClosed == 0 && ticket.getIsClosed() == 1) {
