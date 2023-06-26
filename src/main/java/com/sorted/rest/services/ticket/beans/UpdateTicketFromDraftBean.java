@@ -24,9 +24,6 @@ public class UpdateTicketFromDraftBean implements Serializable {
 	@NotNull
 	private List<String> attachments = new ArrayList<>();
 
-	@NotNull
-	private TicketDetailsBean details = TicketDetailsBean.newInstance();
-
 	public static UpdateTicketFromDraftBean newInstance() {
 		return new UpdateTicketFromDraftBean();
 	}

@@ -3,6 +3,8 @@ package com.sorted.rest.services.ticket.beans;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Data
@@ -10,18 +12,16 @@ public class StoreReturnItemData implements Serializable {
 
 	private static final long serialVersionUID = -6385345671728070023L;
 
-	private Long id;
-
+	@NotNull
 	private Double quantity;
 
-	private Double refundQuantity;
-
 	@JsonProperty("sku_code")
+	@NotEmpty
 	private String skuCode;
-
-	private String day;
 
 	private String remarks;
 
-	private String refundSuggestion;
+	private String qaResult;
+
+	private Double refundQty;
 }

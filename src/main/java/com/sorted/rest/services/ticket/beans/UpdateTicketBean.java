@@ -18,14 +18,7 @@ public class UpdateTicketBean implements Serializable {
 	private Long itemId;
 
 	@NotNull
-	private Integer categoryLeafId;
-
-	@NotNull
 	private String action;
-
-	private Integer priority;
-
-	private String assignedTeam;
 
 	private List<String> attachments;
 

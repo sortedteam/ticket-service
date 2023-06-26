@@ -55,22 +55,11 @@ public class TicketRequestUtils {
 				requestTicket.getMetadata().setStoreDetails(StoreDetailsBean.newInstance());
 			}
 			if (categoryRootLabel.equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
-				UUID orderId = UUID.fromString(requestTicket.getReferenceId());
-				FranchiseOrderResponseBean orderResponseBean = clientService.getFranchiseOrderInfo(orderId, storeId);
-				ticketRequestBean.setOrderResponse(orderResponseBean);
-
-				Map<String, FranchiseOrderItemResponseBean> orderItemSkuMap = new HashMap<>();
-				for (FranchiseOrderItemResponseBean orderItem : orderResponseBean.getOrderItems()) {
-					orderItemSkuMap.put(orderItem.getSkuCode(), orderItem);
-				}
-				ticketRequestBean.setOrderItemSkuMap(orderItemSkuMap);
-
 				StoreReturnResponseBean storeReturnResponseBean = clientService.getStoreReturnByOrderId(requestTicket.getReferenceId());
 				Map<String, StoreReturnItemData> storeReturnItemSkuMap = new HashMap<>();
 				if (storeReturnResponseBean != null) {
 					ticketRequestBean.setStoreReturnResponse(storeReturnResponseBean);
 					for (StoreReturnItemData storeReturnItemData : storeReturnResponseBean.getStoreReturnItemDataList()) {
-						// if skuCode is not unique in storeReturnItemDataList, use the first one
 						if (!storeReturnItemSkuMap.containsKey(storeReturnItemData.getSkuCode())) {
 							storeReturnItemSkuMap.put(storeReturnItemData.getSkuCode(), storeReturnItemData);
 						}
@@ -78,35 +67,47 @@ public class TicketRequestUtils {
 				}
 				ticketRequestBean.setStoreReturnItemSkuMap(storeReturnItemSkuMap);
 
-				Set<String> skuCodes = requestTicketItems.stream().filter(item -> item.getDetails().getOrderDetails() != null)
-						.map(item -> item.getDetails().getOrderDetails().getSkuCode())
-						.filter(skuCode -> !StringUtils.isEmpty(skuCode) && !StringUtils.isEmpty(skuCode.trim())).collect(Collectors.toSet());
-				if (skuCodes.isEmpty()) {
-					ticketRequestBean.setWhSkuResponseMap(new HashMap<>());
-				} else {
-					List<WhSkuResponse> whSkuResponse = clientService.getStoreSkuInventoryForBulkRequest(skuCodes, storeId);
-					Map<String, WhSkuResponse> whSkuResponseMap = new HashMap<>();
-					for (WhSkuResponse whSku : whSkuResponse) {
-						whSkuResponseMap.put(whSku.getSkuCode(), whSku);
-					}
-					ticketRequestBean.setWhSkuResponseMap(whSkuResponseMap);
+				if (requestTicket.getHasNew()) {
+					UUID orderId = UUID.fromString(requestTicket.getReferenceId());
+					FranchiseOrderResponseBean orderResponseBean = clientService.getFranchiseOrderInfo(orderId, storeId);
+					ticketRequestBean.setOrderResponse(orderResponseBean);
 
-					if (requestTicket.getMetadata().getStoreDetails().getRefundPermissibilityFactor() == null) {
-						Map<String, BigDecimal> storeCategoryRefundPermissibilityMap = Arrays.stream(
-										paramService.getParam("STORE_CATEGORY_REFUND_PERMISSIBILITY", "GOOD:1|BAD:0.5|UGLY:0").split("\\|")).map(s -> s.split(":", 2))
-								.collect(Collectors.toMap(s -> s[0], s -> s.length > 1 ?
-										BigDecimal.valueOf(Double.valueOf(s[1])) :
-										TicketConstants.DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR));
-						String storeCategory = requestTicket.getRequesterEntityCategory();
-						if (storeCategory != null && storeCategoryRefundPermissibilityMap.containsKey(storeCategory)) {
-							requestTicket.getMetadata().getStoreDetails()
-									.setRefundPermissibilityFactor(storeCategoryRefundPermissibilityMap.get(storeCategory));
+					Map<String, FranchiseOrderItemResponseBean> orderItemSkuMap = new HashMap<>();
+					for (FranchiseOrderItemResponseBean orderItem : orderResponseBean.getOrderItems()) {
+						orderItemSkuMap.put(orderItem.getSkuCode(), orderItem);
+					}
+					ticketRequestBean.setOrderItemSkuMap(orderItemSkuMap);
+
+					Set<String> skuCodes = requestTicketItems.stream().filter(item -> item.getDetails().getOrderDetails() != null)
+							.map(item -> item.getDetails().getOrderDetails().getSkuCode())
+							.filter(skuCode -> !StringUtils.isEmpty(skuCode) && !StringUtils.isEmpty(skuCode.trim())).collect(Collectors.toSet());
+					if (skuCodes.isEmpty()) {
+						ticketRequestBean.setWhSkuResponseMap(new HashMap<>());
+					} else {
+						List<WhSkuResponse> whSkuResponse = clientService.getStoreSkuInventoryForBulkRequest(skuCodes, storeId);
+						Map<String, WhSkuResponse> whSkuResponseMap = new HashMap<>();
+						for (WhSkuResponse whSku : whSkuResponse) {
+							whSkuResponseMap.put(whSku.getSkuCode(), whSku);
+						}
+						ticketRequestBean.setWhSkuResponseMap(whSkuResponseMap);
+
+						if (requestTicket.getMetadata().getStoreDetails().getRefundPermissibilityFactor() == null) {
+							Map<String, BigDecimal> storeCategoryRefundPermissibilityMap = Arrays.stream(
+											paramService.getParam("STORE_CATEGORY_REFUND_PERMISSIBILITY", "GOOD:1|BAD:0.5|UGLY:0").split("\\|"))
+									.map(s -> s.split(":", 2)).collect(Collectors.toMap(s -> s[0], s -> s.length > 1 ?
+											BigDecimal.valueOf(Double.valueOf(s[1])) :
+											TicketConstants.DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR));
+							String storeCategory = requestTicket.getRequesterEntityCategory();
+							if (storeCategory != null && storeCategoryRefundPermissibilityMap.containsKey(storeCategory)) {
+								requestTicket.getMetadata().getStoreDetails()
+										.setRefundPermissibilityFactor(storeCategoryRefundPermissibilityMap.get(storeCategory));
+							}
 						}
 					}
-				}
-				if (requestTicket.getMetadata().getStoreDetails().getRefundPermissibilityFactor() == null) {
-					requestTicket.getMetadata().getStoreDetails()
-							.setRefundPermissibilityFactor(TicketConstants.DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR);
+					if (requestTicket.getMetadata().getStoreDetails().getRefundPermissibilityFactor() == null) {
+						requestTicket.getMetadata().getStoreDetails()
+								.setRefundPermissibilityFactor(TicketConstants.DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR);
+					}
 				}
 				//			todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
 				//			} else if (categoryRootLabel.equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {

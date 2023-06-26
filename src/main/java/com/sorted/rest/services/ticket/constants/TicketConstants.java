@@ -16,6 +16,8 @@ public class TicketConstants {
 
 	public static final String CLOSED_TICKET_ASSIGNED_TEAM = "NA";
 
+	public static final String STORE_RETURN_TICKET_DESCRIPTION = "Ticket created via store return";
+
 	public static final BigDecimal DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR = BigDecimal.ONE;
 
 	public enum TicketStatus {
@@ -101,7 +103,7 @@ public class TicketConstants {
 
 	public enum TicketPlatform {
 
-		PARTNER_APP, MIDDLE_MILE_APP, IMS
+		PARTNER_APP, MIDDLE_MILE_APP, IMS, STORE_RETURN
 	}
 
 	public enum TicketCreateActions {
@@ -123,7 +125,7 @@ public class TicketConstants {
 
 	public enum TicketUpdateActions {
 
-		DRAFT_TICKET_UPDATED("Draft Ticket Updated"), PROCESS_ORDER_REFUND(
+		DRAFT_TICKET_UPDATED("Draft Ticket Updated"), STORE_RETURN_DATA_UPDATED("Store Return Data Updated"), PROCESS_ORDER_REFUND(
 				"Ticket closed after generating refund for the order for quantity %s against issue raised for %s %s"), CLOSE_WITH_REMARKS(
 				"Ticket closed with remarks %s"), CANCEL_WITH_REMARKS("Ticket cancelled with remarks %s");
 

@@ -63,7 +63,7 @@ public class TicketItemEntity extends BaseEntity {
 	@Column(columnDefinition = "jsonb", nullable = false)
 	private ResolutionDetailsBean resolutionDetails = ResolutionDetailsBean.newInstance();
 
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@JoinColumn(name = "category_leaf_id", referencedColumnName = "id", updatable = false)
 	private TicketCategoryEntity categoryLeaf;
 

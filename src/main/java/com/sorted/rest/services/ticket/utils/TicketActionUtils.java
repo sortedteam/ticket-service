@@ -5,9 +5,11 @@ import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
+import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.actions.*;
 import com.sorted.rest.services.ticket.beans.*;
+import com.sorted.rest.services.ticket.clients.ClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants.*;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
@@ -28,6 +30,12 @@ public class TicketActionUtils {
 
 	@Autowired
 	private TicketHistoryService ticketHistoryService;
+
+	@Autowired
+	private ClientService clientService;
+
+	@Autowired
+	private UserUtils userUtils;
 
 	@Autowired
 	private TicketRequestUtils ticketRequestUtils;
@@ -52,7 +60,7 @@ public class TicketActionUtils {
 
 	public void invokeTicketCreateAction(TicketItemEntity item, Long ticketId) {
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
-		actionDetailsBean.setUserDetail(ticketRequestUtils.getTicketRequest().getRequesterUserDetail());
+		actionDetailsBean.setUserDetail(setRequesterDetails());
 		if (item.getStatus().equals(TicketStatus.IN_PROGRESS.toString())) {
 			item.setRemarks(TicketCreateActions.NEW_TICKET_CREATED.getRemarks());
 			actionDetailsBean.setRemarks(TicketCreateActions.NEW_TICKET_CREATED.getRemarks());
@@ -67,7 +75,7 @@ public class TicketActionUtils {
 	public void invokeDraftTicketUpdateAction(TicketItemEntity item, Long ticketId) {
 		item.setRemarks(TicketUpdateActions.DRAFT_TICKET_UPDATED.getRemarks());
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
-		actionDetailsBean.setUserDetail(ticketRequestUtils.getTicketRequest().getRequesterUserDetail());
+		actionDetailsBean.setUserDetail(setRequesterDetails());
 		actionDetailsBean.setRemarks(TicketUpdateActions.DRAFT_TICKET_UPDATED.getRemarks());
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketUpdateActions.DRAFT_TICKET_UPDATED.toString(), actionDetailsBean);
 	}
@@ -76,7 +84,7 @@ public class TicketActionUtils {
 		List<String> actions = item.getCategoryLeaf().getOnCreateActions();
 		Boolean terminate = false;
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
-		actionDetailsBean.setUserDetail(ticketRequestUtils.getTicketRequest().getInternalUserDetail());
+		actionDetailsBean.setUserDetail(setRequesterDetails());
 		for (String action : actions) {
 			TicketActionsInterface ticketAction = null;
 			if (action.equals(TicketCreateActions.AUTOMATIC_ORDER_REFUND.toString())) {
@@ -140,53 +148,55 @@ public class TicketActionUtils {
 					requestTicket.setMetadata(ticketMetadata);
 				}
 
-				for (TicketItemEntity item : requestTicketItems) {
-					item.setResolutionDetails(mapper.mapSrcToDest(item.getDetails(), ResolutionDetailsBean.newInstance()));
+				if (requestTicket.getHasNew()) {
+					for (TicketItemEntity item : requestTicketItems) {
+						item.setResolutionDetails(mapper.mapSrcToDest(item.getDetails(), ResolutionDetailsBean.newInstance()));
 
-					OrderItemDetailsBean orderItemDetailsBean = item.getResolutionDetails().getOrderDetails();
-					if (orderItemDetailsBean != null && !StringUtils.isEmpty(orderItemDetailsBean.getSkuCode())) {
-						FranchiseOrderItemResponseBean orderItemResponseBean = ticketRequestBean.getOrderItemSkuMap().get(orderItemDetailsBean.getSkuCode());
-						if (orderItemResponseBean == null) {
-							throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND,
-									String.format("Order Item can not be found with skuCode : %s and orderId : %s", orderItemDetailsBean.getSkuCode(),
-											orderResponseBean.getId()), null));
+						OrderItemDetailsBean orderItemDetailsBean = item.getResolutionDetails().getOrderDetails();
+						if (orderItemDetailsBean != null && !StringUtils.isEmpty(orderItemDetailsBean.getSkuCode())) {
+							FranchiseOrderItemResponseBean orderItemResponseBean = ticketRequestBean.getOrderItemSkuMap()
+									.get(orderItemDetailsBean.getSkuCode());
+							if (orderItemResponseBean == null) {
+								throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND,
+										String.format("Order Item can not be found with skuCode : %s and orderId : %s", orderItemDetailsBean.getSkuCode(),
+												orderResponseBean.getId()), null));
+							}
+
+							orderItemDetailsBean.setOrderId(UUID.fromString(requestTicket.getReferenceId()));
+							orderItemDetailsBean.setWhId(orderItemResponseBean.getWhId());
+							orderItemDetailsBean.setSkuCode(orderItemResponseBean.getSkuCode());
+							orderItemDetailsBean.setProductName(orderItemResponseBean.getProductName());
+							orderItemDetailsBean.setFinalItemAmount(orderItemResponseBean.getFinalAmount());
+							orderItemDetailsBean.setItemStatus(orderItemResponseBean.getStatus().toString());
+							orderItemDetailsBean.setProrataAmount(orderItemResponseBean.getProrataAmount());
+							orderItemDetailsBean.setUom(orderItemResponseBean.getUom());
+							orderItemDetailsBean.setOrderedQty(orderItemResponseBean.getOrderedQty());
+							orderItemDetailsBean.setDeliveredQty(orderItemResponseBean.getFinalQuantity());
+
+							WhSkuResponse whSkuResponse = ticketRequestBean.getWhSkuResponseMap().get(orderItemDetailsBean.getSkuCode());
+							if (whSkuResponse == null) {
+								throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND,
+										String.format("WH Sku Details not found with skuCode : %s, whId : %d and orderId : %s",
+												orderItemDetailsBean.getSkuCode(), orderItemDetailsBean.getWhId(), orderItemDetailsBean.getOrderId()), null));
+							}
+							if (whSkuResponse.getPermissibleRefundQuantity() == null) {
+								orderItemDetailsBean.setRefundableQty(0d);
+							} else {
+								orderItemDetailsBean.setRefundableQty(
+										BigDecimal.valueOf(whSkuResponse.getPermissibleRefundQuantity()).divide(BigDecimal.valueOf(100d))
+												.multiply(BigDecimal.valueOf(orderItemDetailsBean.getDeliveredQty()))
+												.multiply(requestTicket.getMetadata().getStoreDetails().getRefundPermissibilityFactor())
+												.setScale(4, RoundingMode.HALF_UP).doubleValue());
+							}
+							orderItemDetailsBean.setResolvedQty(null);
+							item.getResolutionDetails().setOrderDetails(orderItemDetailsBean);
+
 						}
-
-						orderItemDetailsBean.setOrderId(UUID.fromString(requestTicket.getReferenceId()));
-						orderItemDetailsBean.setWhId(orderItemResponseBean.getWhId());
-						orderItemDetailsBean.setSkuCode(orderItemResponseBean.getSkuCode());
-						orderItemDetailsBean.setProductName(orderItemResponseBean.getProductName());
-						orderItemDetailsBean.setFinalItemAmount(orderItemResponseBean.getFinalAmount());
-						orderItemDetailsBean.setItemStatus(orderItemResponseBean.getStatus().toString());
-						orderItemDetailsBean.setProrataAmount(orderItemResponseBean.getProrataAmount());
-						orderItemDetailsBean.setUom(orderItemResponseBean.getUom());
-						orderItemDetailsBean.setOrderedQty(orderItemResponseBean.getOrderedQty());
-						orderItemDetailsBean.setDeliveredQty(orderItemResponseBean.getFinalQuantity());
-
-						WhSkuResponse whSkuResponse = ticketRequestBean.getWhSkuResponseMap().get(orderItemDetailsBean.getSkuCode());
-						if (whSkuResponse == null) {
-							throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND,
-									String.format("WH Sku Details not found with skuCode : %s, whId : %d and orderId : %s", orderItemDetailsBean.getSkuCode(),
-											orderItemDetailsBean.getWhId(), orderItemDetailsBean.getOrderId()), null));
-						}
-						if (whSkuResponse.getPermissibleRefundQuantity() == null) {
-							orderItemDetailsBean.setRefundableQty(0d);
-						} else {
-							orderItemDetailsBean.setRefundableQty(
-									BigDecimal.valueOf(whSkuResponse.getPermissibleRefundQuantity()).divide(BigDecimal.valueOf(100d))
-											.multiply(BigDecimal.valueOf(orderItemDetailsBean.getDeliveredQty()))
-											.multiply(requestTicket.getMetadata().getStoreDetails().getRefundPermissibilityFactor())
-											.setScale(4, RoundingMode.HALF_UP).doubleValue());
-						}
-
-						StoreReturnItemData storeReturnItemResponse = ticketRequestBean.getStoreReturnItemSkuMap().get(orderItemDetailsBean.getSkuCode());
-						orderItemDetailsBean.setReturnQty(storeReturnItemResponse != null ? storeReturnItemResponse.getQuantity() : null);
-						orderItemDetailsBean.setReturnRemarks(storeReturnItemResponse != null ? storeReturnItemResponse.getRemarks() : null);
-						orderItemDetailsBean.setReturnRefundSuggestion(storeReturnItemResponse != null ? storeReturnItemResponse.getRefundSuggestion() : null);
-						orderItemDetailsBean.setReturnRefundQty(storeReturnItemResponse != null ? storeReturnItemResponse.getRefundQuantity() : null);
-						orderItemDetailsBean.setResolvedQty(null);
-						item.getResolutionDetails().setOrderDetails(orderItemDetailsBean);
 					}
+				}
+				for (TicketItemEntity item : requestTicketItems) {
+					updateStoreReturnInfo(item, requestTicket.getId(),
+							ticketRequestBean.getStoreReturnItemSkuMap().get(item.getResolutionDetails().getOrderDetails().getSkuCode()));
 				}
 				//			todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
 				//			} else if (categoryRootLabel.equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {
@@ -202,7 +212,7 @@ public class TicketActionUtils {
 	public void invokeTicketUpdateAction(TicketItemEntity item, Long ticketId, UpdateTicketBean updateTicketBean) {
 		String action = updateTicketBean.getAction();
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
-		actionDetailsBean.setUserDetail(ticketRequestUtils.getTicketRequest().getRequesterUserDetail());
+		actionDetailsBean.setUserDetail(setRequesterDetails());
 
 		TicketActionsInterface ticketAction = null;
 		if (action.equals(TicketUpdateActions.PROCESS_ORDER_REFUND.toString())) {
@@ -245,6 +255,48 @@ public class TicketActionUtils {
 		} else if (wasClosed != null && wasClosed == 0 && ticket.getIsClosed() == 1) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_TICKET_CLOSED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_TICKET_CLOSED.toString(), actionDetailsBean);
+		}
+	}
+
+	private UserDetail setRequesterDetails() {
+		return ticketRequestUtils.getTicketRequest().getRequesterUserDetail() != null ?
+				ticketRequestUtils.getTicketRequest().getRequesterUserDetail() :
+				userUtils.getUserDetail(SessionUtils.getAuthUserId());
+	}
+
+	public void updateStoreReturnInfo(TicketItemEntity item, Long ticketId, StoreReturnItemData storeReturnItemResponse) {
+		if (storeReturnItemResponse == null) {
+			return;
+		}
+		boolean updated = false;
+		if (!storeReturnItemResponse.getQuantity().equals(item.getResolutionDetails().getOrderDetails().getReturnQty())) {
+			updated = true;
+			item.getResolutionDetails().getOrderDetails().setReturnQty(storeReturnItemResponse.getQuantity());
+		}
+
+		if (!storeReturnItemResponse.getRemarks().equals(item.getResolutionDetails().getOrderDetails().getReturnRemarks())) {
+			if (!updated)
+				updated = true;
+			item.getResolutionDetails().getOrderDetails().setReturnRemarks(storeReturnItemResponse.getRemarks());
+		}
+
+		if (!storeReturnItemResponse.getQaResult().equals(item.getResolutionDetails().getOrderDetails().getReturnQaResult())) {
+			if (!updated)
+				updated = true;
+			item.getResolutionDetails().getOrderDetails().setReturnQaResult(storeReturnItemResponse.getQaResult());
+		}
+
+		if (!storeReturnItemResponse.getRefundQty().equals(item.getResolutionDetails().getOrderDetails().getReturnRefundQty())) {
+			if (!updated)
+				updated = true;
+			item.getResolutionDetails().getOrderDetails().setReturnRefundQty(storeReturnItemResponse.getRefundQty());
+		}
+
+		if (updated) {
+			TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
+			actionDetailsBean.setUserDetail(setRequesterDetails());
+			actionDetailsBean.setRemarks(TicketUpdateActions.STORE_RETURN_DATA_UPDATED.getRemarks());
+			ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketUpdateActions.STORE_RETURN_DATA_UPDATED.toString(), actionDetailsBean);
 		}
 	}
 }

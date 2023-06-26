@@ -44,7 +44,7 @@ public class OrderItemDetailsBean implements Serializable {
 
 	private String returnRemarks;
 
-	private String returnRefundSuggestion;
+	private String returnQaResult;
 
 	private Double resolvedQty;
 
