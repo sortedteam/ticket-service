@@ -51,41 +51,21 @@ public class TicketService implements BaseService<TicketEntity> {
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
-	public TicketEntity saveTicketWithItems(TicketEntity entity, List<TicketItemEntity> items) {
-		entity.addTicketItems(items);
-		Boolean hasNew = entity.getHasNew();
-		Integer isClosed = 1, isClosedOld = entity.getIsClosed();
-		Integer hasDraft = 0, hasDraftOld = entity.getHasDraft();
-		Integer hasPending = 0;
-		for (TicketItemEntity item : entity.getItems()) {
-			if (isClosed == 1 && !item.getStatus().equals(TicketStatus.CLOSED.toString())) {
-				isClosed = 0;
-			}
-			if (hasDraft == 0 && item.getStatus().equals(TicketStatus.DRAFT.toString())) {
-				hasDraft = 1;
-			}
-			if (hasPending == 0 && item.getStatus().equals(TicketStatus.IN_PROGRESS.toString())) {
-				hasPending = 1;
-			}
-		}
-		entity.setIsClosed(isClosed);
-		entity.setHasDraft(hasDraft);
-		entity.setHasPending(hasPending);
-		for (TicketItemEntity item : items) {
-			item.setTicket(entity);
-		}
-		entity = ticketRepository.save(entity);
-		ticketActionUtils.addParentTicketHistory(entity, hasNew, hasDraftOld, isClosedOld);
-		return entity;
-	}
-
-	@Transactional(propagation = Propagation.REQUIRED)
 	public TicketEntity saveNewParentTicket(TicketEntity entity) {
 		entity.setIsClosed(0);
 		entity.setHasDraft(0);
 		entity.setHasPending(0);
 		entity = ticketRepository.save(entity);
 		return entity;
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	public TicketEntity saveTicketWithItems(TicketEntity entity, List<TicketItemEntity> items) {
+		entity.addTicketItems(items);
+		for (TicketItemEntity item : items) {
+			item.setTicket(entity);
+		}
+		return saveTicketWithUpdatedItems(entity);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)

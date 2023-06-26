@@ -369,8 +369,6 @@ public class TicketController implements BaseController {
 		}
 		TicketItemEntity item = itemOptional.get();
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
-		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
-				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
 
 		if (updateTicketBean.getAttachments() != null && !updateTicketBean.getAttachments().isEmpty()) {
 			item.setAttachments(Stream.concat(item.getAttachments().stream(), updateTicketBean.getAttachments().stream()).collect(Collectors.toList()));
