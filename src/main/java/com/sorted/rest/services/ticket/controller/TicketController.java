@@ -432,9 +432,10 @@ public class TicketController implements BaseController {
 
 	@ApiOperation(value = "create or update tickets for store return", nickname = "createOrUpdateTicketsForStoreReturn")
 	@PostMapping(path = "/tickets/store-return")
-	@ResponseStatus(HttpStatus.CREATED)
+	@ResponseStatus(HttpStatus.OK)
 	@Transactional(propagation = Propagation.REQUIRED)
-	public TicketBean createOrUpdateTicketsForStoreReturn(@RequestBody StoreReturnTicketRequest request) {
+	public void createOrUpdateTicketsForStoreReturn(@RequestBody @Valid StoreReturnTicketRequest request) {
+		_LOGGER.info(String.format("createOrUpdateTicketsForStoreReturn:: request %s", request));
 		if (request.getStoreId() == null) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Store id not given", null));
 		}
@@ -491,8 +492,7 @@ public class TicketController implements BaseController {
 		for (TicketItemEntity item : ticket.getItems()) {
 			item.setTicket(ticket);
 		}
-		ticket = ticketService.saveTicketWithUpdatedItems(ticket);
-		return convertTicketEntityIntoTicketBean(ticket, ticketCategoryEntities);
+		ticketService.saveTicketWithUpdatedItems(ticket);
 	}
 
 	private TicketEntity createTicketForStoreReturn(StoreReturnTicketRequest request, TicketCategoryEntity category) {
