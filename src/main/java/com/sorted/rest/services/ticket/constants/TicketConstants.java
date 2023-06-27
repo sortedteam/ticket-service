@@ -65,40 +65,6 @@ public class TicketConstants {
 		}
 	}
 
-	public enum FranchiseOrderStatus {
-
-		IN_CART(0), NEW_ORDER(1), ORDER_BILLED(2), OUT_FOR_DELIVERY(3), ORDER_DELIVERED(4), REFUND_REQUESTED(5), ORDER_REFUNDED(6), CANCELLED(7), FAILED(8);
-
-		private int value;
-
-		private FranchiseOrderStatus(int value) {
-			this.value = value;
-		}
-
-		public int getValue() {
-			return value;
-		}
-	}
-
-	public enum FranchiseOrderItemStatus {
-		PENDING, PACKED, NOT_AVAILABLE;
-	}
-
-	public enum StoreReturnStatus {
-
-		ISSUED(0), DRAFT(1), RECEIVED(2), CLOSED(3);
-
-		private int value;
-
-		private StoreReturnStatus(int value) {
-			this.value = value;
-		}
-
-		public int getValue() {
-			return value;
-		}
-	}
-
 	public enum TicketCategoryRoot {
 		ORDER_ISSUE, POS_ISSUE, PAYMENT_ISSUE, PRICING_ISSUE, APP_ISSUE
 	}

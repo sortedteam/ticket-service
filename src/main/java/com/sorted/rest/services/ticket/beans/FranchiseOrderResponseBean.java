@@ -1,7 +1,6 @@
 package com.sorted.rest.services.ticket.beans;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.sorted.rest.services.ticket.constants.TicketConstants.FranchiseOrderStatus;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
@@ -23,7 +22,7 @@ public class FranchiseOrderResponseBean implements Serializable {
 
 	private String storeId;
 
-	private FranchiseOrderStatus status;
+	private String status;
 
 	private Double finalBillAmount;
 

@@ -1,6 +1,5 @@
 package com.sorted.rest.services.ticket.beans;
 
-import com.sorted.rest.services.ticket.constants.TicketConstants.FranchiseOrderItemStatus;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
@@ -42,7 +41,7 @@ public class FranchiseOrderItemResponseBean implements Serializable {
 
 	private Double finalAmount;
 
-	private FranchiseOrderItemStatus status;
+	private String status;
 
 	private Integer orderedCrateQty;
 

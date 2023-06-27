@@ -1,6 +1,5 @@
 package com.sorted.rest.services.ticket.beans;
 
-import com.sorted.rest.services.ticket.constants.TicketConstants.StoreReturnStatus;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -20,7 +19,7 @@ public class StoreReturnResponseBean implements Serializable {
 
 	private Date returnDate;
 
-	private StoreReturnStatus status;
+	private String status;
 
 	private String createdBy;
 
