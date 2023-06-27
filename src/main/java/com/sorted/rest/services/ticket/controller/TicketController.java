@@ -409,7 +409,7 @@ public class TicketController implements BaseController {
 	@GetMapping(path = "/tickets/ims")
 	public PageAndSortResult<TicketBean> fetchTicketsIms(@RequestParam(defaultValue = "1") Integer pageNo, @RequestParam(defaultValue = "25") Integer pageSize,
 			@RequestParam(required = false) String sortBy, @RequestParam(required = false) PageAndSortRequest.SortDirection sortDirection,
-			HttpServletRequest request) {
+			HttpServletRequest request, @RequestParam Boolean orderRelated, @RequestParam Boolean showDraft) {
 		Map<String, SortDirection> sort;
 		if (sortBy != null) {
 			sort = buildSortMap(sortBy, sortDirection);
@@ -419,15 +419,87 @@ public class TicketController implements BaseController {
 			sort.put("modifiedAt", PageAndSortRequest.SortDirection.DESC);
 		}
 		final Map<String, Object> params = getSearchParams(request, TicketEntity.class);
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		Map<String, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
+				.collect(Collectors.toMap(TicketCategoryEntity::getLabel, Function.identity(), (o1, o2) -> o1, HashMap::new));
+
+		List<TicketCategoryEntity> categoryRootsIn = new ArrayList<>();
+		if (orderRelated) {
+			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.ORDER_ISSUE.toString()));
+		} else {
+			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.POS_ISSUE.toString()));
+			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.PAYMENT_ISSUE.toString()));
+			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.PRICING_ISSUE.toString()));
+			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.APP_ISSUE.toString()));
+		}
+		List<Integer> categoryRootIds = new ArrayList<>();
+		for (TicketCategoryEntity category : categoryRootsIn) {
+			if (category != null && category.getId() != null)
+				categoryRootIds.add(category.getId());
+		}
+		if (categoryRootIds.isEmpty()) {
+			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Any relevant issue ticket category not found", null));
+		}
+		params.remove("showDraft");
+		params.remove("orderRelated");
+		params.put("categoryRootId", categoryRootIds);
+
 		PageAndSortResult<TicketEntity> tickets = ticketService.getAllTicketsPaginated(pageSize, pageNo, params, sort);
 		PageAndSortResult<TicketBean> response = prepareResponsePageData(tickets, TicketBean.class);
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		filterTicketOnShowDraft(showDraft, response.getData());
 		for (TicketBean ticketBean : response.getData()) {
 			for (TicketItemBean itemBean : ticketBean.getItems()) {
 				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
 			}
 		}
 		return response;
+	}
+
+	private void filterTicketOnShowDraft(Boolean showDraft, List<TicketBean> ticketBeans) {
+		List<TicketBean> removeList = new ArrayList<>();
+
+		if (showDraft) {
+			for (TicketBean ticketBean : ticketBeans) {
+				List<TicketItemBean> filteredItems = ticketBean.getItems().stream().filter(item -> item.getStatus().equals(TicketStatus.DRAFT.toString()))
+						.collect(Collectors.toList());
+				if (filteredItems.isEmpty()) {
+					removeList.add(ticketBean);
+				} else {
+					ticketBean.setItems(filteredItems);
+					resetTicketBeanStatuses(ticketBean);
+				}
+			}
+		} else {
+			for (TicketBean ticketBean : ticketBeans) {
+				List<TicketItemBean> filteredItems = ticketBean.getItems().stream().filter(item -> !item.getStatus().equals(TicketStatus.DRAFT.toString()))
+						.collect(Collectors.toList());
+				if (filteredItems.isEmpty()) {
+					removeList.add(ticketBean);
+				} else {
+					ticketBean.setItems(filteredItems);
+					resetTicketBeanStatuses(ticketBean);
+				}
+			}
+		}
+		ticketBeans.removeAll(removeList);
+	}
+
+	private void resetTicketBeanStatuses(TicketBean ticketBean) {
+		Integer isClosed = 1, hasDraft = 0, hasPending = 0;
+		for (TicketItemBean item : ticketBean.getItems()) {
+			if (isClosed == 1 && !item.getStatus().equals(TicketStatus.CLOSED.toString())) {
+				isClosed = 0;
+			}
+			if (hasDraft == 0 && item.getStatus().equals(TicketStatus.DRAFT.toString())) {
+				hasDraft = 1;
+			}
+			if (hasPending == 0 && item.getStatus().equals(TicketStatus.IN_PROGRESS.toString())) {
+				hasPending = 1;
+			}
+		}
+		ticketBean.setIsClosed(isClosed);
+		ticketBean.setHasDraft(hasDraft);
+		ticketBean.setHasPending(hasPending);
 	}
 
 	@ApiOperation(value = "create or update tickets for store return", nickname = "createOrUpdateTicketsForStoreReturn")

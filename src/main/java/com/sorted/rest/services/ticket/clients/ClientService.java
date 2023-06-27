@@ -90,7 +90,7 @@ public class ClientService {
 			return orderResponseBean;
 		} catch (Exception e) {
 			_LOGGER.error(String.format("Error while getting Franchise Order Info for orderId : %s", orderId), e);
-			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetch order data"));
+			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data"));
 		}
 	}
 
@@ -130,7 +130,7 @@ public class ClientService {
 			return orderClient.imsProcessFranchiseRefundOrder(request);
 		} catch (Exception e) {
 			_LOGGER.error(String.format("Error while getting processing Refund Order for ticket item id : %s", request.getTicketItemId()), e);
-			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetch order data"));
+			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing order refund"));
 		}
 	}
 
