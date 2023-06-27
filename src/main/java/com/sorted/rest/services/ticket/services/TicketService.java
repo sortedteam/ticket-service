@@ -4,7 +4,7 @@ import com.sorted.rest.common.dbsupport.crud.BaseCrudRepository;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.websupport.base.BaseService;
-import com.sorted.rest.services.ticket.clients.ClientService;
+import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.repository.TicketRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class TicketService implements BaseService<TicketEntity> {
 	private TicketRepository ticketRepository;
 
 	@Autowired
-	private ClientService clientService;
+	private TicketClientService ticketClientService;
 
 	AppLogger _LOGGER = LoggingManager.getLogger(TicketService.class);
 

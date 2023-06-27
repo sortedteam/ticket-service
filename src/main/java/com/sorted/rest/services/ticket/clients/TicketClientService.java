@@ -13,24 +13,21 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
-public class ClientService {
+public class TicketClientService {
 
-	AppLogger _LOGGER = LoggingManager.getLogger(ClientService.class);
-
-	@Autowired
-	private StoreClient storeClient;
+	AppLogger _LOGGER = LoggingManager.getLogger(TicketClientService.class);
 
 	@Autowired
-	private AuthConsumerClient authConsumerClient;
+	private TicketStoreClient ticketStoreClient;
 
 	@Autowired
-	private OrderIntegrationClient orderIntegrationClient;
+	private TicketAuthConsumerClient ticketAuthConsumerClient;
 
 	@Autowired
-	private PaymentClient paymentClient;
+	private TicketPaymentClient ticketPaymentClient;
 
 	@Autowired
-	private WmsClient wmsClient;
+	private TicketWmsClient ticketWmsClient;
 
 	@Value("${client.wms.auth_key}")
 	@Getter
@@ -40,7 +37,7 @@ public class ClientService {
 		String customerIdString = customerId.toString();
 		Map<String, Object> headerMap = new HashMap<>();
 		try {
-			return authConsumerClient.getUserDetailsFromCustomerId(headerMap, customerIdString);
+			return ticketAuthConsumerClient.getUserDetailsFromCustomerId(headerMap, customerIdString);
 		} catch (Exception e) {
 			_LOGGER.error(String.format("Error while getting userDetails for customerId  ", customerIdString), e);
 			return null;

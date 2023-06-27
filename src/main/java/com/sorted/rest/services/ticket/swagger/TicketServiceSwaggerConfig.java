@@ -1,3 +1,4 @@
+/*
 package com.sorted.rest.services.ticket.swagger;
 
 import com.sorted.rest.common.constants.ApplicationProfiles;
@@ -16,3 +17,4 @@ public class TicketServiceSwaggerConfig extends SwaggerConfig {
 		return getSwaggerFileInfo(ContextUtils.getBootName());
 	}
 }
+*/

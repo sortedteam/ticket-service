@@ -5,7 +5,7 @@ import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.websupport.base.BaseController;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.params.service.ParamService;
-import com.sorted.rest.services.ticket.clients.ClientService;
+import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.services.TicketCategoryService;
 import com.sorted.rest.services.ticket.services.TicketHistoryService;
 import com.sorted.rest.services.ticket.services.TicketService;
@@ -35,7 +35,7 @@ public class TicketController implements BaseController {
 	private BaseMapper<?, ?> mapper;
 
 	@Autowired
-	private ClientService clientService;
+	private TicketClientService ticketClientService;
 
 	@Autowired
 	private ParamService paramService;
