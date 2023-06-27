@@ -5,6 +5,7 @@ import com.sorted.rest.common.websupport.base.BaseEntity;
 import com.sorted.rest.services.ticket.beans.ResolutionDetailsBean;
 import com.sorted.rest.services.ticket.beans.TicketDetailsBean;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
+import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
 import lombok.Data;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Type;
@@ -53,7 +54,8 @@ public class TicketItemEntity extends BaseEntity {
 	private List<String> attachments = new ArrayList<>();
 
 	@Column(nullable = false)
-	private String status;
+	@Enumerated(EnumType.STRING)
+	private TicketStatus status;
 
 	@Type(type = "jsonb")
 	@Column(columnDefinition = "jsonb", nullable = false)

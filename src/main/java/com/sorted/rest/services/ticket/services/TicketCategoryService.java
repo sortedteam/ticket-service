@@ -16,12 +16,12 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 	@Autowired
 	private TicketCategoryRepository ticketCategoryRepository;
 
-	public List<TicketCategoryNode> getVisibleTicketCategoryNodes() {
-		return getTicketCategoryNodeList(getVisibleTicketCategories());
+	public List<TicketCategoryNode> getVisibleTicketCategoryNodes(List<TicketCategoryEntity> ticketCategoryEntities) {
+		return getTicketCategoryNodeList(ticketCategoryEntities);
 	}
 
-	public TicketCategoryNode getTicketCategoryNodeByLabel(String label) {
-		return getTicketCategoryNodeLabel(getVisibleTicketCategories(), label);
+	public TicketCategoryNode getTicketCategoryNodeByLabel(List<TicketCategoryEntity> ticketCategoryEntities, String label) {
+		return getTicketCategoryNodeLabel(ticketCategoryEntities, label);
 	}
 
 	public List<TicketCategoryEntity> getVisibleTicketCategories() {
@@ -33,8 +33,8 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 	private Map<Integer, TicketCategoryNode> getTicketCategoriesMap(List<TicketCategoryEntity> categories) {
 		Map<Integer, TicketCategoryNode> categoryMap = new HashMap<>();
 		for (TicketCategoryEntity category : categories) {
-			TicketCategoryNode TicketCategoryNode = new TicketCategoryNode(category.getId(), category.getLabel(), category.getDescription());
-			categoryMap.put(category.getId(), TicketCategoryNode);
+			TicketCategoryNode ticketCategoryNode = new TicketCategoryNode(category.getId(), category.getLabel(), category.getDescription());
+			categoryMap.put(category.getId(), ticketCategoryNode);
 		}
 
 		for (TicketCategoryEntity category : categories) {

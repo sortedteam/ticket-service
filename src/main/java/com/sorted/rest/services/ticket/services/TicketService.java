@@ -75,13 +75,13 @@ public class TicketService implements BaseService<TicketEntity> {
 		Integer hasDraft = 0, hasDraftOld = entity.getHasDraft();
 		Integer hasPending = 0;
 		for (TicketItemEntity item : entity.getItems()) {
-			if (isClosed == 1 && !item.getStatus().equals(TicketStatus.CLOSED.toString())) {
+			if (isClosed == 1 && !item.getStatus().equals(TicketStatus.CLOSED)) {
 				isClosed = 0;
 			}
-			if (hasDraft == 0 && item.getStatus().equals(TicketStatus.DRAFT.toString())) {
+			if (hasDraft == 0 && item.getStatus().equals(TicketStatus.DRAFT)) {
 				hasDraft = 1;
 			}
-			if (hasPending == 0 && item.getStatus().equals(TicketStatus.IN_PROGRESS.toString())) {
+			if (hasPending == 0 && item.getStatus().equals(TicketStatus.IN_PROGRESS)) {
 				hasPending = 1;
 			}
 		}

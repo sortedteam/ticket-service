@@ -5,6 +5,7 @@ import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
+import com.sorted.rest.services.ticket.beans.FranchiseOrderResponseBean;
 import com.sorted.rest.services.ticket.beans.ImsFranchiseOrderRefundBean;
 import com.sorted.rest.services.ticket.beans.ImsFranchiseOrderRefundItemBean;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
@@ -63,13 +64,15 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		clientService.imsProcessFranchiseRefundOrder(createRefundBean(item, ticketId));
+		FranchiseOrderResponseBean refundResponse = clientService.imsProcessFranchiseRefundOrder(createRefundBean(item, ticketId));
+		item.getResolutionDetails().getOrderDetails().setRefundAmount(refundResponse.getFinalBillAmount());
 		setRemarks(String.format(TicketUpdateActions.PROCESS_ORDER_REFUND.getRemarks(), resolvedQuantity,
 				item.getResolutionDetails().getOrderDetails().getIssueQty(), item.getResolutionDetails().getOrderDetails().getUom()));
 		item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
-		item.setStatus(TicketStatus.CLOSED.toString());
+		item.getResolutionDetails().setResolvedRemarks(remarks);
+		item.setStatus(TicketStatus.CLOSED);
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);

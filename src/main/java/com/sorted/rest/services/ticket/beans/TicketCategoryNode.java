@@ -2,8 +2,6 @@ package com.sorted.rest.services.ticket.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,38 +29,6 @@ public class TicketCategoryNode {
 		this.parent = null;
 		this.parentId = null;
 		this.children = new ArrayList<>();
-	}
-
-	public Integer getId() {
-		return id;
-	}
-
-	public String getLabel() {
-		return label;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public TicketCategoryNode getParent() {
-		return parent;
-	}
-
-	public void setParent(TicketCategoryNode parent) {
-		this.parent = parent;
-	}
-
-	public Integer getParentId() {
-		return parentId;
-	}
-
-	public void setParentId(Integer id) {
-		this.parentId = id;
-	}
-
-	public List<TicketCategoryNode> getChildren() {
-		return children;
 	}
 
 	public void addChild(TicketCategoryNode child) {

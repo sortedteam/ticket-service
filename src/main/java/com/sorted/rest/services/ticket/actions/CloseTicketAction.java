@@ -36,7 +36,7 @@ public class CloseTicketAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean isApplicable(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		return item.getStatus().equals(TicketStatus.IN_PROGRESS.toString());
+		return item.getStatus().equals(TicketStatus.IN_PROGRESS);
 	}
 
 	@Override
@@ -45,7 +45,8 @@ public class CloseTicketAction implements TicketActionsInterface {
 		item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
-		item.setStatus(TicketStatus.CLOSED.toString());
+		item.getResolutionDetails().setResolvedRemarks(remarks);
+		item.setStatus(TicketStatus.CLOSED);
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);

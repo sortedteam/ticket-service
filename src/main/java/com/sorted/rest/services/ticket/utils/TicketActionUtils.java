@@ -61,12 +61,12 @@ public class TicketActionUtils {
 	public void invokeTicketCreateAction(TicketItemEntity item, Long ticketId) {
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 		actionDetailsBean.setUserDetail(setRequesterDetails());
-		if (item.getStatus().equals(TicketStatus.IN_PROGRESS.toString())) {
+		if (item.getStatus().equals(TicketStatus.IN_PROGRESS)) {
 			item.setRemarks(TicketCreateActions.NEW_TICKET_CREATED.getRemarks());
 			actionDetailsBean.setAttachments(item.getAttachments());
 			actionDetailsBean.setRemarks(TicketCreateActions.NEW_TICKET_CREATED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketCreateActions.NEW_TICKET_CREATED.toString(), actionDetailsBean);
-		} else if (item.getStatus().equals(TicketStatus.DRAFT.toString())) {
+		} else if (item.getStatus().equals(TicketStatus.DRAFT)) {
 			item.setRemarks(TicketCreateActions.DRAFT_TICKET_CREATED.getRemarks());
 			actionDetailsBean.setAttachments(item.getAttachments());
 			actionDetailsBean.setRemarks(TicketCreateActions.DRAFT_TICKET_CREATED.getRemarks());
@@ -229,10 +229,11 @@ public class TicketActionUtils {
 			ticketAction = closeTicketAction;
 			closeTicketAction.setAttachments(updateTicketBean.getAttachments());
 			closeTicketAction.setRemarks(updateTicketBean.getRemarks());
-		} else if (action.equals(TicketUpdateActions.CANCEL_WITH_REMARKS.toString())) {
-			ticketAction = cancelTicketAction;
-			cancelTicketAction.setAttachments(updateTicketBean.getAttachments());
-			cancelTicketAction.setRemarks(updateTicketBean.getRemarks());
+			//			todo: CANCEL_WITH_REMARKS not allowed in V1, add in subsequent releases
+			//		} else if (action.equals(TicketUpdateActions.CANCEL_WITH_REMARKS.toString())) {
+			//			ticketAction = cancelTicketAction;
+			//			cancelTicketAction.setAttachments(updateTicketBean.getAttachments());
+			//			cancelTicketAction.setRemarks(updateTicketBean.getRemarks());
 		} else {
 			_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 		}

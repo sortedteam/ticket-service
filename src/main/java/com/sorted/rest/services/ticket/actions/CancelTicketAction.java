@@ -36,7 +36,7 @@ public class CancelTicketAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean isApplicable(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		return item.getStatus().equals(TicketStatus.DRAFT.toString()) || item.getStatus().equals(TicketStatus.IN_PROGRESS.toString());
+		return item.getStatus().equals(TicketStatus.DRAFT) || item.getStatus().equals(TicketStatus.IN_PROGRESS);
 	}
 
 	@Override
@@ -45,7 +45,9 @@ public class CancelTicketAction implements TicketActionsInterface {
 		item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
-		item.setStatus(TicketStatus.CANCELLED.toString());
+		item.getResolutionDetails().setResolvedRemarks(remarks);
+		//todo: CANCEL_WITH_REMARKS not allowed in V1, add in subsequent releases
+		//item.setStatus(TicketStatus.CANCELLED);
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);

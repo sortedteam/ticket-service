@@ -24,7 +24,7 @@ public class TicketConstants {
 
 	public enum TicketStatus {
 
-		DRAFT, IN_PROGRESS, CLOSED, CANCELLED
+		DRAFT, IN_PROGRESS, CLOSED//, CANCELLED
 	}
 
 	public enum EntityType {
