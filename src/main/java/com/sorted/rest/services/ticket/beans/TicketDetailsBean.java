@@ -13,7 +13,10 @@ public class TicketDetailsBean implements Serializable {
 
 	private String description;
 
-	private OrderDetailsBean orderDetails;
+	private OrderDetailsRequestBean orderDetails;
+
+	//	todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
+	//	private PaymentDetailsRequestBean paymentDetails;
 
 	public static TicketDetailsBean newInstance() {
 		return new TicketDetailsBean();

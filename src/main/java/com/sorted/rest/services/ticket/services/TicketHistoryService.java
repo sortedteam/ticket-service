@@ -4,6 +4,7 @@ import com.sorted.rest.common.dbsupport.crud.BaseCrudRepository;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.websupport.base.BaseService;
+import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
 import com.sorted.rest.services.ticket.entity.TicketHistoryEntity;
 import com.sorted.rest.services.ticket.repository.TicketHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Created by Abhishek on 20.8.22.
- */
 @Service
 public class TicketHistoryService implements BaseService<TicketHistoryEntity> {
 
@@ -21,6 +19,17 @@ public class TicketHistoryService implements BaseService<TicketHistoryEntity> {
 
 	@Autowired
 	private TicketHistoryRepository ticketHistoryRepository;
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	public TicketHistoryEntity addTicketHistory(Long ticketId, Long ticketItemId, String action, TicketActionDetailsBean details) {
+		TicketHistoryEntity historyEntity = TicketHistoryEntity.newInstance();
+		historyEntity.setTicketId(ticketId);
+		historyEntity.setTicketItemId(ticketItemId);
+		historyEntity.setAction(action);
+		historyEntity.setDetails(details);
+		historyEntity = save(historyEntity);
+		return historyEntity;
+	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	public TicketHistoryEntity save(TicketHistoryEntity entity) {

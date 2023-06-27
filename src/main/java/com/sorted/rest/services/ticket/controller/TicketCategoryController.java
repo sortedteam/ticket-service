@@ -5,6 +5,7 @@ import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.websupport.base.BaseController;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.beans.TicketCategoryNode;
+import com.sorted.rest.services.ticket.entity.TicketCategoryEntity;
 import com.sorted.rest.services.ticket.services.TicketCategoryService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -17,11 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by mohit on 19.6.20.
- */
 @RestController
-@Api(tags = "Order Services", description = "Manage Order related services.")
+@Api(tags = "Ticket Categories Services", description = "Manage Ticket Categories related services.")
 public class TicketCategoryController implements BaseController {
 
 	AppLogger _LOGGER = LoggingManager.getLogger(TicketCategoryController.class);
@@ -34,19 +32,24 @@ public class TicketCategoryController implements BaseController {
 
 	@ApiOperation(value = "List all Ticket Categories", nickname = "getVisibleTicketCategories")
 	@GetMapping("/tickets/categories")
-	public ResponseEntity<List<TicketCategoryNode>> getVisibleTicketCategories(@RequestParam(required = false) Integer id) {
+	public ResponseEntity<List<TicketCategoryNode>> getVisibleTicketCategories(@RequestParam(required = false) String label,
+			@RequestParam(defaultValue = "true") Boolean showOnlyVisible) {
 		List<TicketCategoryNode> ticketCategoryNodes = new ArrayList<>();
-		if (id == null) {
-			ticketCategoryNodes = ticketCategoryService.getVisibleTicketCategoryNodes();
+		List<TicketCategoryEntity> ticketCategoryEntities;
+		if (showOnlyVisible) {
+			ticketCategoryEntities = ticketCategoryService.getVisibleTicketCategories();
 		} else {
-			ticketCategoryNodes.add(ticketCategoryService.getTicketCategoryNodeById(id));
+			ticketCategoryEntities = ticketCategoryService.findAllRecords();
 		}
-		//		String response = "[]";
-		//		try {
-		//			response = getMapper().getJacksonMapper().writeValueAsString(ticketCategoryNodes);
-		//		} catch (JsonProcessingException e) {
-		//			_LOGGER.error("Error while fetching ticket categories", e);
-		//		}
+
+		if (label == null) {
+			ticketCategoryNodes = ticketCategoryService.getVisibleTicketCategoryNodes(ticketCategoryEntities);
+		} else {
+			TicketCategoryNode ticketCategoryNode = ticketCategoryService.getTicketCategoryNodeByLabel(ticketCategoryEntities, label);
+			if (ticketCategoryNode != null) {
+				ticketCategoryNodes.add(ticketCategoryNode);
+			}
+		}
 		return ResponseEntity.ok(ticketCategoryNodes);
 	}
 

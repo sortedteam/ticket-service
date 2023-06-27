@@ -13,7 +13,12 @@ public class ResolutionDetailsBean implements Serializable {
 
 	private String description;
 
-	private OrderDetailsBean orderDetails;
+	private String resolvedRemarks;
+
+	private OrderItemDetailsBean orderDetails;
+
+	//	todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
+	//	private PaymentDetailsBean paymentDetails;
 
 	public static ResolutionDetailsBean newInstance() {
 		return new ResolutionDetailsBean();

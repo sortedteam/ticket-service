@@ -1,9 +1,10 @@
 package com.sorted.rest.services.ticket.beans;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -24,27 +25,31 @@ public class TicketBean implements Serializable {
 
 	private Integer categoryRootId;
 
-	private Integer categoryLeafId;
+	private TicketMetadataBean metadata;
 
-	private Integer priority;
+	@JsonIgnore
+	private TicketCategoryBean categoryRoot;
 
-	private String assignedTeam;
+	private java.sql.Date lastAddedOn;
 
-	private Date assignedAt;
-
-	private List<String> attachments = new ArrayList<String>();
-
-	private String status;
-
-	private TicketDetailsBean details = TicketDetailsBean.newInstance();
-
-	private ResolutionDetailsBean resolutionDetails = ResolutionDetailsBean.newInstance();
-
-	private List<TicketHistoryBean> history = new ArrayList<TicketHistoryBean>();
-
-	private TicketCategoryNode category;
-
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
 	private Date createdAt;
 
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
 	private Date modifiedAt;
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
+	private Date lastCreatedAt;
+
+	private Integer isClosed;
+
+	private Integer hasDraft;
+
+	private Integer hasPending;
+
+	private List<TicketItemBean> items;
+
+	public static TicketBean newInstance() {
+		return new TicketBean();
+	}
 }

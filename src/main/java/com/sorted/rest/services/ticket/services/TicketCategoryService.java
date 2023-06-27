@@ -8,25 +8,23 @@ import com.sorted.rest.services.ticket.repository.TicketCategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-/**
- * Created by mohit on 20.8.22.
- */
 @Service
 public class TicketCategoryService implements BaseService<TicketCategoryEntity> {
 
 	@Autowired
 	private TicketCategoryRepository ticketCategoryRepository;
 
-	public List<TicketCategoryNode> getVisibleTicketCategoryNodes() {
-		return getTicketCategoryNodeList(getVisibleTicketCategories());
+	public List<TicketCategoryNode> getVisibleTicketCategoryNodes(List<TicketCategoryEntity> ticketCategoryEntities) {
+		return getTicketCategoryNodeList(ticketCategoryEntities);
 	}
 
-	private List<TicketCategoryEntity> getVisibleTicketCategories() {
+	public TicketCategoryNode getTicketCategoryNodeByLabel(List<TicketCategoryEntity> ticketCategoryEntities, String label) {
+		return getTicketCategoryNodeLabel(ticketCategoryEntities, label);
+	}
+
+	public List<TicketCategoryEntity> getVisibleTicketCategories() {
 		Map<String, Object> filters = new HashMap<>();
 		filters.put("appVisible", 1);
 		return findAllRecords(filters);
@@ -35,8 +33,8 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 	private Map<Integer, TicketCategoryNode> getTicketCategoriesMap(List<TicketCategoryEntity> categories) {
 		Map<Integer, TicketCategoryNode> categoryMap = new HashMap<>();
 		for (TicketCategoryEntity category : categories) {
-			TicketCategoryNode TicketCategoryNode = new TicketCategoryNode(category.getId(), category.getLabel(), category.getDescription());
-			categoryMap.put(category.getId(), TicketCategoryNode);
+			TicketCategoryNode ticketCategoryNode = new TicketCategoryNode(category.getId(), category.getLabel(), category.getDescription());
+			categoryMap.put(category.getId(), ticketCategoryNode);
 		}
 
 		for (TicketCategoryEntity category : categories) {
@@ -44,7 +42,9 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 			TicketCategoryNode currentTicketCategoryNode = categoryMap.get(category.getId());
 			if (parentId != null) {
 				TicketCategoryNode parentTicketCategoryNode = categoryMap.get(parentId);
-				parentTicketCategoryNode.addChild(currentTicketCategoryNode);
+				if (parentTicketCategoryNode != null) {
+					parentTicketCategoryNode.addChild(currentTicketCategoryNode);
+				}
 			}
 		}
 		return categoryMap;
@@ -61,18 +61,30 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 		return rootTicketCategoryNodes;
 	}
 
-	public TicketCategoryNode getTicketCategoryNodeById(Integer id) {
-		return getTicketCategoryNode(getVisibleTicketCategories(), id);
-	}
-
-	private TicketCategoryNode getTicketCategoryNode(List<TicketCategoryEntity> categories, Integer id) {
+	private TicketCategoryNode getTicketCategoryNodeLabel(List<TicketCategoryEntity> categories, String label) {
 		Map<Integer, TicketCategoryNode> categoryMap = getTicketCategoriesMap(categories);
 		for (TicketCategoryNode ticketCategoryNode : categoryMap.values()) {
-			if (ticketCategoryNode.getId() == id) {
+			if (ticketCategoryNode.getLabel().equals(label)) {
 				return ticketCategoryNode;
 			}
 		}
 		return null;
+	}
+
+	public TicketCategoryNode getRootToLeafPathUsingCategoryList(List<TicketCategoryEntity> ticketCategoryEntities, Integer rootId, Integer leafId) {
+		Map<Integer, TicketCategoryNode> categoryMap = getTicketCategoriesMap(ticketCategoryEntities);
+		TicketCategoryNode leafNode = categoryMap.get(leafId);
+		leafNode.resetChildren(Collections.emptyList());
+		if (rootId == leafId) {
+			return leafNode;
+		}
+		TicketCategoryNode rootNode = leafNode.getParent();
+		while (leafNode.getId() != rootId && leafNode != null) {
+			rootNode.resetChildren(Collections.singletonList(leafNode));
+			leafNode = rootNode;
+			rootNode = leafNode.getParent();
+		}
+		return leafNode;
 	}
 
 	@Override

@@ -4,33 +4,28 @@ import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.sql.Date;
+import java.util.Date;
+import java.util.UUID;
 
-@ApiModel(description = "Resolution Details Bean")
+@ApiModel(description = "Order Details Bean")
 @Data
 public class OrderDetailsBean implements Serializable {
 
 	private static final long serialVersionUID = 2102504245219017738L;
 
-	private String skuCode;
+	private UUID orderId;
 
-	private String orderId;
+	private String displayOrderId;
 
-	private String orderItemId;
+	private String orderStatus;
+
+	private Double finalOrderBillAmount;
+
+	private String challanUrl;
 
 	private Date deliveryDate;
 
 	private String deliverySlot;
-
-	private String uom;
-
-	private Double orderedQuantity;
-
-	private Double deliveredQuantity;
-
-	private Double issueQuantity;
-
-	private Double resolvedQuantity;
 
 	public static OrderDetailsBean newInstance() {
 		return new OrderDetailsBean();
