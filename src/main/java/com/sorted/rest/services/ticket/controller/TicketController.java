@@ -440,9 +440,14 @@ public class TicketController implements BaseController {
 		PageAndSortResult<TicketBean> response = prepareResponsePageData(tickets, TicketBean.class);
 		filterTicketOnShowDraft(showDraft, response.getData());
 		for (TicketBean ticketBean : response.getData()) {
+			Date lastCreatedAt = null;
 			for (TicketItemBean itemBean : ticketBean.getItems()) {
 				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+				if (lastCreatedAt.toInstant().isBefore(itemBean.getCreatedAt().toInstant())) {
+					lastCreatedAt = itemBean.getCreatedAt();
+				}
 			}
+			ticketBean.setLastCreatedAt(lastCreatedAt);
 		}
 		return response;
 	}
