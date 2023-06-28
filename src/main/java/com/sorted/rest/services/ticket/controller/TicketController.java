@@ -443,7 +443,7 @@ public class TicketController implements BaseController {
 			Date lastCreatedAt = null;
 			for (TicketItemBean itemBean : ticketBean.getItems()) {
 				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
-				if (lastCreatedAt.toInstant().isBefore(itemBean.getCreatedAt().toInstant())) {
+				if (lastCreatedAt == null || lastCreatedAt.toInstant().isBefore(itemBean.getCreatedAt().toInstant())) {
 					lastCreatedAt = itemBean.getCreatedAt();
 				}
 			}
