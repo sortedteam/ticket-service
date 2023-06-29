@@ -174,7 +174,7 @@ public class TicketClientService {
 
 	public List<FranchiseOrderListBean> getFranchiseOrderByDisplayIds(Set<String> ids) {
 		try {
-			return orderClient.getFranchiseOrderByDisplayIds(ids);
+			return ticketOrderClient.getFranchiseOrderByDisplayIds(ids);
 		} catch (FeignClientException f) {
 			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data by display ids", null);
 			try {

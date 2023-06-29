@@ -436,7 +436,7 @@ public class TicketController implements BaseController {
 							ticket.getMetadata().getOrderDetails().getDisplayOrderId())).map(ticket -> ticket.getMetadata().getOrderDetails().getDisplayOrderId())
 					.collect(Collectors.toSet());
 			;
-			Map<String, FranchiseOrderListBean> ordersDisplayIdMap = clientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
+			Map<String, FranchiseOrderListBean> ordersDisplayIdMap = ticketClientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
 					.collect(Collectors.toMap(FranchiseOrderListBean::getDisplayOrderId, Function.identity()));
 			for (TicketBean ticketBean : response.getData()) {
 				if (ticketBean.getMetadata().getOrderDetails() != null && ticketBean.getMetadata().getOrderDetails()
