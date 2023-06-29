@@ -9,7 +9,7 @@ import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.actions.*;
 import com.sorted.rest.services.ticket.beans.*;
-import com.sorted.rest.services.ticket.clients.ClientService;
+import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants.*;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
@@ -32,7 +32,7 @@ public class TicketActionUtils {
 	private TicketHistoryService ticketHistoryService;
 
 	@Autowired
-	private ClientService clientService;
+	private TicketClientService ticketClientService;
 
 	@Autowired
 	private UserUtils userUtils;

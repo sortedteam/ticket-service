@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.UUID;
 
-@FeignClient(value = "order", url = "${client.util.url}", configuration = { FeignCustomConfiguration.class })
-public interface OrderClient {
+@FeignClient(value = "order", url = "${client.order.url}", configuration = { FeignCustomConfiguration.class })
+public interface TicketOrderClient {
 
 	@GetMapping("/orders/franchise/{orderId}")
 	FranchiseOrderResponseBean getFranchiseOrderInfo(@RequestHeader Map<String, Object> headerMap, @PathVariable UUID orderId);

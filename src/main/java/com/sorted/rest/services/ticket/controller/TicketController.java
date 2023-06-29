@@ -13,7 +13,7 @@ import com.sorted.rest.common.websupport.base.BaseController;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.params.service.ParamService;
 import com.sorted.rest.services.ticket.beans.*;
-import com.sorted.rest.services.ticket.clients.ClientService;
+import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.*;
 import com.sorted.rest.services.ticket.entity.TicketCategoryEntity;
@@ -64,7 +64,7 @@ public class TicketController implements BaseController {
 	private BaseMapper<?, ?> mapper;
 
 	@Autowired
-	private ClientService clientService;
+	private TicketClientService ticketClientService;
 
 	@Autowired
 	private ParamService paramService;
@@ -194,7 +194,7 @@ public class TicketController implements BaseController {
 	private String getStoreCategoryForTicket(String storeId, String entityType) {
 		List<String> storeCategoryForTicketParam = Arrays.stream(paramService.getParam("STORE_CATEGORY_FOR_TICKET", "Good|").split("\\|"))
 				.collect(Collectors.toList());
-		return clientService.getFilteredOrDefaultAudience(entityType, storeId,
+		return ticketClientService.getFilteredOrDefaultAudience(entityType, storeId,
 				Arrays.stream(storeCategoryForTicketParam.get(1).split(",")).filter(s -> !StringUtils.isEmpty(s) && !StringUtils.isEmpty(s.trim()))
 						.map(String::trim).distinct().collect(Collectors.toList()), storeCategoryForTicketParam.get(0));
 	}

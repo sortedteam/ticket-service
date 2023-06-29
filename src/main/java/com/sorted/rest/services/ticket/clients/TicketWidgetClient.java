@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 @FeignClient(value = "widget", url = "${client.widget.url}", configuration = { FeignCustomConfiguration.class })
-public interface WidgetClient {
+public interface TicketWidgetClient {
 
 	@GetMapping(value = "/widgets/audiences/filtered")
 	String getFilteredAudience(@RequestParam Integer usertype, @RequestParam String entityType, @RequestParam String entityId,

@@ -5,7 +5,7 @@ import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.services.ticket.beans.UserDetail;
 import com.sorted.rest.services.ticket.beans.UserServiceResponse;
-import com.sorted.rest.services.ticket.clients.ClientService;
+import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +17,7 @@ import java.util.UUID;
 public class UserUtils {
 
 	@Autowired
-	public ClientService clientService;
+	public TicketClientService ticketClientService;
 
 	@Value("${auth.id}")
 	private UUID internalAuthUserId;
@@ -36,7 +36,7 @@ public class UserUtils {
 			return getInternalUserDetail();
 		}
 
-		UserServiceResponse entity = clientService.getUserDetailsFromCustomerId(userId);
+		UserServiceResponse entity = ticketClientService.getUserDetailsFromCustomerId(userId);
 		if (entity == null)
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "User details not found", ""));
 		UserDetail userDetail = UserDetail.newInstance();

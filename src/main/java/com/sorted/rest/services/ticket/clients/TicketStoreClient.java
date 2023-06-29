@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 @FeignClient(value = "store", url = "${client.store.url}", configuration = { FeignCustomConfiguration.class })
-public interface StoreClient {
+public interface TicketStoreClient {
 
 	@GetMapping(value = "/store-app/internal/store")
 	List<StoreDataResponse> getStoreDataFromId(@RequestParam(name = "store_id") String storeId);

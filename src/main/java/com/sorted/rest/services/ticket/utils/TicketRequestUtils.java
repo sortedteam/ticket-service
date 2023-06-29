@@ -3,7 +3,7 @@ package com.sorted.rest.services.ticket.utils;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.params.service.ParamService;
 import com.sorted.rest.services.ticket.beans.*;
-import com.sorted.rest.services.ticket.clients.ClientService;
+import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketCategoryRoot;
@@ -24,7 +24,7 @@ public class TicketRequestUtils {
 	private ParamService paramService;
 
 	@Autowired
-	private ClientService clientService;
+	private TicketClientService ticketClientService;
 
 	@Autowired
 	private UserUtils userUtils;
@@ -51,11 +51,11 @@ public class TicketRequestUtils {
 		if (entityType.equals(EntityType.STORE.toString())) {
 			String storeId = requestTicket.getRequesterEntityId();
 			if (requestTicket.getMetadata().getStoreDetails() == null) {
-				ticketRequestBean.setStoreDataResponse(clientService.getStoreDataFromId(storeId));
+				ticketRequestBean.setStoreDataResponse(ticketClientService.getStoreDataFromId(storeId));
 				requestTicket.getMetadata().setStoreDetails(StoreDetailsBean.newInstance());
 			}
 			if (categoryRootLabel.equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
-				StoreReturnResponseBean storeReturnResponseBean = clientService.getStoreReturnByOrderId(requestTicket.getReferenceId());
+				StoreReturnResponseBean storeReturnResponseBean = ticketClientService.getStoreReturnByOrderId(requestTicket.getReferenceId());
 				Map<String, StoreReturnItemData> storeReturnItemSkuMap = new HashMap<>();
 				if (storeReturnResponseBean != null) {
 					ticketRequestBean.setStoreReturnResponse(storeReturnResponseBean);
@@ -69,7 +69,7 @@ public class TicketRequestUtils {
 
 				if (requestTicket.getHasNew()) {
 					UUID orderId = UUID.fromString(requestTicket.getReferenceId());
-					FranchiseOrderResponseBean orderResponseBean = clientService.getFranchiseOrderInfo(orderId, storeId);
+					FranchiseOrderResponseBean orderResponseBean = ticketClientService.getFranchiseOrderInfo(orderId, storeId);
 					ticketRequestBean.setOrderResponse(orderResponseBean);
 
 					Map<String, FranchiseOrderItemResponseBean> orderItemSkuMap = new HashMap<>();
@@ -84,7 +84,7 @@ public class TicketRequestUtils {
 					if (skuCodes.isEmpty()) {
 						ticketRequestBean.setWhSkuResponseMap(new HashMap<>());
 					} else {
-						List<WhSkuResponse> whSkuResponse = clientService.getStoreSkuInventoryForBulkRequest(skuCodes, storeId);
+						List<WhSkuResponse> whSkuResponse = ticketClientService.getStoreSkuInventoryForBulkRequest(skuCodes, storeId);
 						Map<String, WhSkuResponse> whSkuResponseMap = new HashMap<>();
 						for (WhSkuResponse whSku : whSkuResponse) {
 							whSkuResponseMap.put(whSku.getSkuCode(), whSku);
