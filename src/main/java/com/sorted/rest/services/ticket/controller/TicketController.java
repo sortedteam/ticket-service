@@ -518,7 +518,6 @@ public class TicketController implements BaseController {
 			} else {
 				filters.put("hasDraft", new FilterCriteria("draftCount", 0, Operation.EQUALS));
 			}
-			filters.remove("hasDraft");
 		}
 
 		if (hasPending != null) {
@@ -527,16 +526,14 @@ public class TicketController implements BaseController {
 			} else {
 				filters.put("hasPending", new FilterCriteria("pendingCount", 0, Operation.EQUALS));
 			}
-			filters.remove("hasDraft");
 		}
 
 		if (hasClosed != null) {
-			if (hasDraft) {
+			if (hasClosed) {
 				filters.put("hasClosed", new FilterCriteria("closedCount", 0, Operation.GT));
 			} else {
 				filters.put("hasClosed", new FilterCriteria("closedCount", 0, Operation.EQUALS));
 			}
-			filters.remove("hasClosed");
 		}
 	}
 
