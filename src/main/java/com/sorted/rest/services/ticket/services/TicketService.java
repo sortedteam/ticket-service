@@ -52,9 +52,10 @@ public class TicketService implements BaseService<TicketEntity> {
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	public TicketEntity saveNewParentTicket(TicketEntity entity) {
-		entity.setIsClosed(0);
+		entity.setHasClosed(0);
 		entity.setHasDraft(0);
 		entity.setHasPending(0);
+		entity.setHasCancelled(0);
 		entity = ticketRepository.save(entity);
 		return entity;
 	}
@@ -71,26 +72,31 @@ public class TicketService implements BaseService<TicketEntity> {
 	@Transactional(propagation = Propagation.REQUIRED)
 	public TicketEntity saveTicketWithUpdatedItems(TicketEntity entity) {
 		Boolean hasNew = entity.getHasNew();
-		Integer isClosed = 1, isClosedOld = entity.getIsClosed();
 		Integer hasDraft = 0, hasDraftOld = entity.getHasDraft();
-		Integer hasPending = 0;
+		Integer hasPending = 0, hasPendingOld = entity.getHasDraft();
+		Integer hasClosed = 0, hasClosedOld = entity.getHasClosed();
+		Integer hasCancelled = 0, hasCancelledOld = entity.getHasDraft();
 		for (TicketItemEntity item : entity.getItems()) {
-			if (isClosed == 1 && !item.getStatus().equals(TicketStatus.CLOSED)) {
-				isClosed = 0;
-			}
 			if (hasDraft == 0 && item.getStatus().equals(TicketStatus.DRAFT)) {
 				hasDraft = 1;
 			}
 			if (hasPending == 0 && item.getStatus().equals(TicketStatus.IN_PROGRESS)) {
 				hasPending = 1;
 			}
+			if (hasClosed == 0 && item.getStatus().equals(TicketStatus.CLOSED)) {
+				hasClosed = 1;
+			}
+			if (hasCancelled == 0 && item.getStatus().equals(TicketStatus.CANCELLED)) {
+				hasCancelled = 1;
+			}
 		}
-		entity.setIsClosed(isClosed);
+		entity.setHasClosed(hasClosed);
 		entity.setHasDraft(hasDraft);
 		entity.setHasPending(hasPending);
+		entity.setHasCancelled(hasCancelled);
 		entity.setModifiedAt(new Date());
 		entity = ticketRepository.save(entity);
-		ticketActionUtils.addParentTicketHistory(entity, hasNew, hasDraftOld, isClosedOld);
+		ticketActionUtils.addParentTicketHistory(entity, hasNew, hasDraftOld, hasPendingOld, hasClosedOld, hasCancelledOld);
 		return entity;
 	}
 
@@ -146,20 +152,6 @@ public class TicketService implements BaseService<TicketEntity> {
 		}
 		return tickets;
 	}
-
-	/*
-	public PageAndSortResult<String> getAllGroupedTicketsPaginated(Integer pageSize, Integer pageNo, Map<String, Object> filters,
-			Map<String, PageAndSortRequest.SortDirection> sort) {
-		PageAndSortResult<String> tickets = null;
-		try {
-			tickets = ticketRepository.findGroupedByReferenceId(List.of(TicketStatus.DRAFT.toString(), TicketStatus.IN_PROGRESS.toString()), 2, 0, 1);
-		} catch (Exception e) {
-			_LOGGER.error(e);
-			throw new ValidationException(ErrorBean.withError("FETCH_ERROR", e.getMessage(), null));
-		}
-		return tickets;
-	}
-	 */
 
 	@Override
 	public Class<TicketEntity> getEntity() {

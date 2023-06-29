@@ -24,7 +24,7 @@ public class TicketConstants {
 
 	public enum TicketStatus {
 
-		DRAFT, IN_PROGRESS, CLOSED//, CANCELLED
+		DRAFT, IN_PROGRESS, CLOSED, CANCELLED
 	}
 
 	public enum EntityType {
@@ -111,8 +111,8 @@ public class TicketConstants {
 
 	public enum ParentTicketUpdateActions {
 
-		NEW_PARENT_CREATED("New parent ticket created"), NEW_TICKET_ADDED("New ticket(s) added"), NEW_DRAFT_TICKET_ADDED(
-				"New ticket(s) added as Draft"), ALL_DRAFT_TICKET_MOVED("All draft ticket(s) moved"), ALL_TICKET_CLOSED("All ticket(s) closed");
+		NEW_PARENT_CREATED("New parent ticket created"), NEW_CHILDREN_ADDED("New child ticket(s) added"), ALL_DRAFT_CHILDREN_MOVED(
+				"All draft child ticket(s) moved"), ALL_PENDING_CHILDREN_MOVED("All pending child ticket(s) moved");
 
 		private String remarks;
 

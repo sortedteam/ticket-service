@@ -45,12 +45,6 @@ public class TicketItemBean implements Serializable {
 
 	private List<String> updateActions;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
-	private Date createdAt;
-
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
-	private Date modifiedAt;
-
 	public static TicketItemBean newInstance() {
 		return new TicketItemBean();
 	}
