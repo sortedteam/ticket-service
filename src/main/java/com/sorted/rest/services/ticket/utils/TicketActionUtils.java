@@ -200,8 +200,10 @@ public class TicketActionUtils {
 					}
 				}
 				for (TicketItemEntity item : requestTicketItems) {
-					invokeUpdateStoreReturnInfoAction(item, requestTicket.getId(),
-							ticketRequestBean.getStoreReturnItemSkuMap().get(item.getResolutionDetails().getOrderDetails().getSkuCode()));
+					if (item.getResolutionDetails().getOrderDetails() != null && item.getResolutionDetails().getOrderDetails().getSkuCode() != null) {
+						invokeUpdateStoreReturnInfoAction(item, requestTicket.getId(),
+								ticketRequestBean.getStoreReturnItemSkuMap().get(item.getResolutionDetails().getOrderDetails().getSkuCode()));
+					}
 				}
 				//			todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
 				//			} else if (categoryRootLabel.equals(TicketCategoryRoot.PAYMENT_ISSUE.toString())) {

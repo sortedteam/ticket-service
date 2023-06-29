@@ -1,13 +1,16 @@
 package com.sorted.rest.services.ticket.clients;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sorted.rest.common.beans.ErrorBean;
 import com.sorted.rest.common.exceptions.ServerException;
 import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
+import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.beans.*;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
+import feign.FeignException.FeignClientException;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +45,9 @@ public class ClientService {
 	@Getter
 	private String RZ_AUTH_VALUE;
 
+	@Autowired
+	private BaseMapper<?, ?> mapper;
+
 	public UserServiceResponse getUserDetailsFromCustomerId(UUID customerId) {
 		String customerIdString = customerId.toString();
 		Map<String, Object> headerMap = new HashMap<>();
@@ -68,16 +74,21 @@ public class ClientService {
 		try {
 			StoreDataResponse response = storeClient.getStoreDataFromId(storeId).get(0);
 			if (response == null || response.getId() == null) {
-				throw new ValidationException(new ErrorBean("store_not_found", "We are unable to locate the store"));
+				throw new ValidationException(new ErrorBean(Errors.NO_DATA_FOUND, "We are unable to locate the store"));
 			}
 			return response;
-		} catch (Exception e) {
-			_LOGGER.error("Error while fetching StoreFromId", e);
-			if (e instanceof ValidationException) {
-				throw e;
-			} else {
-				throw new ValidationException(new ErrorBean("store_not_found", "Something went wrong. We are trying to place the order. Kindly try again."));
+		} catch (FeignClientException f) {
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching store data", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
 			}
+			throw new ValidationException(error);
+		} catch (Exception e) {
+			_LOGGER.error("Error while fetching StoreFromId ", e);
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching store data"));
 		}
 	}
 
@@ -88,9 +99,18 @@ public class ClientService {
 			headerMap.put("storeId", storeId);
 			orderResponseBean = orderClient.getFranchiseOrderInfo(headerMap, orderId);
 			return orderResponseBean;
+		} catch (FeignClientException f) {
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
+			}
+			throw new ValidationException(error);
 		} catch (Exception e) {
 			_LOGGER.error(String.format("Error while getting Franchise Order Info for orderId : %s", orderId), e);
-			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data"));
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data"));
 		}
 	}
 
@@ -99,18 +119,36 @@ public class ClientService {
 			Map<String, Object> headerMap = new HashMap<>();
 			headerMap.put("rz-auth-key", RZ_AUTH_VALUE);
 			return wmsClient.getStoreSkuInventoryForBulkRequest(headerMap, skuCodes, storeId);
+		} catch (FeignClientException f) {
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching while fetching wh skus data from warehouse", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
+			}
+			throw new ValidationException(error);
 		} catch (Exception e) {
 			_LOGGER.error("Error while fetching StoreInventory", e);
-			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetch data from warehouse"));
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching wh skus data from warehouse"));
 		}
 	}
 
 	public WalletStatementBean fetchWalletStatementById(Integer id) {
 		try {
 			return paymentClient.fetchWalletStatementById(id);
+		} catch (FeignClientException f) {
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching wallet statement", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
+			}
+			throw new ValidationException(error);
 		} catch (Exception e) {
 			_LOGGER.error("Error while Fetching wallet statement", e);
-			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching wallet statement."));
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching wallet statement"));
 		}
 	}
 
@@ -119,18 +157,35 @@ public class ClientService {
 			Map<String, Object> headerMap = new HashMap<>();
 			headerMap.put("rz-auth-key", RZ_AUTH_VALUE);
 			return wmsClient.getStoreReturnByOrderId(headerMap, orderId);
+		} catch (FeignClientException f) {
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching store return", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
+			}
+			throw new ValidationException(error);
 		} catch (Exception e) {
 			_LOGGER.error("Error while fetching StoreReturn", e);
-			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetch data from warehouse"));
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching store return"));
 		}
 	}
 
 	public FranchiseOrderResponseBean imsProcessFranchiseRefundOrder(ImsFranchiseOrderRefundBean request) {
 		try {
 			return orderClient.imsProcessFranchiseRefundOrder(request);
+		} catch (FeignClientException f) {
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing order refund", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
+			}
+			throw new ValidationException(error);
 		} catch (Exception e) {
-			_LOGGER.error(String.format("Error while getting processing Refund Order for ticket item id : %s", request.getTicketItemId()), e);
-			throw new ValidationException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing order refund"));
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing order refund"));
 		}
 	}
 

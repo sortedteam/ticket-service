@@ -29,7 +29,8 @@ public class TicketConstants {
 
 	public enum EntityType {
 
-		USER(1), STORE(2);
+		//USER(1),
+		STORE(2);
 
 		private final int value;
 

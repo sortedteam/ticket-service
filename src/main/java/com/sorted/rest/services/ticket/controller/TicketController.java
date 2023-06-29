@@ -329,8 +329,9 @@ public class TicketController implements BaseController {
 			throw new ValidationException(
 					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket with id : %s", updateTicketBean.getItemId()), null));
 		}
-		Optional<TicketItemEntity> itemOptional = ticket.getItems().stream().filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId())).findFirst();
-		if (itemOptional.isEmpty() || !itemOptional.get().getStatus().equals(TicketStatus.DRAFT)) {
+		Optional<TicketItemEntity> itemOptional = ticket.getItems().stream()
+				.filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId()) && i.getStatus().equals(TicketStatus.DRAFT)).findFirst();
+		if (itemOptional.isEmpty()) {
 			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND,
 					String.format("No data found for ticket item  in draft status with id : %s", updateTicketBean.getId()), null));
 		}
@@ -368,7 +369,8 @@ public class TicketController implements BaseController {
 			throw new ValidationException(
 					ErrorBean.withError(Errors.INVALID_REQUEST, String.format("No data found for ticket with id : %s", updateTicketBean.getId()), null));
 		}
-		Optional<TicketItemEntity> itemOptional = ticket.getItems().stream().filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId())).findFirst();
+		Optional<TicketItemEntity> itemOptional = ticket.getItems().stream()
+				.filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId()) && i.getStatus().equals(TicketStatus.IN_PROGRESS)).findFirst();
 		if (itemOptional.isEmpty()) {
 			throw new ValidationException(
 					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket item with id : %s", updateTicketBean.getItemId()), null));
@@ -438,9 +440,14 @@ public class TicketController implements BaseController {
 		PageAndSortResult<TicketBean> response = prepareResponsePageData(tickets, TicketBean.class);
 		filterTicketOnShowDraft(showDraft, response.getData());
 		for (TicketBean ticketBean : response.getData()) {
+			Date lastCreatedAt = null;
 			for (TicketItemBean itemBean : ticketBean.getItems()) {
 				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+				if (lastCreatedAt == null || lastCreatedAt.toInstant().isBefore(itemBean.getCreatedAt().toInstant())) {
+					lastCreatedAt = itemBean.getCreatedAt();
+				}
 			}
+			ticketBean.setLastCreatedAt(lastCreatedAt);
 		}
 		return response;
 	}
