@@ -172,6 +172,24 @@ public class TicketClientService {
 		}
 	}
 
+	public List<FranchiseOrderListBean> getFranchiseOrderByDisplayIds(Set<String> ids) {
+		try {
+			return orderClient.getFranchiseOrderByDisplayIds(ids);
+		} catch (FeignClientException f) {
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data by display ids", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
+			}
+			throw new ValidationException(error);
+		} catch (Exception e) {
+			_LOGGER.error(String.format("Error while getting Franchise Order Info for displayOrderIds : %s", ids), e);
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data by display ids"));
+		}
+	}
+
 	public FranchiseOrderResponseBean imsProcessFranchiseRefundOrder(ImsFranchiseOrderRefundBean request) {
 		try {
 			return ticketOrderClient.imsProcessFranchiseRefundOrder(request);

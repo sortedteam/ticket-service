@@ -45,9 +45,8 @@ public class CancelTicketAction implements TicketActionsInterface {
 		item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
-		item.getResolutionDetails().setResolvedRemarks(remarks);
-		//todo: CANCEL_WITH_REMARKS not allowed in V1, add in subsequent releases
-		//item.setStatus(TicketStatus.CANCELLED);
+		item.getDetails().setResolvedRemarks(remarks);
+		item.setStatus(TicketStatus.CANCELLED);
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);

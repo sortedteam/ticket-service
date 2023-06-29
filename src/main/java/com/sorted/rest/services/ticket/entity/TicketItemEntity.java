@@ -3,7 +3,6 @@ package com.sorted.rest.services.ticket.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.sorted.rest.common.websupport.base.BaseEntity;
 import com.sorted.rest.services.ticket.beans.ResolutionDetailsBean;
-import com.sorted.rest.services.ticket.beans.TicketDetailsBean;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
 import lombok.Data;
@@ -59,11 +58,7 @@ public class TicketItemEntity extends BaseEntity {
 
 	@Type(type = "jsonb")
 	@Column(columnDefinition = "jsonb", nullable = false)
-	private TicketDetailsBean details = TicketDetailsBean.newInstance();
-
-	@Type(type = "jsonb")
-	@Column(columnDefinition = "jsonb", nullable = false)
-	private ResolutionDetailsBean resolutionDetails = ResolutionDetailsBean.newInstance();
+	private ResolutionDetailsBean details = ResolutionDetailsBean.newInstance();
 
 	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@JoinColumn(name = "category_leaf_id", referencedColumnName = "id")

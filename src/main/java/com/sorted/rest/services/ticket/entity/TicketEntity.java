@@ -45,16 +45,16 @@ public class TicketEntity extends BaseEntity {
 	private Integer categoryRootId;
 
 	@Column(nullable = false)
-	private Integer hasClosed;
+	private Integer draftCount;
 
 	@Column(nullable = false)
-	private Integer hasDraft;
+	private Integer pendingCount;
 
 	@Column(nullable = false)
-	private Integer hasPending;
+	private Integer closedCount;
 
 	@Column(nullable = false)
-	private Integer hasCancelled;
+	private Integer cancelledCount;
 
 	@Type(type = "jsonb")
 	@Column(columnDefinition = "jsonb", nullable = false)

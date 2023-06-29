@@ -9,7 +9,6 @@ import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.actions.*;
 import com.sorted.rest.services.ticket.beans.*;
-import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants.*;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
@@ -32,16 +31,13 @@ public class TicketActionUtils {
 	private TicketHistoryService ticketHistoryService;
 
 	@Autowired
-	private TicketClientService ticketClientService;
-
-	@Autowired
 	private UserUtils userUtils;
 
 	@Autowired
 	private TicketRequestUtils ticketRequestUtils;
 
 	@Autowired
-	private EscalateToTeamAction escalateToTeamAction;
+	private OnlyAddRemarksAction onlyAddRemarksAction;
 
 	@Autowired
 	private AutomaticOrderRefundAction automaticOrderRefundAction;
@@ -144,7 +140,7 @@ public class TicketActionUtils {
 					OrderDetailsBean orderDetailsBean = OrderDetailsBean.newInstance();
 					orderDetailsBean.setOrderId(orderResponseBean.getId());
 					orderDetailsBean.setDisplayOrderId(orderResponseBean.getDisplayOrderId());
-					orderDetailsBean.setOrderStatus(orderResponseBean.getStatus().toString());
+					orderDetailsBean.setOrderStatus(orderResponseBean.getStatus().toString()); // status updated On Get
 					orderDetailsBean.setFinalOrderBillAmount(orderResponseBean.getFinalBillAmount());
 					orderDetailsBean.setChallanUrl(orderResponseBean.getChallanUrl());
 					orderDetailsBean.setDeliveryDate(orderResponseBean.getDeliveryDate());
@@ -155,9 +151,8 @@ public class TicketActionUtils {
 
 				if (requestTicket.getHasNew()) {
 					for (TicketItemEntity item : requestTicketItems) {
-						item.setResolutionDetails(mapper.mapSrcToDest(item.getDetails(), ResolutionDetailsBean.newInstance()));
 
-						OrderItemDetailsBean orderItemDetailsBean = item.getResolutionDetails().getOrderDetails();
+						OrderItemDetailsBean orderItemDetailsBean = item.getDetails().getOrderDetails();
 						if (orderItemDetailsBean != null && !StringUtils.isEmpty(orderItemDetailsBean.getSkuCode())) {
 							FranchiseOrderItemResponseBean orderItemResponseBean = ticketRequestBean.getOrderItemSkuMap()
 									.get(orderItemDetailsBean.getSkuCode());
@@ -194,15 +189,15 @@ public class TicketActionUtils {
 												.setScale(4, RoundingMode.HALF_UP).doubleValue());
 							}
 							orderItemDetailsBean.setResolvedQty(null);
-							item.getResolutionDetails().setOrderDetails(orderItemDetailsBean);
+							item.getDetails().setOrderDetails(orderItemDetailsBean);
 
 						}
 					}
 				}
 				for (TicketItemEntity item : requestTicketItems) {
-					if (item.getResolutionDetails().getOrderDetails() != null && item.getResolutionDetails().getOrderDetails().getSkuCode() != null) {
+					if (item.getDetails().getOrderDetails() != null && item.getDetails().getOrderDetails().getSkuCode() != null) {
 						invokeUpdateStoreReturnInfoAction(item, requestTicket.getId(),
-								ticketRequestBean.getStoreReturnItemSkuMap().get(item.getResolutionDetails().getOrderDetails().getSkuCode()));
+								ticketRequestBean.getStoreReturnItemSkuMap().get(item.getDetails().getOrderDetails().getSkuCode()));
 					}
 				}
 				//			todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
@@ -222,7 +217,11 @@ public class TicketActionUtils {
 		actionDetailsBean.setUserDetail(setRequesterDetails());
 
 		TicketActionsInterface ticketAction = null;
-		if (action.equals(TicketUpdateActions.PROCESS_ORDER_REFUND.toString())) {
+		if (action.equals(TicketUpdateActions.ONLY_ADD_REMARKS.toString())) {
+			ticketAction = onlyAddRemarksAction;
+			onlyAddRemarksAction.setAttachments(updateTicketBean.getAttachments());
+			onlyAddRemarksAction.setRemarks(updateTicketBean.getRemarks());
+		} else if (action.equals(TicketUpdateActions.PROCESS_ORDER_REFUND.toString())) {
 			ticketAction = processOrderRefundAction;
 			processOrderRefundAction.setAttachments(updateTicketBean.getAttachments());
 			processOrderRefundAction.setResolvedQuantity(updateTicketBean.getResolvedQuantity());
@@ -247,19 +246,20 @@ public class TicketActionUtils {
 		}
 	}
 
-	public void addParentTicketHistory(TicketEntity ticket, Boolean hasNew, Integer hadDraft, Integer hadPending, Integer hadClosed, Integer hadCancelled) {
+	public void addParentTicketHistory(TicketEntity ticket, Boolean hasNew, Integer draftCountOld, Integer pendingCountOld, Integer closedCountOld,
+			Integer cancelledCountOld) {
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 		actionDetailsBean.setUserDetail(setRequesterDetails());
-		if (hadDraft == null && hadPending == null && hadClosed == null && hadCancelled == null) {
+		if (draftCountOld == null && pendingCountOld == null && closedCountOld == null && cancelledCountOld == null) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_PARENT_CREATED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_PARENT_CREATED.toString(), actionDetailsBean);
 		} else if (hasNew) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_CHILDREN_ADDED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_CHILDREN_ADDED.toString(), actionDetailsBean);
-		} else if (hadDraft == 1 && ticket.getHasDraft() == 0) {
+		} else if (draftCountOld > 0 && ticket.getDraftCount() == 0) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_DRAFT_CHILDREN_MOVED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_DRAFT_CHILDREN_MOVED.toString(), actionDetailsBean);
-		} else if (hadPending == 1 && ticket.getHasPending() == 0 && ticket.getHasDraft() == 0) {
+		} else if (pendingCountOld > 0 && ticket.getPendingCount() == 0 && ticket.getDraftCount() == 0) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_PENDING_CHILDREN_MOVED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_PENDING_CHILDREN_MOVED.toString(), actionDetailsBean);
 		}
@@ -276,27 +276,27 @@ public class TicketActionUtils {
 			return;
 		}
 		boolean updated = false;
-		if (!storeReturnItemResponse.getQuantity().equals(item.getResolutionDetails().getOrderDetails().getReturnQty())) {
+		if (!storeReturnItemResponse.getQuantity().equals(item.getDetails().getOrderDetails().getReturnQty())) {
 			updated = true;
-			item.getResolutionDetails().getOrderDetails().setReturnQty(storeReturnItemResponse.getQuantity());
+			item.getDetails().getOrderDetails().setReturnQty(storeReturnItemResponse.getQuantity());
 		}
 
-		if (!storeReturnItemResponse.getRemarks().equals(item.getResolutionDetails().getOrderDetails().getReturnRemarks())) {
+		if (!storeReturnItemResponse.getRemarks().equals(item.getDetails().getOrderDetails().getReturnRemarks())) {
 			if (!updated)
 				updated = true;
-			item.getResolutionDetails().getOrderDetails().setReturnRemarks(storeReturnItemResponse.getRemarks());
+			item.getDetails().getOrderDetails().setReturnRemarks(storeReturnItemResponse.getRemarks());
 		}
 
-		if (!storeReturnItemResponse.getQaResult().equals(item.getResolutionDetails().getOrderDetails().getReturnQaResult())) {
+		if (!storeReturnItemResponse.getQaResult().equals(item.getDetails().getOrderDetails().getReturnQaResult())) {
 			if (!updated)
 				updated = true;
-			item.getResolutionDetails().getOrderDetails().setReturnQaResult(storeReturnItemResponse.getQaResult());
+			item.getDetails().getOrderDetails().setReturnQaResult(storeReturnItemResponse.getQaResult());
 		}
 
-		if (!storeReturnItemResponse.getRefundQty().equals(item.getResolutionDetails().getOrderDetails().getReturnRefundQty())) {
+		if (!storeReturnItemResponse.getRefundQty().equals(item.getDetails().getOrderDetails().getReturnRefundQty())) {
 			if (!updated)
 				updated = true;
-			item.getResolutionDetails().getOrderDetails().setReturnRefundQty(storeReturnItemResponse.getRefundQty());
+			item.getDetails().getOrderDetails().setReturnRefundQty(storeReturnItemResponse.getRefundQty());
 		}
 
 		if (updated) {
