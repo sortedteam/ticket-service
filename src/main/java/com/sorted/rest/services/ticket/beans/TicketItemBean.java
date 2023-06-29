@@ -34,9 +34,7 @@ public class TicketItemBean implements Serializable {
 
 	private String remarks;
 
-	private TicketDetailsBean details;
-
-	private ResolutionDetailsBean resolutionDetails;
+	private ResolutionDetailsBean details;
 
 	private TicketCategoryNode category;
 

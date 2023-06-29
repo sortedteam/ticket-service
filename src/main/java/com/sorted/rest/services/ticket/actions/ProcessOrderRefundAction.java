@@ -57,21 +57,20 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean isApplicable(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		return item.getResolutionDetails().getOrderDetails() != null && item.getResolutionDetails().getOrderDetails()
-				.getOrderId() != null && item.getResolutionDetails().getOrderDetails().getSkuCode() != null && item.getResolutionDetails().getOrderDetails()
-				.getIssueQty() != null && item.getResolutionDetails().getOrderDetails().getUom() != null;
+		return item.getDetails().getOrderDetails() != null && item.getDetails().getOrderDetails().getOrderId() != null && item.getDetails().getOrderDetails()
+				.getSkuCode() != null && item.getDetails().getOrderDetails().getIssueQty() != null && item.getDetails().getOrderDetails().getUom() != null;
 	}
 
 	@Override
 	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
 		FranchiseOrderResponseBean refundResponse = clientService.imsProcessFranchiseRefundOrder(createRefundBean(item, ticketId));
-		item.getResolutionDetails().getOrderDetails().setRefundAmount(refundResponse.getFinalBillAmount());
-		setRemarks(String.format(TicketUpdateActions.PROCESS_ORDER_REFUND.getRemarks(), resolvedQuantity,
-				item.getResolutionDetails().getOrderDetails().getIssueQty(), item.getResolutionDetails().getOrderDetails().getUom()));
+		item.getDetails().getOrderDetails().setRefundAmount(refundResponse.getFinalBillAmount());
+		setRemarks(String.format(TicketUpdateActions.PROCESS_ORDER_REFUND.getRemarks(), resolvedQuantity, item.getDetails().getOrderDetails().getIssueQty(),
+				item.getDetails().getOrderDetails().getUom()));
 		item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
-		item.getResolutionDetails().setResolvedRemarks(remarks);
+		item.getDetails().setResolvedRemarks(remarks);
 		item.setStatus(TicketStatus.CLOSED);
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
@@ -81,17 +80,16 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 
 	private ImsFranchiseOrderRefundBean createRefundBean(TicketItemEntity item, Long ticketId) {
 		ImsFranchiseOrderRefundItemBean franchiseOrderRefundItemBean = ImsFranchiseOrderRefundItemBean.newInstance();
-		franchiseOrderRefundItemBean.setSkuCode(item.getResolutionDetails().getOrderDetails().getSkuCode());
+		franchiseOrderRefundItemBean.setSkuCode(item.getDetails().getOrderDetails().getSkuCode());
 		franchiseOrderRefundItemBean.setRefundQuantity(resolvedQuantity);
 		franchiseOrderRefundItemBean.setWarehouseReturnCheck(
-				item.getResolutionDetails().getOrderDetails().getReturnQty() != null && item.getResolutionDetails().getOrderDetails().getReturnQty()
-						.compareTo(0d) == 1);
+				item.getDetails().getOrderDetails().getReturnQty() != null && item.getDetails().getOrderDetails().getReturnQty().compareTo(0d) == 1);
 		franchiseOrderRefundItemBean.setRefundRemarks(remarks);
 
 		ImsFranchiseOrderRefundBean franchiseOrderRefundBean = ImsFranchiseOrderRefundBean.newInstance();
 		franchiseOrderRefundBean.setTicketId(ticketId);
 		franchiseOrderRefundBean.setTicketItemId(item.getId());
-		franchiseOrderRefundBean.setParentOrderId(item.getResolutionDetails().getOrderDetails().getOrderId());
+		franchiseOrderRefundBean.setParentOrderId(item.getDetails().getOrderDetails().getOrderId());
 		franchiseOrderRefundBean.setRefundOrderItems(Collections.singletonList(franchiseOrderRefundItemBean));
 		return franchiseOrderRefundBean;
 	}

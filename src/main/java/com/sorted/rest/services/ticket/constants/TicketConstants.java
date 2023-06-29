@@ -95,8 +95,8 @@ public class TicketConstants {
 	public enum TicketUpdateActions {
 
 		DRAFT_TICKET_UPDATED("Draft Ticket Updated"), STORE_RETURN_DATA_UPDATED("Store Return Data Updated"), PROCESS_ORDER_REFUND(
-				"Ticket closed after generating refund for the order for quantity %s against issue raised for %s %s"), CLOSE_WITH_REMARKS(
-				"Ticket closed with remarks %s"), CANCEL_WITH_REMARKS("Ticket cancelled with remarks %s");
+				"Ticket closed after generating refund for the order for quantity %s against issue raised for %s %s"), ONLY_ADD_REMARKS(
+				"Ticket updated with remarks %s"), CLOSE_WITH_REMARKS("Ticket closed with remarks %s"), CANCEL_WITH_REMARKS("Ticket cancelled with remarks %s");
 
 		private String remarks;
 

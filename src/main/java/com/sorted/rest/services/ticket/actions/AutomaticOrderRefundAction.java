@@ -38,23 +38,19 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean isApplicable(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		if (item.getResolutionDetails().getOrderDetails() != null) {
+		if (item.getDetails().getOrderDetails() != null) {
 
-			item.getResolutionDetails().getOrderDetails().setIsReturnIssue(true);
-			if (item.getResolutionDetails().getOrderDetails().getProrataAmount() != null && item.getResolutionDetails().getOrderDetails()
-					.getDeliveredQty() != null && item.getResolutionDetails().getOrderDetails().getIssueQty() != null) {
+			item.getDetails().getOrderDetails().setIsReturnIssue(true);
+			if (item.getDetails().getOrderDetails().getProrataAmount() != null && item.getDetails().getOrderDetails()
+					.getDeliveredQty() != null && item.getDetails().getOrderDetails().getIssueQty() != null) {
 
-				item.getResolutionDetails().getOrderDetails().setRefundableAmount(
-						BigDecimal.valueOf(item.getResolutionDetails().getOrderDetails().getProrataAmount())
-								.divide(BigDecimal.valueOf(item.getResolutionDetails().getOrderDetails().getDeliveredQty()))
-								.multiply(BigDecimal.valueOf(item.getResolutionDetails().getOrderDetails().getIssueQty())).setScale(2, RoundingMode.HALF_UP)
-								.doubleValue());
+				item.getDetails().getOrderDetails().setRefundableAmount(BigDecimal.valueOf(item.getDetails().getOrderDetails().getProrataAmount())
+						.divide(BigDecimal.valueOf(item.getDetails().getOrderDetails().getDeliveredQty()))
+						.multiply(BigDecimal.valueOf(item.getDetails().getOrderDetails().getIssueQty())).setScale(2, RoundingMode.HALF_UP).doubleValue());
 			}
 
-			if (item.getResolutionDetails().getOrderDetails().getIssueQty() != null && item.getResolutionDetails().getOrderDetails()
-					.getRefundableQty() != null) {
-				return item.getResolutionDetails().getOrderDetails().getRefundableQty()
-						.compareTo(item.getResolutionDetails().getOrderDetails().getIssueQty()) != -1;
+			if (item.getDetails().getOrderDetails().getIssueQty() != null && item.getDetails().getOrderDetails().getRefundableQty() != null) {
+				return item.getDetails().getOrderDetails().getRefundableQty().compareTo(item.getDetails().getOrderDetails().getIssueQty()) != -1;
 			}
 		}
 		return false;
@@ -62,7 +58,7 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		item.getResolutionDetails().getOrderDetails().setIsAutoRefundEligible(true);
+		item.getDetails().getOrderDetails().setIsAutoRefundEligible(true);
 		item.setAssignedTeam(team);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);

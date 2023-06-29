@@ -3,7 +3,6 @@ package com.sorted.rest.services.ticket.actions;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
-import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketUpdateActions;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
@@ -11,13 +10,12 @@ import com.sorted.rest.services.ticket.services.TicketHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
 import java.util.List;
 
 @Component
-public class CloseTicketAction implements TicketActionsInterface {
+public class OnlyAddRemarksAction implements TicketActionsInterface {
 
-	static AppLogger _LOGGER = LoggingManager.getLogger(CloseTicketAction.class);
+	static AppLogger _LOGGER = LoggingManager.getLogger(OnlyAddRemarksAction.class);
 
 	@Autowired
 	private TicketHistoryService ticketHistoryService;
@@ -41,12 +39,8 @@ public class CloseTicketAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		setRemarks(String.format(TicketUpdateActions.CLOSE_WITH_REMARKS.getRemarks(), remarks));
-		item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
-		item.setAssignedAt(new Date());
+		setRemarks(String.format(TicketUpdateActions.ONLY_ADD_REMARKS.getRemarks(), remarks));
 		item.setRemarks(remarks);
-		item.getDetails().setResolvedRemarks(remarks);
-		item.setStatus(TicketStatus.CLOSED);
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);

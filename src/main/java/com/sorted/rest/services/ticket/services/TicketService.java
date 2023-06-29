@@ -52,10 +52,10 @@ public class TicketService implements BaseService<TicketEntity> {
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	public TicketEntity saveNewParentTicket(TicketEntity entity) {
-		entity.setHasClosed(0);
-		entity.setHasDraft(0);
-		entity.setHasPending(0);
-		entity.setHasCancelled(0);
+		entity.setClosedCount(0);
+		entity.setDraftCount(0);
+		entity.setPendingCount(0);
+		entity.setCancelledCount(0);
 		entity = ticketRepository.save(entity);
 		return entity;
 	}
@@ -72,31 +72,28 @@ public class TicketService implements BaseService<TicketEntity> {
 	@Transactional(propagation = Propagation.REQUIRED)
 	public TicketEntity saveTicketWithUpdatedItems(TicketEntity entity) {
 		Boolean hasNew = entity.getHasNew();
-		Integer hasDraft = 0, hasDraftOld = entity.getHasDraft();
-		Integer hasPending = 0, hasPendingOld = entity.getHasDraft();
-		Integer hasClosed = 0, hasClosedOld = entity.getHasClosed();
-		Integer hasCancelled = 0, hasCancelledOld = entity.getHasDraft();
+		Integer draftCount = 0, draftCountOld = entity.getDraftCount();
+		Integer pendingCount = 0, pendingCountOld = entity.getPendingCount();
+		Integer closedCount = 0, closedCountOld = entity.getClosedCount();
+		Integer cancelledCount = 0, cancelledCountOld = entity.getCancelledCount();
 		for (TicketItemEntity item : entity.getItems()) {
-			if (hasDraft == 0 && item.getStatus().equals(TicketStatus.DRAFT)) {
-				hasDraft = 1;
-			}
-			if (hasPending == 0 && item.getStatus().equals(TicketStatus.IN_PROGRESS)) {
-				hasPending = 1;
-			}
-			if (hasClosed == 0 && item.getStatus().equals(TicketStatus.CLOSED)) {
-				hasClosed = 1;
-			}
-			if (hasCancelled == 0 && item.getStatus().equals(TicketStatus.CANCELLED)) {
-				hasCancelled = 1;
+			if (item.getStatus().equals(TicketStatus.DRAFT)) {
+				draftCount++;
+			} else if (item.getStatus().equals(TicketStatus.IN_PROGRESS)) {
+				pendingCount++;
+			} else if (item.getStatus().equals(TicketStatus.CLOSED)) {
+				closedCount++;
+			} else if (item.getStatus().equals(TicketStatus.CANCELLED)) {
+				cancelledCount++;
 			}
 		}
-		entity.setHasClosed(hasClosed);
-		entity.setHasDraft(hasDraft);
-		entity.setHasPending(hasPending);
-		entity.setHasCancelled(hasCancelled);
+		entity.setClosedCount(closedCount);
+		entity.setDraftCount(draftCount);
+		entity.setPendingCount(pendingCount);
+		entity.setCancelledCount(cancelledCount);
 		entity.setModifiedAt(new Date());
 		entity = ticketRepository.save(entity);
-		ticketActionUtils.addParentTicketHistory(entity, hasNew, hasDraftOld, hasPendingOld, hasClosedOld, hasCancelledOld);
+		ticketActionUtils.addParentTicketHistory(entity, hasNew, draftCountOld, pendingCountOld, closedCountOld, cancelledCountOld);
 		return entity;
 	}
 

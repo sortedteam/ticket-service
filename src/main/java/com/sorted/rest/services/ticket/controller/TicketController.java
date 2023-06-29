@@ -230,8 +230,8 @@ public class TicketController implements BaseController {
 				dbEntity = ticketService.findByReferenceIdAndCategoryRootId(requestTicket.getReferenceId(), requestTicket.getCategoryRootId()).get(0);
 				if (dbEntity != null) {
 					Set<String> skuCodes = dbEntity.getItems().stream().filter(item -> !item.getStatus().equals(TicketStatus.CLOSED) && !item.getStatus()
-									.equals(TicketStatus.CANCELLED) && item.getResolutionDetails().getOrderDetails() != null)
-							.map(item -> item.getResolutionDetails().getOrderDetails().getSkuCode())
+									.equals(TicketStatus.CANCELLED) && item.getDetails().getOrderDetails() != null)
+							.map(item -> item.getDetails().getOrderDetails().getSkuCode())
 							.filter(skuCode -> !StringUtils.isEmpty(skuCode) && !StringUtils.isEmpty(skuCode.trim())).collect(Collectors.toSet());
 					for (TicketItemEntity item : requestTicket.getItems()) {
 						if (item.getDetails().getOrderDetails() != null && item.getDetails().getOrderDetails().getSkuCode() != null && skuCodes.contains(
@@ -338,7 +338,7 @@ public class TicketController implements BaseController {
 			throw new ValidationException(
 					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket item with id : %s", updateTicketBean.getId()), null));
 		}
-		if (itemOptional.get().getStatus().equals(TicketStatus.DRAFT)) {
+		if (!itemOptional.get().getStatus().equals(TicketStatus.DRAFT)) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
 					String.format("Ticket item with id : %s already moved from DRAFT. Current status : %s", updateTicketBean.getId(),
 							itemOptional.get().getStatus()), null));
@@ -359,7 +359,7 @@ public class TicketController implements BaseController {
 			item.setAttachments(Stream.concat(item.getAttachments().stream(), updateTicketBean.getAttachments().stream()).collect(Collectors.toList()));
 		}
 		if (updateTicketBean.getDescription() != null) {
-			item.getResolutionDetails().setDescription(updateTicketBean.getDescription());
+			item.getDetails().setDescription(updateTicketBean.getDescription());
 		}
 		ticket.setHasUpdatedDraft(true);
 		populateTicketDetailsAndInvokeCreateOrUpdateActions(ticket, Collections.singletonList(item));
@@ -382,7 +382,7 @@ public class TicketController implements BaseController {
 			throw new ValidationException(
 					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket item with id : %s", updateTicketBean.getItemId()), null));
 		}
-		if (itemOptional.get().getStatus().equals(TicketStatus.IN_PROGRESS)) {
+		if (!itemOptional.get().getStatus().equals(TicketStatus.IN_PROGRESS)) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
 					String.format("Ticket item with id : %s already moved from IN_PROGRESS. Current status : %s", updateTicketBean.getId(),
 							itemOptional.get().getStatus()), null));
@@ -413,8 +413,11 @@ public class TicketController implements BaseController {
 	@GetMapping(path = "/tickets/ims")
 	public PageAndSortResult<TicketBean> fetchTicketsIms(@RequestParam(defaultValue = "1") Integer pageNo, @RequestParam(defaultValue = "25") Integer pageSize,
 			@RequestParam(required = false) String sortBy, @RequestParam(required = false) PageAndSortRequest.SortDirection sortDirection,
-			HttpServletRequest request, @RequestParam Boolean orderRelated, @RequestParam Boolean showDraft, @RequestParam(required = false) String lastAddedOn)
-			throws ParseException {
+			HttpServletRequest request, @RequestParam Boolean orderRelated, @RequestParam Boolean showDraft, @RequestParam(required = false) String lastAddedOn,
+			@RequestParam(required = false) Boolean hasDraft, @RequestParam(required = false) Boolean hasPending,
+			@RequestParam(required = false) Boolean hasClosed) throws ParseException {
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+
 		Map<String, SortDirection> sort;
 		if (sortBy != null) {
 			sort = buildSortMap(sortBy, sortDirection);
@@ -423,11 +426,39 @@ public class TicketController implements BaseController {
 			sort.put("lastAddedAt", PageAndSortRequest.SortDirection.DESC);
 		}
 		final Map<String, Object> filters = getSearchParams(request, TicketEntity.class);
+		updateFilters(filters, orderRelated, lastAddedOn, hasDraft, hasPending, hasClosed, ticketCategoryEntities);
 
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		PageAndSortResult<TicketEntity> tickets = ticketService.getAllTicketsPaginated(pageSize, pageNo, filters, sort);
+		PageAndSortResult<TicketBean> response = prepareResponsePageData(tickets, TicketBean.class);
+		filterTicketOnShowDraft(showDraft, response.getData());
+		if (orderRelated) {
+			Set<String> displayOrderIds = response.getData().stream().filter(ticket -> ticket.getMetadata().getOrderDetails() != null && !StringUtils.isEmpty(
+							ticket.getMetadata().getOrderDetails().getDisplayOrderId())).map(ticket -> ticket.getMetadata().getOrderDetails().getDisplayOrderId())
+					.collect(Collectors.toSet());
+			;
+			Map<String, FranchiseOrderListBean> ordersDisplayIdMap = clientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
+					.collect(Collectors.toMap(FranchiseOrderListBean::getDisplayOrderId, Function.identity()));
+			for (TicketBean ticketBean : response.getData()) {
+				if (ticketBean.getMetadata().getOrderDetails() != null && ticketBean.getMetadata().getOrderDetails()
+						.getDisplayOrderId() != null && ordersDisplayIdMap.containsKey(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId())) {
+					FranchiseOrderListBean orderListBean = ordersDisplayIdMap.get(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId());
+					ticketBean.getMetadata().getOrderDetails().setOrderStatus(orderListBean.getStatus());
+				}
+			}
+		}
+		for (TicketBean ticketBean : response.getData()) {
+			for (TicketItemBean itemBean : ticketBean.getItems()) {
+				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+			}
+		}
+		return response;
+	}
+
+	private void updateFilters(Map<String, Object> filters, Boolean orderRelated, String lastAddedOn, Boolean hasDraft, Boolean hasPending, Boolean hasClosed,
+			List<TicketCategoryEntity> ticketCategoryEntities) throws ParseException {
+
 		Map<String, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getLabel, Function.identity(), (o1, o2) -> o1, HashMap::new));
-
 		List<TicketCategoryEntity> categoryRootsIn = new ArrayList<>();
 		if (orderRelated) {
 			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.ORDER_ISSUE.toString()));
@@ -459,15 +490,32 @@ public class TicketController implements BaseController {
 			filters.remove("lastAddedOn");
 		}
 
-		PageAndSortResult<TicketEntity> tickets = ticketService.getAllTicketsPaginated(pageSize, pageNo, filters, sort);
-		PageAndSortResult<TicketBean> response = prepareResponsePageData(tickets, TicketBean.class);
-		filterTicketOnShowDraft(showDraft, response.getData());
-		for (TicketBean ticketBean : response.getData()) {
-			for (TicketItemBean itemBean : ticketBean.getItems()) {
-				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+		if (hasDraft != null) {
+			if (hasDraft) {
+				filters.put("hasDraft", new FilterCriteria("draftCount", 0, Operation.GT));
+			} else {
+				filters.put("hasDraft", new FilterCriteria("draftCount", 0, Operation.EQUALS));
 			}
+			filters.remove("hasDraft");
 		}
-		return response;
+
+		if (hasPending != null) {
+			if (hasPending) {
+				filters.put("hasPending", new FilterCriteria("pendingCount", 0, Operation.GT));
+			} else {
+				filters.put("hasPending", new FilterCriteria("pendingCount", 0, Operation.EQUALS));
+			}
+			filters.remove("hasDraft");
+		}
+
+		if (hasClosed != null) {
+			if (hasDraft) {
+				filters.put("hasClosed", new FilterCriteria("closedCount", 0, Operation.GT));
+			} else {
+				filters.put("hasClosed", new FilterCriteria("closedCount", 0, Operation.EQUALS));
+			}
+			filters.remove("hasClosed");
+		}
 	}
 
 	private void filterTicketOnShowDraft(Boolean showDraft, List<TicketBean> ticketBeans) {
@@ -481,7 +529,6 @@ public class TicketController implements BaseController {
 					removeList.add(ticketBean);
 				} else {
 					ticketBean.setItems(filteredItems);
-					resetTicketBeanStatuses(ticketBean);
 				}
 			}
 		} else {
@@ -492,33 +539,10 @@ public class TicketController implements BaseController {
 					removeList.add(ticketBean);
 				} else {
 					ticketBean.setItems(filteredItems);
-					resetTicketBeanStatuses(ticketBean);
 				}
 			}
 		}
 		ticketBeans.removeAll(removeList);
-	}
-
-	private void resetTicketBeanStatuses(TicketBean ticketBean) {
-		Integer hasDraft = 0, hasPending = 0, hasCancelled = 0, hasClosed = 0;
-		for (TicketItemBean item : ticketBean.getItems()) {
-			if (hasDraft == 0 && item.getStatus().equals(TicketStatus.DRAFT.toString())) {
-				hasDraft = 1;
-			}
-			if (hasPending == 0 && item.getStatus().equals(TicketStatus.IN_PROGRESS.toString())) {
-				hasPending = 1;
-			}
-			if (hasClosed == 0 && item.getStatus().equals(TicketStatus.CLOSED.toString())) {
-				hasClosed = 1;
-			}
-			if (hasCancelled == 0 && item.getStatus().equals(TicketStatus.CANCELLED.toString())) {
-				hasCancelled = 1;
-			}
-		}
-		ticketBean.setHasDraft(hasDraft);
-		ticketBean.setHasPending(hasPending);
-		ticketBean.setHasClosed(hasClosed);
-		ticketBean.setHasCancelled(hasCancelled);
 	}
 
 	@ApiOperation(value = "create or update tickets for store return", nickname = "createOrUpdateTicketsForStoreReturn")
@@ -598,9 +622,9 @@ public class TicketController implements BaseController {
 	}
 
 	private TicketItemEntity createTicketItemForStoreReturn(StoreReturnItemData requestItem, TicketCategoryEntity category) {
-		TicketDetailsBean ticketDetailsBean = TicketDetailsBean.newInstance();
+		ResolutionDetailsBean ticketDetailsBean = ResolutionDetailsBean.newInstance();
 		ticketDetailsBean.setDescription(TicketConstants.STORE_RETURN_TICKET_DESCRIPTION);
-		OrderDetailsRequestBean orderDetailsRequestBean = OrderDetailsRequestBean.newInstance();
+		OrderItemDetailsBean orderDetailsRequestBean = OrderItemDetailsBean.newInstance();
 		orderDetailsRequestBean.setSkuCode(requestItem.getSkuCode());
 		orderDetailsRequestBean.setIssueQty(requestItem.getQuantity());
 		ticketDetailsBean.setOrderDetails(orderDetailsRequestBean);

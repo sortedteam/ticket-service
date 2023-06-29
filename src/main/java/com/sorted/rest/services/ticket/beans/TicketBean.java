@@ -31,13 +31,13 @@ public class TicketBean implements Serializable {
 
 	private Date lastAddedAt;
 
-	private Integer hasDraft;
+	private Integer draftCount;
 
-	private Integer hasPending;
+	private Integer pendingCount;
 
-	private Integer hasClosed;
+	private Integer closedCount;
 
-	private Integer hasCancelled;
+	private Integer cancelledCount;
 
 	private List<TicketItemBean> items;
 
