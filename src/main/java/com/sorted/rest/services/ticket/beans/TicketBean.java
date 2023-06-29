@@ -1,6 +1,5 @@
 package com.sorted.rest.services.ticket.beans;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
@@ -30,22 +29,15 @@ public class TicketBean implements Serializable {
 	@JsonIgnore
 	private TicketCategoryBean categoryRoot;
 
-	private java.sql.Date lastAddedOn;
-
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
-	private Date createdAt;
-
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
-	private Date modifiedAt;
-
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "IST")
-	private Date lastCreatedAt;
-
-	private Integer isClosed;
+	private Date lastAddedAt;
 
 	private Integer hasDraft;
 
 	private Integer hasPending;
+
+	private Integer hasClosed;
+
+	private Integer hasCancelled;
 
 	private List<TicketItemBean> items;
 

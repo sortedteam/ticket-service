@@ -13,6 +13,7 @@ import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -44,7 +45,7 @@ public class TicketEntity extends BaseEntity {
 	private Integer categoryRootId;
 
 	@Column(nullable = false)
-	private Integer isClosed;
+	private Integer hasClosed;
 
 	@Column(nullable = false)
 	private Integer hasDraft;
@@ -52,12 +53,15 @@ public class TicketEntity extends BaseEntity {
 	@Column(nullable = false)
 	private Integer hasPending;
 
+	@Column(nullable = false)
+	private Integer hasCancelled;
+
 	@Type(type = "jsonb")
 	@Column(columnDefinition = "jsonb", nullable = false)
 	private TicketMetadataBean metadata = TicketMetadataBean.newInstance();
 
 	@Column(nullable = false)
-	private java.sql.Date lastAddedOn;
+	private Date lastAddedAt;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_root_id", referencedColumnName = "id", updatable = false)

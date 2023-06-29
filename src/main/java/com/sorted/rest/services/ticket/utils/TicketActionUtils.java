@@ -231,11 +231,10 @@ public class TicketActionUtils {
 			ticketAction = closeTicketAction;
 			closeTicketAction.setAttachments(updateTicketBean.getAttachments());
 			closeTicketAction.setRemarks(updateTicketBean.getRemarks());
-			//			todo: CANCEL_WITH_REMARKS not allowed in V1, add in subsequent releases
-			//		} else if (action.equals(TicketUpdateActions.CANCEL_WITH_REMARKS.toString())) {
-			//			ticketAction = cancelTicketAction;
-			//			cancelTicketAction.setAttachments(updateTicketBean.getAttachments());
-			//			cancelTicketAction.setRemarks(updateTicketBean.getRemarks());
+		} else if (action.equals(TicketUpdateActions.CANCEL_WITH_REMARKS.toString())) {
+			ticketAction = cancelTicketAction;
+			cancelTicketAction.setAttachments(updateTicketBean.getAttachments());
+			cancelTicketAction.setRemarks(updateTicketBean.getRemarks());
 		} else {
 			_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 		}
@@ -248,24 +247,21 @@ public class TicketActionUtils {
 		}
 	}
 
-	public void addParentTicketHistory(TicketEntity ticket, Boolean hasNew, Integer hadDraft, Integer wasClosed) {
+	public void addParentTicketHistory(TicketEntity ticket, Boolean hasNew, Integer hadDraft, Integer hadPending, Integer hadClosed, Integer hadCancelled) {
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 		actionDetailsBean.setUserDetail(setRequesterDetails());
-		if (hadDraft == null && wasClosed == null && ticket.getHasNew()) {
+		if (hadDraft == null && hadPending == null && hadClosed == null && hadCancelled == null) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_PARENT_CREATED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_PARENT_CREATED.toString(), actionDetailsBean);
-		} else if ((hadDraft == null || hadDraft == 0) && ticket.getHasDraft() == 1) {
-			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_DRAFT_TICKET_ADDED.getRemarks());
-			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_DRAFT_TICKET_ADDED.toString(), actionDetailsBean);
 		} else if (hasNew) {
-			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_TICKET_ADDED.getRemarks());
-			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_TICKET_ADDED.toString(), actionDetailsBean);
-		} else if (hadDraft != null && hadDraft == 1 && ticket.getHasDraft() == 0) {
-			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_DRAFT_TICKET_MOVED.getRemarks());
-			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_DRAFT_TICKET_MOVED.toString(), actionDetailsBean);
-		} else if (wasClosed != null && wasClosed == 0 && ticket.getIsClosed() == 1) {
-			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_TICKET_CLOSED.getRemarks());
-			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_TICKET_CLOSED.toString(), actionDetailsBean);
+			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_CHILDREN_ADDED.getRemarks());
+			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_CHILDREN_ADDED.toString(), actionDetailsBean);
+		} else if (hadDraft == 1 && ticket.getHasDraft() == 0) {
+			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_DRAFT_CHILDREN_MOVED.getRemarks());
+			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_DRAFT_CHILDREN_MOVED.toString(), actionDetailsBean);
+		} else if (hadPending == 1 && ticket.getHasPending() == 0 && ticket.getHasDraft() == 0) {
+			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_PENDING_CHILDREN_MOVED.getRemarks());
+			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_PENDING_CHILDREN_MOVED.toString(), actionDetailsBean);
 		}
 	}
 
