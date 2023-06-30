@@ -326,7 +326,7 @@ public class TicketController implements BaseController {
 	@PutMapping(path = "/tickets/ims/draft")
 	@ResponseStatus(HttpStatus.OK)
 	@Transactional(propagation = Propagation.REQUIRED)
-	public void updateTicketFromDraftForIms(@Valid @RequestBody UpdateTicketFromDraftBean updateTicketBean) {
+	public TicketItemBean updateTicketFromDraftForIms(@Valid @RequestBody UpdateTicketFromDraftBean updateTicketBean) {
 		_LOGGER.info(String.format("updateTicketFromDraftForIms:: request %s", updateTicketBean));
 		TicketEntity ticket = ticketService.findById(updateTicketBean.getId());
 		if (ticket == null) {
@@ -336,7 +336,7 @@ public class TicketController implements BaseController {
 		Optional<TicketItemEntity> itemOptional = ticket.getItems().stream().filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId())).findFirst();
 		if (itemOptional.isEmpty()) {
 			throw new ValidationException(
-					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket item with id : %s", updateTicketBean.getId()), null));
+					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket item with id : %s", updateTicketBean.getItemId()), null));
 		}
 		if (!itemOptional.get().getStatus().equals(TicketStatus.DRAFT)) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
@@ -363,14 +363,25 @@ public class TicketController implements BaseController {
 		}
 		ticket.setHasUpdatedDraft(true);
 		populateTicketDetailsAndInvokeCreateOrUpdateActions(ticket, Collections.singletonList(item));
-		ticketService.saveTicketWithUpdatedItems(ticket);
+		ticket = ticketService.saveTicketWithUpdatedItems(ticket);
+		itemOptional = ticket.getItems().stream().filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId())).findFirst();
+		if (itemOptional.isPresent()) {
+			TicketItemBean itemBean = getMapper().mapSrcToDest(itemOptional.get(), TicketItemBean.newInstance());
+			List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+			setTicketActionsAndCategory(itemBean, ticket.getCategoryRootId(), ticketCategoryEntities);
+			return itemBean;
+		} else {
+			throw new ValidationException(
+					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found after updating ticket with id : %s", updateTicketBean.getItemId()),
+							null));
+		}
 	}
 
 	@ApiOperation(value = "update ticket for backoffice", nickname = "updateTicketForIms")
 	@PutMapping(path = "/tickets/ims")
 	@ResponseStatus(HttpStatus.OK)
 	@Transactional(propagation = Propagation.REQUIRED)
-	public void updateTicketForIms(@Valid @RequestBody UpdateTicketBean updateTicketBean) {
+	public TicketItemBean updateTicketForIms(@Valid @RequestBody UpdateTicketBean updateTicketBean) {
 		_LOGGER.info(String.format("updateTicketForIms:: request %s", updateTicketBean));
 		TicketEntity ticket = ticketService.findById(updateTicketBean.getId());
 		if (ticket == null) {
@@ -384,7 +395,7 @@ public class TicketController implements BaseController {
 		}
 		if (!itemOptional.get().getStatus().equals(TicketStatus.IN_PROGRESS)) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
-					String.format("Ticket item with id : %s already moved from IN_PROGRESS. Current status : %s", updateTicketBean.getId(),
+					String.format("Ticket item with id : %s already moved from IN_PROGRESS. Current status : %s", updateTicketBean.getItemId(),
 							itemOptional.get().getStatus()), null));
 		}
 		TicketItemEntity item = itemOptional.get();
@@ -395,7 +406,18 @@ public class TicketController implements BaseController {
 		}
 
 		populateTicketDetailsAndInvokeUpdateActions(ticket, item, updateTicketBean);
-		ticketService.saveTicketWithUpdatedItems(ticket);
+		ticket = ticketService.saveTicketWithUpdatedItems(ticket);
+		itemOptional = ticket.getItems().stream().filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId())).findFirst();
+		if (itemOptional.isPresent()) {
+			TicketItemBean itemBean = getMapper().mapSrcToDest(itemOptional.get(), TicketItemBean.newInstance());
+			List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+			setTicketActionsAndCategory(itemBean, ticket.getCategoryRootId(), ticketCategoryEntities);
+			return itemBean;
+		} else {
+			throw new ValidationException(
+					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found after updating ticket with id : %s", updateTicketBean.getItemId()),
+							null));
+		}
 	}
 
 	private void populateTicketDetailsAndInvokeUpdateActions(TicketEntity requestTicket, TicketItemEntity requestItem, UpdateTicketBean updateTicketBean) {
@@ -496,7 +518,6 @@ public class TicketController implements BaseController {
 			} else {
 				filters.put("hasDraft", new FilterCriteria("draftCount", 0, Operation.EQUALS));
 			}
-			filters.remove("hasDraft");
 		}
 
 		if (hasPending != null) {
@@ -505,16 +526,14 @@ public class TicketController implements BaseController {
 			} else {
 				filters.put("hasPending", new FilterCriteria("pendingCount", 0, Operation.EQUALS));
 			}
-			filters.remove("hasDraft");
 		}
 
 		if (hasClosed != null) {
-			if (hasDraft) {
+			if (hasClosed) {
 				filters.put("hasClosed", new FilterCriteria("closedCount", 0, Operation.GT));
 			} else {
 				filters.put("hasClosed", new FilterCriteria("closedCount", 0, Operation.EQUALS));
 			}
-			filters.remove("hasClosed");
 		}
 	}
 
