@@ -196,7 +196,7 @@ public class TicketController implements BaseController {
 	}
 
 	private String getStoreCategoryForTicket(String storeId, String entityType) {
-		List<String> storeCategoryForTicketParam = Arrays.stream(paramService.getParam("STORE_CATEGORY_FOR_TICKET", "Good|").split("\\|"))
+		List<String> storeCategoryForTicketParam = Arrays.stream(paramService.getParam("STORE_CATEGORY_FOR_TICKET", "Good|Good,Bad,Ugly").split("\\|"))
 				.collect(Collectors.toList());
 		return ticketClientService.getFilteredOrDefaultAudience(entityType, storeId,
 				Arrays.stream(storeCategoryForTicketParam.get(1).split(",")).filter(s -> !StringUtils.isEmpty(s) && !StringUtils.isEmpty(s.trim()))
