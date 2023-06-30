@@ -124,4 +124,9 @@ public class TicketConstants {
 			return remarks;
 		}
 	}
+
+	public enum UserRoles {
+
+		CCEXECUTIVE, CCMANAGER
+	}
 }
