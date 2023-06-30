@@ -393,7 +393,8 @@ public class TicketController implements BaseController {
 			throw new ValidationException(
 					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket item with id : %s", updateTicketBean.getItemId()), null));
 		}
-		if (!itemOptional.get().getStatus().equals(TicketStatus.IN_PROGRESS)) {
+		if (!itemOptional.get().getStatus().equals(TicketStatus.IN_PROGRESS) || (!itemOptional.get().getStatus()
+				.equals(TicketStatus.DRAFT) || !updateTicketBean.getAction().equals(TicketUpdateActions.CANCEL_WITH_REMARKS.toString()))) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
 					String.format("Ticket item with id : %s already moved from IN_PROGRESS. Current status : %s", updateTicketBean.getItemId(),
 							itemOptional.get().getStatus()), null));
