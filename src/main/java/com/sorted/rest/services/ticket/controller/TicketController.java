@@ -16,7 +16,7 @@ import com.sorted.rest.common.websupport.base.BaseController;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.params.service.ParamService;
 import com.sorted.rest.services.ticket.beans.*;
-import com.sorted.rest.services.ticket.clients.ClientService;
+import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.*;
 import com.sorted.rest.services.ticket.entity.TicketCategoryEntity;
@@ -68,7 +68,7 @@ public class TicketController implements BaseController {
 	private BaseMapper<?, ?> mapper;
 
 	@Autowired
-	private ClientService clientService;
+	private TicketClientService ticketClientService;
 
 	@Autowired
 	private ParamService paramService;
@@ -198,7 +198,7 @@ public class TicketController implements BaseController {
 	private String getStoreCategoryForTicket(String storeId, String entityType) {
 		List<String> storeCategoryForTicketParam = Arrays.stream(paramService.getParam("STORE_CATEGORY_FOR_TICKET", "Good|").split("\\|"))
 				.collect(Collectors.toList());
-		return clientService.getFilteredOrDefaultAudience(entityType, storeId,
+		return ticketClientService.getFilteredOrDefaultAudience(entityType, storeId,
 				Arrays.stream(storeCategoryForTicketParam.get(1).split(",")).filter(s -> !StringUtils.isEmpty(s) && !StringUtils.isEmpty(s.trim()))
 						.map(String::trim).distinct().collect(Collectors.toList()), storeCategoryForTicketParam.get(0));
 	}
@@ -458,7 +458,7 @@ public class TicketController implements BaseController {
 							ticket.getMetadata().getOrderDetails().getDisplayOrderId())).map(ticket -> ticket.getMetadata().getOrderDetails().getDisplayOrderId())
 					.collect(Collectors.toSet());
 			;
-			Map<String, FranchiseOrderListBean> ordersDisplayIdMap = clientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
+			Map<String, FranchiseOrderListBean> ordersDisplayIdMap = ticketClientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
 					.collect(Collectors.toMap(FranchiseOrderListBean::getDisplayOrderId, Function.identity()));
 			for (TicketBean ticketBean : response.getData()) {
 				if (ticketBean.getMetadata().getOrderDetails() != null && ticketBean.getMetadata().getOrderDetails()

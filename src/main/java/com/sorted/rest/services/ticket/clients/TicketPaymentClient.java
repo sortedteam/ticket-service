@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(value = "payment", url = "${client.payment.url}", configuration = { FeignCustomConfiguration.class })
-public interface PaymentClient {
+public interface TicketPaymentClient {
 
 	@GetMapping("/payments/walletStatement/id/{id}")
 	WalletStatementBean fetchWalletStatementById(@PathVariable Integer id);

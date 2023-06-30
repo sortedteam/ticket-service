@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 @FeignClient(value = "warehouse", url = "${client.wms.url}")
-public interface WmsClient {
+public interface TicketWmsClient {
 
 	@GetMapping(value = "/api/v1/catalog/bulk-request/store-sku")
 	List<WhSkuResponse> getStoreSkuInventoryForBulkRequest(@RequestHeader Map<String, Object> headers, @RequestParam Set<String> skuCodes,

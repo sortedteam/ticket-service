@@ -9,7 +9,7 @@ import com.sorted.rest.services.ticket.beans.FranchiseOrderResponseBean;
 import com.sorted.rest.services.ticket.beans.ImsFranchiseOrderRefundBean;
 import com.sorted.rest.services.ticket.beans.ImsFranchiseOrderRefundItemBean;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
-import com.sorted.rest.services.ticket.clients.ClientService;
+import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketUpdateActions;
@@ -31,7 +31,7 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 	private TicketHistoryService ticketHistoryService;
 
 	@Autowired
-	private ClientService clientService;
+	private TicketClientService ticketClientService;
 
 	private String remarks;
 
@@ -63,7 +63,7 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		FranchiseOrderResponseBean refundResponse = clientService.imsProcessFranchiseRefundOrder(createRefundBean(item, ticketId));
+		FranchiseOrderResponseBean refundResponse = ticketClientService.imsProcessFranchiseRefundOrder(createRefundBean(item, ticketId));
 		item.getDetails().getOrderDetails().setRefundAmount(refundResponse.getFinalBillAmount());
 		setRemarks(String.format(TicketUpdateActions.PROCESS_ORDER_REFUND.getRemarks(), resolvedQuantity, item.getDetails().getOrderDetails().getIssueQty(),
 				item.getDetails().getOrderDetails().getUom()));

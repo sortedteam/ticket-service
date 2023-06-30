@@ -19,27 +19,27 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class ClientService {
+public class TicketClientService {
 
-	AppLogger _LOGGER = LoggingManager.getLogger(ClientService.class);
-
-	@Autowired
-	private StoreClient storeClient;
+	AppLogger _LOGGER = LoggingManager.getLogger(TicketClientService.class);
 
 	@Autowired
-	private AuthConsumerClient authConsumerClient;
+	private TicketStoreClient ticketStoreClient;
 
 	@Autowired
-	private OrderClient orderClient;
+	private TicketAuthConsumerClient authConsumerClient;
 
 	@Autowired
-	private PaymentClient paymentClient;
+	private TicketOrderClient ticketOrderClient;
 
 	@Autowired
-	private WmsClient wmsClient;
+	private TicketPaymentClient ticketPaymentClient;
 
 	@Autowired
-	private WidgetClient widgetClient;
+	private TicketWmsClient ticketWmsClient;
+
+	@Autowired
+	private TicketWidgetClient ticketWidgetClient;
 
 	@Value("${client.wms.auth_key}")
 	@Getter
@@ -62,7 +62,7 @@ public class ClientService {
 	public String getFilteredOrDefaultAudience(String entityType, String entityId, List<String> superset, String defaultAudience) {
 		String audience = null;
 		try {
-			audience = widgetClient.getFilteredAudience(TicketConstants.TICKET_RAISING_USER_USERTYPE, entityType, entityId, superset);
+			audience = ticketWidgetClient.getFilteredAudience(TicketConstants.TICKET_RAISING_USER_USERTYPE, entityType, entityId, superset);
 		} catch (Exception e) {
 			_LOGGER.error(String.format("Error while fetching filteredOrDefault audience for %s : %s from subset : %s with default : %s", entityType, entityId,
 					superset, defaultAudience), e);
@@ -72,7 +72,7 @@ public class ClientService {
 
 	public StoreDataResponse getStoreDataFromId(String storeId) {
 		try {
-			StoreDataResponse response = storeClient.getStoreDataFromId(storeId).get(0);
+			StoreDataResponse response = ticketStoreClient.getStoreDataFromId(storeId).get(0);
 			if (response == null || response.getId() == null) {
 				throw new ValidationException(new ErrorBean(Errors.NO_DATA_FOUND, "We are unable to locate the store"));
 			}
@@ -97,7 +97,7 @@ public class ClientService {
 		try {
 			Map<String, Object> headerMap = new HashMap<>();
 			headerMap.put("storeId", storeId);
-			orderResponseBean = orderClient.getFranchiseOrderInfo(headerMap, orderId);
+			orderResponseBean = ticketOrderClient.getFranchiseOrderInfo(headerMap, orderId);
 			return orderResponseBean;
 		} catch (FeignClientException f) {
 			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data", null);
@@ -118,7 +118,7 @@ public class ClientService {
 		try {
 			Map<String, Object> headerMap = new HashMap<>();
 			headerMap.put("rz-auth-key", RZ_AUTH_VALUE);
-			return wmsClient.getStoreSkuInventoryForBulkRequest(headerMap, skuCodes, storeId);
+			return ticketWmsClient.getStoreSkuInventoryForBulkRequest(headerMap, skuCodes, storeId);
 		} catch (FeignClientException f) {
 			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching while fetching wh skus data from warehouse", null);
 			try {
@@ -136,7 +136,7 @@ public class ClientService {
 
 	public WalletStatementBean fetchWalletStatementById(Integer id) {
 		try {
-			return paymentClient.fetchWalletStatementById(id);
+			return ticketPaymentClient.fetchWalletStatementById(id);
 		} catch (FeignClientException f) {
 			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching wallet statement", null);
 			try {
@@ -156,7 +156,7 @@ public class ClientService {
 		try {
 			Map<String, Object> headerMap = new HashMap<>();
 			headerMap.put("rz-auth-key", RZ_AUTH_VALUE);
-			return wmsClient.getStoreReturnByOrderId(headerMap, orderId);
+			return ticketWmsClient.getStoreReturnByOrderId(headerMap, orderId);
 		} catch (FeignClientException f) {
 			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching store return", null);
 			try {
@@ -174,7 +174,7 @@ public class ClientService {
 
 	public List<FranchiseOrderListBean> getFranchiseOrderByDisplayIds(Set<String> ids) {
 		try {
-			return orderClient.getFranchiseOrderByDisplayIds(ids);
+			return ticketOrderClient.getFranchiseOrderByDisplayIds(ids);
 		} catch (FeignClientException f) {
 			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data by display ids", null);
 			try {
@@ -192,7 +192,7 @@ public class ClientService {
 
 	public FranchiseOrderResponseBean imsProcessFranchiseRefundOrder(ImsFranchiseOrderRefundBean request) {
 		try {
-			return orderClient.imsProcessFranchiseRefundOrder(request);
+			return ticketOrderClient.imsProcessFranchiseRefundOrder(request);
 		} catch (FeignClientException f) {
 			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing order refund", null);
 			try {

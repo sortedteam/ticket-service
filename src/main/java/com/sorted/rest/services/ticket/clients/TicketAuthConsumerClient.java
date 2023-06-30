@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import java.util.Map;
 
 @FeignClient(value = "authConsumer", url = "${client.auth.url}", configuration = { FeignCustomConfiguration.class })
-public interface AuthConsumerClient {
+public interface TicketAuthConsumerClient {
 
 	@GetMapping(value = "/auth/internal/user/{customerId}")
 	UserServiceResponse getUserDetailsFromCustomerId(@RequestHeader Map<String, Object> headers, @PathVariable String customerId);
