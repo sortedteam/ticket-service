@@ -405,6 +405,9 @@ public class TicketController implements BaseController {
 			item.setNewAttachments(updateTicketBean.getAttachments());
 			item.setAttachments(Stream.concat(item.getAttachments().stream(), updateTicketBean.getAttachments().stream()).collect(Collectors.toList()));
 		}
+		if (StringUtils.isEmpty(updateTicketBean.getRemarks())) {
+			updateTicketBean.setRemarks(TicketConstants.UPDATED_TICKET_DEFAULT_REMARKS);
+		}
 
 		populateTicketDetailsAndInvokeUpdateActions(ticket, item, updateTicketBean);
 		ticket = ticketService.saveTicketWithUpdatedItems(ticket);
