@@ -69,8 +69,9 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
 		FranchiseOrderResponseBean refundResponse = ticketClientService.imsProcessFranchiseRefundOrder(createRefundBean(item, ticketId));
 		item.getDetails().getOrderDetails().setRefundAmount(refundResponse.getFinalBillAmount());
+		item.getDetails().getOrderDetails().setResolvedQty(resolvedQuantity);
 		setRemarks(String.format(TicketUpdateActions.PROCESS_ORDER_REFUND.getRemarks(), resolvedQuantity, item.getDetails().getOrderDetails().getIssueQty(),
-				item.getDetails().getOrderDetails().getUom()));
+				item.getDetails().getOrderDetails().getUom(), remarks));
 		item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
