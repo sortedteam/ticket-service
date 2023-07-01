@@ -581,16 +581,18 @@ public class TicketController implements BaseController {
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
 		Map<String, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getLabel, Function.identity(), (o1, o2) -> o1, HashMap::new));
-		if (!categoryMap.containsKey(TicketCategoryRoot.ORDER_ISSUE.toString())) {
-			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Order issue ticket category not found", null));
+		if (!categoryMap.containsKey(TicketCategoryRoot.ORDER_ISSUE.toString()) || !categoryMap.containsKey(
+				TicketConstants.STORE_RETURN_TICKET_CATEGORY_LEAF_LABEL)) {
+			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Relevant order issue ticket category not found", null));
 		}
-		TicketCategoryEntity category = categoryMap.get(TicketCategoryRoot.ORDER_ISSUE.toString());
+		TicketCategoryEntity categoryRoot = categoryMap.get(TicketCategoryRoot.ORDER_ISSUE.toString());
+		TicketCategoryEntity categoryLeaf = categoryMap.get(TicketConstants.STORE_RETURN_TICKET_CATEGORY_LEAF_LABEL);
 		Map<String, TicketItemEntity> ticketItemSkuMap = new HashMap<>();
 
-		TicketEntity ticket = ticketService.findByReferenceIdAndCategoryRootId(request.getOrderId(), category.getId()).get(0);
+		TicketEntity ticket = ticketService.findByReferenceIdAndCategoryRootId(request.getOrderId(), categoryRoot.getId()).get(0);
 
 		if (ticket == null) {
-			ticket = createTicketForStoreReturn(request, category);
+			ticket = createTicketForStoreReturn(request, categoryRoot);
 		} else {
 			ticketItemSkuMap = ticket.getItems().stream()
 					.filter(item -> !item.getStatus().equals(TicketStatus.CLOSED) && !item.getStatus().equals(TicketStatus.CANCELLED) && item.getDetails()
@@ -605,7 +607,7 @@ public class TicketController implements BaseController {
 			if (ticketItemSkuMap.containsKey(requestItem.getSkuCode())) {
 				updateTicketItems.add(ticketItemSkuMap.get(requestItem.getSkuCode()));
 			} else {
-				TicketItemEntity ticketItem = createTicketItemForStoreReturn(requestItem, category);
+				TicketItemEntity ticketItem = createTicketItemForStoreReturn(requestItem, categoryLeaf);
 				insertTicketItems.add(ticketItem);
 			}
 		}
