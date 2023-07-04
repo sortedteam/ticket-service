@@ -38,7 +38,7 @@ public class TicketEntity extends BaseEntity {
 	@Column
 	private String requesterEntityCategory;
 
-	@Column(unique = true)
+	@Column
 	private String referenceId;
 
 	@Column(name = "category_root_id", insertable = false, updatable = false, nullable = false)
