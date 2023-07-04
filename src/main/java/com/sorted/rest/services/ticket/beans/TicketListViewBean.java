@@ -1,5 +1,6 @@
 package com.sorted.rest.services.ticket.beans;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -22,22 +23,22 @@ public class TicketListViewBean implements Serializable {
 
 	private Integer categoryRootId;
 
-	private Integer priority;
+	private TicketMetadataBean metadata;
 
-	private String assignedTeam;
+	@JsonIgnore
+	private TicketCategoryBean categoryRoot;
 
-	private Date assignedAt;
+	private Date lastAddedAt;
 
-	private String status;
+	private Integer draftCount;
 
-	private TicketCategoryNode category;
+	private Integer pendingCount;
 
-	private Date createdAt;
+	private Integer closedCount;
 
-	private Date modifiedAt;
+	private Integer cancelledCount;
 
 	public static TicketListViewBean newInstance() {
 		return new TicketListViewBean();
 	}
-
 }
