@@ -276,24 +276,28 @@ public class TicketActionUtils {
 			return;
 		}
 		boolean updated = false;
-		if (!storeReturnItemResponse.getQuantity().equals(item.getDetails().getOrderDetails().getReturnQty())) {
+		if (storeReturnItemResponse.getQuantity() != null && !storeReturnItemResponse.getQuantity()
+				.equals(item.getDetails().getOrderDetails().getReturnQty())) {
 			updated = true;
 			item.getDetails().getOrderDetails().setReturnQty(storeReturnItemResponse.getQuantity());
 		}
 
-		if (!storeReturnItemResponse.getRemarks().equals(item.getDetails().getOrderDetails().getReturnRemarks())) {
+		if (storeReturnItemResponse.getRemarks() != null && !storeReturnItemResponse.getRemarks()
+				.equals(item.getDetails().getOrderDetails().getReturnRemarks())) {
 			if (!updated)
 				updated = true;
 			item.getDetails().getOrderDetails().setReturnRemarks(storeReturnItemResponse.getRemarks());
 		}
 
-		if (!storeReturnItemResponse.getQaResult().equals(item.getDetails().getOrderDetails().getReturnQaResult())) {
+		if (storeReturnItemResponse.getQaResult() != null && !storeReturnItemResponse.getQaResult()
+				.equals(item.getDetails().getOrderDetails().getReturnQaResult())) {
 			if (!updated)
 				updated = true;
 			item.getDetails().getOrderDetails().setReturnQaResult(storeReturnItemResponse.getQaResult());
 		}
 
-		if (!storeReturnItemResponse.getRefundQty().equals(item.getDetails().getOrderDetails().getReturnRefundQty())) {
+		if (storeReturnItemResponse.getRefundQty() != null && !storeReturnItemResponse.getRefundQty()
+				.equals(item.getDetails().getOrderDetails().getReturnRefundQty())) {
 			if (!updated)
 				updated = true;
 			item.getDetails().getOrderDetails().setReturnRefundQty(storeReturnItemResponse.getRefundQty());
