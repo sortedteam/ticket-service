@@ -118,7 +118,6 @@ public class TicketController implements BaseController {
 		ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
 	}
 
-	// todo: API not in use, to be integrated in subsequent releases
 	@ApiOperation(value = "create tickets for partner app", nickname = "createTicketsForPartnerApp")
 	@PostMapping(path = "/tickets/partner-app")
 	@ResponseStatus(HttpStatus.CREATED)
