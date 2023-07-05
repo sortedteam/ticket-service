@@ -437,9 +437,9 @@ public class TicketController implements BaseController {
 
 	@ApiOperation(value = "fetch paginated lists of tickets for ims", nickname = "fetchTicketsIms")
 	@GetMapping(path = "/tickets/ims")
-	public PageAndSortResult<TicketListViewBean> fetchTicketsIms(@RequestParam(defaultValue = "1") Integer pageNo, @RequestParam(defaultValue = "25") Integer pageSize,
+	public PageAndSortResult<TicketBean> fetchTicketsIms(@RequestParam(defaultValue = "1") Integer pageNo, @RequestParam(defaultValue = "25") Integer pageSize,
 			@RequestParam(required = false) String sortBy, @RequestParam(required = false) PageAndSortRequest.SortDirection sortDirection,
-			HttpServletRequest request, @RequestParam Boolean orderRelated, @RequestParam(required = false) String lastAddedOn,
+			HttpServletRequest request, @RequestParam Boolean orderRelated, @RequestParam Boolean showDraft, @RequestParam(required = false) String lastAddedOn,
 			@RequestParam(required = false) Boolean hasDraft, @RequestParam(required = false) Boolean hasPending,
 			@RequestParam(required = false) Boolean hasClosed) throws ParseException {
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
@@ -455,19 +455,25 @@ public class TicketController implements BaseController {
 		updateFilters(filters, orderRelated, lastAddedOn, hasDraft, hasPending, hasClosed, ticketCategoryEntities);
 
 		PageAndSortResult<TicketEntity> tickets = ticketService.getAllTicketsPaginated(pageSize, pageNo, filters, sort);
-		PageAndSortResult<TicketListViewBean> response = prepareResponsePageData(tickets, TicketListViewBean.class);
+		PageAndSortResult<TicketBean> response = prepareResponsePageData(tickets, TicketBean.class);
+		filterTicketOnShowDraft(showDraft, response.getData());
 		if (orderRelated) {
 			Set<String> displayOrderIds = response.getData().stream().filter(ticket -> ticket.getMetadata().getOrderDetails() != null && !StringUtils.isEmpty(
 							ticket.getMetadata().getOrderDetails().getDisplayOrderId())).map(ticket -> ticket.getMetadata().getOrderDetails().getDisplayOrderId())
 					.collect(Collectors.toSet());
 			Map<String, FranchiseOrderListBean> ordersDisplayIdMap = ticketClientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
 					.collect(Collectors.toMap(FranchiseOrderListBean::getDisplayOrderId, Function.identity()));
-			for (TicketListViewBean ticketBean : response.getData()) {
+			for (TicketBean ticketBean : response.getData()) {
 				if (ticketBean.getMetadata().getOrderDetails() != null && ticketBean.getMetadata().getOrderDetails()
 						.getDisplayOrderId() != null && ordersDisplayIdMap.containsKey(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId())) {
 					FranchiseOrderListBean orderListBean = ordersDisplayIdMap.get(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId());
 					ticketBean.getMetadata().getOrderDetails().setOrderStatus(orderListBean.getStatus());
 				}
+			}
+		}
+		for (TicketBean ticketBean : response.getData()) {
+			for (TicketItemBean itemBean : ticketBean.getItems()) {
+				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
 			}
 		}
 		return response;
@@ -495,6 +501,7 @@ public class TicketController implements BaseController {
 		if (categoryRootIds.isEmpty()) {
 			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Any relevant issue ticket category not found", null));
 		}
+		filters.remove("showDraft");
 		filters.remove("orderRelated");
 		filters.put("categoryRootId", categoryRootIds);
 
@@ -761,8 +768,6 @@ public class TicketController implements BaseController {
 		TicketBean ticketBean = getMapper().mapSrcToDest(ticket, TicketBean.newInstance());
 		if (showOnlyDraft) {
 			filterTicketOnShowDraft(true, Collections.singletonList(ticketBean));
-		} else {
-			filterTicketOnShowDraft(false, Collections.singletonList(ticketBean));
 		}
 		if (ticketBean.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
 			Set<String> displayOrderIds = ticketBean.getMetadata().getOrderDetails() != null && !StringUtils.isEmpty(
