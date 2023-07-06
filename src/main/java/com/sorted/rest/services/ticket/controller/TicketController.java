@@ -470,6 +470,14 @@ public class TicketController implements BaseController {
 				}
 			}
 		}
+		if (hasDraft == null || !hasDraft) {
+			List<TicketListViewBean> removeList = new ArrayList<>();
+			for (TicketListViewBean ticketBean : response.getData()) {
+				if (ticketBean.getDraftCount() > 0 && ticketBean.getPendingCount() == 0 && ticketBean.getCancelledCount() == 0 && ticketBean.getClosedCount() == 0){
+					removeList.add(ticketBean);
+				}
+			} response.getData().removeAll(removeList);
+		}
 		return response;
 	}
 
@@ -535,27 +543,13 @@ public class TicketController implements BaseController {
 
 	private void filterTicketOnShowDraft(Boolean showDraft, List<TicketBean> ticketBeans) {
 		List<TicketBean> removeList = new ArrayList<>();
-
-		if (showDraft) {
-			for (TicketBean ticketBean : ticketBeans) {
-				List<TicketItemBean> filteredItems = ticketBean.getItems().stream().filter(item -> item.getStatus().equals(TicketStatus.DRAFT.toString()))
-						.collect(Collectors.toList());
-				if (filteredItems.isEmpty()) {
-					removeList.add(ticketBean);
-				} else {
-					ticketBean.setItems(filteredItems);
-				}
+		for (TicketBean ticketBean : ticketBeans) {
+			List<TicketItemBean> filteredItems = ticketBean.getItems().stream().filter(item -> showDraft && item.getStatus().equals(TicketStatus.DRAFT.toString()))
+					.collect(Collectors.toList());
+			if (filteredItems.isEmpty()) {
+				removeList.add(ticketBean);
 			}
-		} else {
-			for (TicketBean ticketBean : ticketBeans) {
-				List<TicketItemBean> filteredItems = ticketBean.getItems().stream().filter(item -> !item.getStatus().equals(TicketStatus.DRAFT.toString()))
-						.collect(Collectors.toList());
-				if (filteredItems.isEmpty()) {
-					removeList.add(ticketBean);
-				} else {
-					ticketBean.setItems(filteredItems);
-				}
-			}
+			ticketBean.setItems(filteredItems);
 		}
 		ticketBeans.removeAll(removeList);
 	}
@@ -673,10 +667,12 @@ public class TicketController implements BaseController {
 		}
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
 		TicketBean ticketBean = getMapper().mapSrcToDest(ticket, TicketBean.newInstance());
+		List<TicketBean> ticketBeans = new ArrayList<>();
+		ticketBeans.add(ticketBean);
 		if (showOnlyDraft) {
-			filterTicketOnShowDraft(true, Collections.singletonList(ticketBean));
+			filterTicketOnShowDraft(true, ticketBeans);
 		} else {
-			filterTicketOnShowDraft(false, Collections.singletonList(ticketBean));
+			filterTicketOnShowDraft(false, ticketBeans);
 		}
 		if (ticketBean.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
 			Set<String> displayOrderIds = ticketBean.getMetadata().getOrderDetails() != null && !StringUtils.isEmpty(
