@@ -544,7 +544,7 @@ public class TicketController implements BaseController {
 	private void filterTicketOnShowDraft(Boolean showDraft, List<TicketBean> ticketBeans) {
 		List<TicketBean> removeList = new ArrayList<>();
 		for (TicketBean ticketBean : ticketBeans) {
-			List<TicketItemBean> filteredItems = ticketBean.getItems().stream().filter(item -> showDraft && item.getStatus().equals(TicketStatus.DRAFT.toString()))
+			List<TicketItemBean> filteredItems = ticketBean.getItems().stream().filter(item -> !(showDraft ^ item.getStatus().equals(TicketStatus.DRAFT.toString())))
 					.collect(Collectors.toList());
 			if (filteredItems.isEmpty()) {
 				removeList.add(ticketBean);
