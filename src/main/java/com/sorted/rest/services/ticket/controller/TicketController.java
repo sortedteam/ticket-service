@@ -712,44 +712,6 @@ public class TicketController implements BaseController {
 		return ResponseEntity.ok(ticketBeans);
 	}
 
-	@ApiOperation(value = "fetch paginated lists of tickets for ims", nickname = "fetchTicketListIms")
-	@GetMapping(path = "/tickets/ims/list")
-	public PageAndSortResult<TicketListViewBean> fetchTicketListIms(@RequestParam(defaultValue = "1") Integer pageNo,
-			@RequestParam(defaultValue = "25") Integer pageSize, @RequestParam(required = false) String sortBy,
-			@RequestParam(required = false) PageAndSortRequest.SortDirection sortDirection, HttpServletRequest request, @RequestParam Boolean orderRelated,
-			@RequestParam(required = false) String lastAddedOn, @RequestParam(required = false) Boolean hasDraft,
-			@RequestParam(required = false) Boolean hasPending, @RequestParam(required = false) Boolean hasClosed) throws ParseException {
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
-
-		Map<String, SortDirection> sort;
-		if (sortBy != null) {
-			sort = buildSortMap(sortBy, sortDirection);
-		} else {
-			sort = new LinkedHashMap<>();
-			sort.put("lastAddedAt", PageAndSortRequest.SortDirection.DESC);
-		}
-		final Map<String, Object> filters = getSearchParams(request, TicketEntity.class);
-		updateFilters(filters, orderRelated, lastAddedOn, hasDraft, hasPending, hasClosed, ticketCategoryEntities);
-
-		PageAndSortResult<TicketEntity> tickets = ticketService.getAllTicketsPaginated(pageSize, pageNo, filters, sort);
-		PageAndSortResult<TicketListViewBean> response = prepareResponsePageData(tickets, TicketListViewBean.class);
-		if (orderRelated) {
-			Set<String> displayOrderIds = response.getData().stream().filter(ticket -> ticket.getMetadata().getOrderDetails() != null && !StringUtils.isEmpty(
-							ticket.getMetadata().getOrderDetails().getDisplayOrderId())).map(ticket -> ticket.getMetadata().getOrderDetails().getDisplayOrderId())
-					.collect(Collectors.toSet());
-			Map<String, FranchiseOrderListBean> ordersDisplayIdMap = ticketClientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
-					.collect(Collectors.toMap(FranchiseOrderListBean::getDisplayOrderId, Function.identity()));
-			for (TicketListViewBean ticketBean : response.getData()) {
-				if (ticketBean.getMetadata().getOrderDetails() != null && ticketBean.getMetadata().getOrderDetails()
-						.getDisplayOrderId() != null && ordersDisplayIdMap.containsKey(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId())) {
-					FranchiseOrderListBean orderListBean = ordersDisplayIdMap.get(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId());
-					ticketBean.getMetadata().getOrderDetails().setOrderStatus(orderListBean.getStatus());
-				}
-			}
-		}
-		return response;
-	}
-
 	@ApiOperation(value = "fetch ticket for ims by id", nickname = "fetchTicketByIdIms")
 	@GetMapping(path = "/tickets/{id}/ims")
 	public ResponseEntity<TicketBean> fetchTicketByIdIms(@PathVariable Long id, @RequestParam(defaultValue = "false") Boolean showOnlyDraft) {
