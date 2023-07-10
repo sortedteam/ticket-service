@@ -3,6 +3,7 @@ package com.sorted.rest.services.ticket.actions;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
+import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
 import com.sorted.rest.services.ticket.services.TicketHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +38,8 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 	}
 
 	@Override
-	public Boolean isApplicable(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		if (item.getDetails().getOrderDetails() != null) {
-
+	public Boolean isApplicable(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
+		if (item.getDetails().getOrderDetails() != null && ticket.getMetadata().getOrderDetails() != null) {
 			item.getDetails().getOrderDetails().setIsReturnIssue(true);
 			if (item.getDetails().getOrderDetails().getProrataAmount() != null && item.getDetails().getOrderDetails().getIssueQty() != null && item.getDetails()
 					.getOrderDetails().getDeliveredQty() != null && item.getDetails().getOrderDetails().getDeliveredQty().compareTo(0d) == 1) {
@@ -47,8 +47,11 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 						.multiply(BigDecimal.valueOf(item.getDetails().getOrderDetails().getIssueQty()))
 						.divide(BigDecimal.valueOf(item.getDetails().getOrderDetails().getDeliveredQty()), 2, RoundingMode.HALF_UP).doubleValue());
 			}
-
 			if (item.getDetails().getOrderDetails().getIssueQty() != null && item.getDetails().getOrderDetails().getRefundableQty() != null) {
+				ticket.getMetadata().getOrderDetails().setTotalRefundableAmount(BigDecimal.valueOf(
+						ticket.getMetadata().getOrderDetails().getTotalRefundableAmount() != null ?
+								ticket.getMetadata().getOrderDetails().getTotalRefundableAmount() :
+								0d).add(BigDecimal.valueOf(item.getDetails().getOrderDetails().getRefundableAmount())).doubleValue());
 				return item.getDetails().getOrderDetails().getRefundableQty().compareTo(item.getDetails().getOrderDetails().getIssueQty()) != -1;
 			}
 		}
@@ -56,14 +59,14 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 	}
 
 	@Override
-	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
+	public Boolean apply(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
 		item.getDetails().getOrderDetails().setIsAutoRefundEligible(true);
 		item.setAssignedTeam(team);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
-		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);
+		ticketHistoryService.addTicketHistory(ticket.getId(), item.getId(), action, actionDetailsBean);
 		return true;
 	}
 }

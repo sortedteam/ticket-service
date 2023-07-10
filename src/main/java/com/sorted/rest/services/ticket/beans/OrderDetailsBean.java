@@ -27,6 +27,10 @@ public class OrderDetailsBean implements Serializable {
 
 	private String deliverySlot;
 
+	private Double totalRefundableAmount;
+
+	private Double totalRefundAmount;
+
 	public static OrderDetailsBean newInstance() {
 		return new OrderDetailsBean();
 	}

@@ -6,6 +6,7 @@ import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketUpdateActions;
+import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
 import com.sorted.rest.services.ticket.services.TicketHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,12 +36,12 @@ public class CloseTicketAction implements TicketActionsInterface {
 	}
 
 	@Override
-	public Boolean isApplicable(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
+	public Boolean isApplicable(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
 		return item.getStatus().equals(TicketStatus.IN_PROGRESS);
 	}
 
 	@Override
-	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
+	public Boolean apply(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
 		setRemarks(String.format(TicketUpdateActions.CLOSE_WITH_REMARKS.getRemarks(), remarks));
 		item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 		item.setAssignedAt(new Date());
@@ -49,7 +50,7 @@ public class CloseTicketAction implements TicketActionsInterface {
 		item.setStatus(TicketStatus.CLOSED);
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
-		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);
+		ticketHistoryService.addTicketHistory(ticket.getId(), item.getId(), action, actionDetailsBean);
 		return true;
 	}
 }
