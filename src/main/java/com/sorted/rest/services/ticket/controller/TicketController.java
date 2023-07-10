@@ -306,7 +306,7 @@ public class TicketController implements BaseController {
 				}
 
 				if (item.getStatus().equals(TicketStatus.IN_PROGRESS)) {
-					ticketActionUtils.invokeTicketRaiseAction(item, requestTicket.getId());
+					ticketActionUtils.invokeTicketRaiseAction(item, requestTicket);
 				}
 			}
 			ticketRequestUtils.clearTicketRequest();
@@ -427,7 +427,7 @@ public class TicketController implements BaseController {
 	private void populateTicketDetailsAndInvokeUpdateActions(TicketEntity requestTicket, TicketItemEntity requestItem, UpdateTicketBean updateTicketBean) {
 		try {
 			ticketRequestUtils.populateTicketRequestAsPerCategoryRoot(requestTicket, Collections.singletonList(requestItem));
-			ticketActionUtils.invokeTicketUpdateAction(requestItem, requestTicket.getId(), updateTicketBean);
+			ticketActionUtils.invokeTicketUpdateAction(requestItem, requestTicket, updateTicketBean);
 			ticketRequestUtils.clearTicketRequest();
 		} catch (Exception e) {
 			ticketRequestUtils.clearTicketRequest();
@@ -437,11 +437,11 @@ public class TicketController implements BaseController {
 
 	@ApiOperation(value = "fetch paginated lists of tickets for ims", nickname = "fetchTicketsIms")
 	@GetMapping(path = "/tickets/ims")
-	public PageAndSortResult<TicketListViewBean> fetchTicketsIms(@RequestParam(defaultValue = "1") Integer pageNo, @RequestParam(defaultValue = "25") Integer pageSize,
-			@RequestParam(required = false) String sortBy, @RequestParam(required = false) PageAndSortRequest.SortDirection sortDirection,
-			HttpServletRequest request, @RequestParam Boolean orderRelated, @RequestParam(required = false) String lastAddedOn,
-			@RequestParam(required = false) Boolean hasDraft, @RequestParam(required = false) Boolean hasPending,
-			@RequestParam(required = false) Boolean hasClosed) throws ParseException {
+	public PageAndSortResult<TicketListViewBean> fetchTicketsIms(@RequestParam(defaultValue = "1") Integer pageNo,
+			@RequestParam(defaultValue = "25") Integer pageSize, @RequestParam(required = false) String sortBy,
+			@RequestParam(required = false) PageAndSortRequest.SortDirection sortDirection, HttpServletRequest request, @RequestParam Boolean orderRelated,
+			@RequestParam(required = false) String lastAddedOn, @RequestParam(required = false) Boolean hasDraft,
+			@RequestParam(required = false) Boolean hasPending, @RequestParam(required = false) Boolean hasClosed) throws ParseException {
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
 
 		Map<String, SortDirection> sort;
@@ -536,8 +536,8 @@ public class TicketController implements BaseController {
 	private void filterTicketOnShowDraft(Boolean showDraft, List<TicketBean> ticketBeans) {
 		List<TicketBean> removeList = new ArrayList<>();
 		for (TicketBean ticketBean : ticketBeans) {
-			List<TicketItemBean> filteredItems = ticketBean.getItems().stream().filter(item -> !(showDraft ^ item.getStatus().equals(TicketStatus.DRAFT.toString())))
-					.collect(Collectors.toList());
+			List<TicketItemBean> filteredItems = ticketBean.getItems().stream()
+					.filter(item -> !(showDraft ^ item.getStatus().equals(TicketStatus.DRAFT.toString()))).collect(Collectors.toList());
 			if (filteredItems.isEmpty()) {
 				removeList.add(ticketBean);
 			}
