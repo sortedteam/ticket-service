@@ -437,11 +437,11 @@ public class TicketController implements BaseController {
 
 	@ApiOperation(value = "fetch paginated lists of tickets for ims", nickname = "fetchTicketsIms")
 	@GetMapping(path = "/tickets/ims")
-	public PageAndSortResult<TicketBean> fetchTicketsIms(@RequestParam(defaultValue = "1") Integer pageNo, @RequestParam(defaultValue = "25") Integer pageSize,
-			@RequestParam(required = false) String sortBy, @RequestParam(required = false) PageAndSortRequest.SortDirection sortDirection,
-			HttpServletRequest request, @RequestParam Boolean orderRelated, @RequestParam Boolean showDraft, @RequestParam(required = false) String lastAddedOn,
-			@RequestParam(required = false) Boolean hasDraft, @RequestParam(required = false) Boolean hasPending,
-			@RequestParam(required = false) Boolean hasClosed) throws ParseException {
+	public PageAndSortResult<TicketListViewBean> fetchTicketsIms(@RequestParam(defaultValue = "1") Integer pageNo,
+			@RequestParam(defaultValue = "25") Integer pageSize, @RequestParam(required = false) String sortBy,
+			@RequestParam(required = false) PageAndSortRequest.SortDirection sortDirection, HttpServletRequest request, @RequestParam Boolean orderRelated,
+			@RequestParam(required = false) String lastAddedOn, @RequestParam(required = false) Boolean hasDraft,
+			@RequestParam(required = false) Boolean hasPending, @RequestParam(required = false) Boolean hasClosed) throws ParseException {
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
 
 		Map<String, SortDirection> sort;
@@ -455,25 +455,19 @@ public class TicketController implements BaseController {
 		updateFilters(filters, orderRelated, lastAddedOn, hasDraft, hasPending, hasClosed, ticketCategoryEntities);
 
 		PageAndSortResult<TicketEntity> tickets = ticketService.getAllTicketsPaginated(pageSize, pageNo, filters, sort);
-		PageAndSortResult<TicketBean> response = prepareResponsePageData(tickets, TicketBean.class);
-		filterTicketOnShowDraft(showDraft, response.getData());
+		PageAndSortResult<TicketListViewBean> response = prepareResponsePageData(tickets, TicketListViewBean.class);
 		if (orderRelated) {
 			Set<String> displayOrderIds = response.getData().stream().filter(ticket -> ticket.getMetadata().getOrderDetails() != null && !StringUtils.isEmpty(
 							ticket.getMetadata().getOrderDetails().getDisplayOrderId())).map(ticket -> ticket.getMetadata().getOrderDetails().getDisplayOrderId())
 					.collect(Collectors.toSet());
 			Map<String, FranchiseOrderListBean> ordersDisplayIdMap = ticketClientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
 					.collect(Collectors.toMap(FranchiseOrderListBean::getDisplayOrderId, Function.identity()));
-			for (TicketBean ticketBean : response.getData()) {
+			for (TicketListViewBean ticketBean : response.getData()) {
 				if (ticketBean.getMetadata().getOrderDetails() != null && ticketBean.getMetadata().getOrderDetails()
 						.getDisplayOrderId() != null && ordersDisplayIdMap.containsKey(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId())) {
 					FranchiseOrderListBean orderListBean = ordersDisplayIdMap.get(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId());
 					ticketBean.getMetadata().getOrderDetails().setOrderStatus(orderListBean.getStatus());
 				}
-			}
-		}
-		for (TicketBean ticketBean : response.getData()) {
-			for (TicketItemBean itemBean : ticketBean.getItems()) {
-				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
 			}
 		}
 		return response;
@@ -501,7 +495,6 @@ public class TicketController implements BaseController {
 		if (categoryRootIds.isEmpty()) {
 			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Any relevant issue ticket category not found", null));
 		}
-		filters.remove("showDraft");
 		filters.remove("orderRelated");
 		filters.put("categoryRootId", categoryRootIds);
 
@@ -542,27 +535,13 @@ public class TicketController implements BaseController {
 
 	private void filterTicketOnShowDraft(Boolean showDraft, List<TicketBean> ticketBeans) {
 		List<TicketBean> removeList = new ArrayList<>();
-
-		if (showDraft) {
-			for (TicketBean ticketBean : ticketBeans) {
-				List<TicketItemBean> filteredItems = ticketBean.getItems().stream().filter(item -> item.getStatus().equals(TicketStatus.DRAFT.toString()))
-						.collect(Collectors.toList());
-				if (filteredItems.isEmpty()) {
-					removeList.add(ticketBean);
-				} else {
-					ticketBean.setItems(filteredItems);
-				}
+		for (TicketBean ticketBean : ticketBeans) {
+			List<TicketItemBean> filteredItems = ticketBean.getItems().stream()
+					.filter(item -> !(showDraft ^ item.getStatus().equals(TicketStatus.DRAFT.toString()))).collect(Collectors.toList());
+			if (filteredItems.isEmpty()) {
+				removeList.add(ticketBean);
 			}
-		} else {
-			for (TicketBean ticketBean : ticketBeans) {
-				List<TicketItemBean> filteredItems = ticketBean.getItems().stream().filter(item -> !item.getStatus().equals(TicketStatus.DRAFT.toString()))
-						.collect(Collectors.toList());
-				if (filteredItems.isEmpty()) {
-					removeList.add(ticketBean);
-				} else {
-					ticketBean.setItems(filteredItems);
-				}
-			}
+			ticketBean.setItems(filteredItems);
 		}
 		ticketBeans.removeAll(removeList);
 	}
@@ -669,6 +648,39 @@ public class TicketController implements BaseController {
 	@PostMapping(path = "/tickets/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<List<String>> uploadFiles(@RequestParam("files") MultipartFile[] files) {
 		return ResponseEntity.ok(ticketService.uploadFiles(files));
+	}
+
+	@ApiOperation(value = "fetch ticket for ims by id", nickname = "fetchTicketByIdIms")
+	@GetMapping(path = "/tickets/{id}/ims")
+	public ResponseEntity<TicketBean> fetchTicketByIdIms(@PathVariable Long id, @RequestParam(defaultValue = "false") Boolean showOnlyDraft) {
+		TicketEntity ticket = ticketService.findById(id);
+		if (ticket == null) {
+			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket with id : %s", id), null));
+		}
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		TicketBean ticketBean = getMapper().mapSrcToDest(ticket, TicketBean.newInstance());
+		List<TicketBean> ticketBeans = new ArrayList<>();
+		ticketBeans.add(ticketBean);
+		if (showOnlyDraft) {
+			filterTicketOnShowDraft(true, ticketBeans);
+		}
+		if (ticketBean.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
+			Set<String> displayOrderIds = ticketBean.getMetadata().getOrderDetails() != null && !StringUtils.isEmpty(
+					ticketBean.getMetadata().getOrderDetails().getDisplayOrderId()) ?
+					Collections.singleton(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId()) :
+					new HashSet<>();
+			Map<String, FranchiseOrderListBean> ordersDisplayIdMap = ticketClientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
+					.collect(Collectors.toMap(FranchiseOrderListBean::getDisplayOrderId, Function.identity()));
+			if (ticketBean.getMetadata().getOrderDetails() != null && ticketBean.getMetadata().getOrderDetails()
+					.getDisplayOrderId() != null && ordersDisplayIdMap.containsKey(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId())) {
+				FranchiseOrderListBean orderListBean = ordersDisplayIdMap.get(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId());
+				ticketBean.getMetadata().getOrderDetails().setOrderStatus(orderListBean.getStatus());
+			}
+		}
+		for (TicketItemBean itemBean : ticketBean.getItems()) {
+			setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+		}
+		return ResponseEntity.ok(ticketBean);
 	}
 
 	@ApiOperation(value = "fetch tickets for partner app", nickname = "fetchTicketsForPartnerApp")

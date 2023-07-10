@@ -203,6 +203,7 @@ public class TicketClientService {
 			}
 			throw new ValidationException(error);
 		} catch (Exception e) {
+			_LOGGER.error(String.format("Error while refunding with request : %s ", request), e);
 			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing order refund"));
 		}
 	}
