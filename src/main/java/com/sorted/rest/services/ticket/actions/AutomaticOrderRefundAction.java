@@ -41,12 +41,11 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 		if (item.getDetails().getOrderDetails() != null) {
 
 			item.getDetails().getOrderDetails().setIsReturnIssue(true);
-			if (item.getDetails().getOrderDetails().getProrataAmount() != null && item.getDetails().getOrderDetails()
-					.getDeliveredQty() != null && item.getDetails().getOrderDetails().getIssueQty() != null) {
-
+			if (item.getDetails().getOrderDetails().getProrataAmount() != null && item.getDetails().getOrderDetails().getIssueQty() != null && item.getDetails()
+					.getOrderDetails().getDeliveredQty() != null && item.getDetails().getOrderDetails().getDeliveredQty().compareTo(0d) == 1) {
 				item.getDetails().getOrderDetails().setRefundableAmount(BigDecimal.valueOf(item.getDetails().getOrderDetails().getProrataAmount())
-						.divide(BigDecimal.valueOf(item.getDetails().getOrderDetails().getDeliveredQty()))
-						.multiply(BigDecimal.valueOf(item.getDetails().getOrderDetails().getIssueQty())).setScale(2, RoundingMode.HALF_UP).doubleValue());
+						.multiply(BigDecimal.valueOf(item.getDetails().getOrderDetails().getIssueQty()))
+						.divide(BigDecimal.valueOf(item.getDetails().getOrderDetails().getDeliveredQty()), 2, RoundingMode.HALF_UP).doubleValue());
 			}
 
 			if (item.getDetails().getOrderDetails().getIssueQty() != null && item.getDetails().getOrderDetails().getRefundableQty() != null) {
