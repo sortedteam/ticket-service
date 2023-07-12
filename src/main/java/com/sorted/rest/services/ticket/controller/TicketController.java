@@ -484,7 +484,7 @@ public class TicketController implements BaseController {
 		} else {
 			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.POS_ISSUE.toString()));
 			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.PAYMENT_ISSUE.toString()));
-			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.PRICING_ISSUE.toString()));
+			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.OTHER_ISSUE.toString()));
 			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.APP_ISSUE.toString()));
 		}
 		List<Integer> categoryRootIds = new ArrayList<>();
