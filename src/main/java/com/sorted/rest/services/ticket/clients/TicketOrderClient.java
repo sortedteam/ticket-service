@@ -22,6 +22,6 @@ public interface TicketOrderClient {
 	List<FranchiseOrderListBean> getFranchiseOrderByDisplayIds(@RequestParam Set<String> ids);
 
 	@PostMapping("/orders/franchise/ims/refund")
-	FranchiseOrderResponseBean imsProcessFranchiseRefundOrder(@RequestBody ImsFranchiseOrderRefundBean request);
+	FranchiseOrderResponseBean imsProcessFranchiseRefundOrder(@RequestBody ImsFranchiseOrderRefundBean request, @RequestParam String key);
 
 }
