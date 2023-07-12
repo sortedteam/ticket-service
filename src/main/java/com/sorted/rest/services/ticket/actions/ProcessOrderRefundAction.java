@@ -69,7 +69,8 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean apply(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		FranchiseOrderResponseBean refundResponse = ticketClientService.imsProcessFranchiseRefundOrder(createRefundBean(item, ticket.getId()));
+		FranchiseOrderResponseBean refundResponse = ticketClientService.imsProcessFranchiseRefundOrder(createRefundBean(item, ticket.getId()),
+				generateClientKeyForRefund(ticket.getId(), item.getId()));
 		item.getDetails().getOrderDetails().setRefundAmount(refundResponse.getFinalBillAmount());
 		item.getDetails().getOrderDetails().setResolvedQty(resolvedQuantity);
 		setRemarks(String.format(TicketUpdateActions.PROCESS_ORDER_REFUND.getRemarks(), resolvedQuantity, item.getDetails().getOrderDetails().getIssueQty(),
@@ -106,5 +107,9 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 		franchiseOrderRefundBean.setParentOrderId(item.getDetails().getOrderDetails().getOrderId());
 		franchiseOrderRefundBean.setRefundOrderItems(Collections.singletonList(franchiseOrderRefundItemBean));
 		return franchiseOrderRefundBean;
+	}
+
+	private String generateClientKeyForRefund(Long ticketId, Long ticketItemId) {
+		return TicketConstants.CLIENT_KEY_FOR_REFUND + "|" + ticketId + "|" + ticketItemId;
 	}
 }
