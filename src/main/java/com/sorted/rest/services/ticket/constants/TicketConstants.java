@@ -26,6 +26,8 @@ public class TicketConstants {
 
 	public static final BigDecimal DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR = BigDecimal.ONE;
 
+	public static final String CLIENT_KEY_FOR_REFUND = "REFUND_VIA_TICKET";
+
 	public enum TicketStatus {
 
 		DRAFT, IN_PROGRESS, CLOSED, CANCELLED
