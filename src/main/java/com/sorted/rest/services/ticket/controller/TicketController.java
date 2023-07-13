@@ -559,7 +559,7 @@ public class TicketController implements BaseController {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Order id not given", null));
 		}
 
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getVisibleTicketCategories();
 		Map<String, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getLabel, Function.identity(), (o1, o2) -> o1, HashMap::new));
 		if (!categoryMap.containsKey(TicketCategoryRoot.ORDER_ISSUE.toString()) || !categoryMap.containsKey(
@@ -657,7 +657,7 @@ public class TicketController implements BaseController {
 		if (ticket == null) {
 			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket with id : %s", id), null));
 		}
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
 		TicketBean ticketBean = getMapper().mapSrcToDest(ticket, TicketBean.newInstance());
 		List<TicketBean> ticketBeans = new ArrayList<>();
 		ticketBeans.add(ticketBean);
@@ -705,7 +705,7 @@ public class TicketController implements BaseController {
 					String.format("No tickets found for storeId : %s for the last : %d days", requesterEntityId, sinceDays), null));
 		}
 
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
 		List<TicketBean> ticketBeans = getMapper().mapAsList(tickets, TicketBean.class);
 
 		filterTicketOnShowDraft(false, ticketBeans);
