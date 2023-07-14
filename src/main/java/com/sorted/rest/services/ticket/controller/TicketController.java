@@ -498,15 +498,19 @@ public class TicketController implements BaseController {
 		filters.remove("orderRelated");
 		filters.put("categoryRootId", categoryRootIds);
 
+		Date fromDate, toDate;
+		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+		formatter.setTimeZone(TimeZone.getDefault());
 		if (lastAddedOn != null) {
-			DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-			formatter.setTimeZone(TimeZone.getDefault());
-			Date fromDate = DateUtils.addMinutes(formatter.parse(lastAddedOn), -330);
-
-			filters.put("fromDate", new FilterCriteria("lastAddedAt", fromDate, Operation.GTE));
-			filters.put("toDate", new FilterCriteria("lastAddedAt", DateUtils.addDays(fromDate, 1), Operation.LTE));
+			fromDate = DateUtils.addMinutes(formatter.parse(lastAddedOn), -330);
+			toDate = DateUtils.addDays(fromDate, 1);
 			filters.remove("lastAddedOn");
+		} else {
+			toDate = new Date();
+			fromDate = DateUtils.addDays(toDate, -1);
 		}
+		filters.put("fromDate", new FilterCriteria("lastAddedAt", fromDate, Operation.GTE));
+		filters.put("toDate", new FilterCriteria("lastAddedAt", toDate, Operation.LTE));
 
 		if (hasDraft != null) {
 			if (hasDraft) {
