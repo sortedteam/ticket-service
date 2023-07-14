@@ -679,6 +679,7 @@ public class TicketController implements BaseController {
 		}
 		for (TicketItemBean itemBean : ticketBean.getItems()) {
 			setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+			setTicketCategoryDesc(itemBean);
 		}
 		return ResponseEntity.ok(ticketBean);
 	}
@@ -726,9 +727,21 @@ public class TicketController implements BaseController {
 			}
 			for (TicketItemBean itemBean : ticketBean.getItems()) {
 				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+				setTicketCategoryDesc(itemBean);
 			}
 		}
 		return ResponseEntity.ok(ticketBeans);
+	}
+
+	private void setTicketCategoryDesc(TicketItemBean itemBean) {
+		itemBean.setLeafPrevCategoryDesc(itemBean.getCategoryLeaf().getDescription());
+		if (itemBean.getCategoryLeaf().getParentId() != null) {
+			TicketCategoryEntity categoryLeafPrevious = ticketCategoryService.findRecordById(itemBean.getCategoryLeaf().getParentId());
+			if (categoryLeafPrevious != null) {
+				itemBean.setLeafCategoryDesc(itemBean.getCategoryLeaf().getDescription());
+				itemBean.setLeafPrevCategoryDesc(categoryLeafPrevious.getDescription());
+			}
+		}
 	}
 
 	@Override
