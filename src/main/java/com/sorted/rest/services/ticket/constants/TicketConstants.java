@@ -22,7 +22,7 @@ public class TicketConstants {
 
 	public static final String STORE_RETURN_TICKET_DESCRIPTION = "Ticket created via store return";
 
-	public static final String STORE_RETURN_TICKET_CATEGORY_LEAF_LABEL = "QUALITY_OR_QUANTITY_ORDER_ISSUE";
+	public static final String STORE_RETURN_TICKET_CATEGORY_LEAF_LABEL = "QUALITY_ISSUE";
 
 	public static final BigDecimal DEFAULT_STORE_CATEGORY_REFUND_PERMISSIBILITY_FACTOR = BigDecimal.ONE;
 
@@ -71,7 +71,7 @@ public class TicketConstants {
 	}
 
 	public enum TicketCategoryRoot {
-		ORDER_ISSUE, POS_ISSUE, PAYMENT_ISSUE, PRICING_ISSUE, APP_ISSUE
+		ORDER_ISSUE, POS_ISSUE, PAYMENT_ISSUE, OTHER_ISSUE, APP_ISSUE
 	}
 
 	public enum TicketPlatform {
