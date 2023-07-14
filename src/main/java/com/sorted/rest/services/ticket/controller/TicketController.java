@@ -709,7 +709,7 @@ public class TicketController implements BaseController {
 		List<TicketBean> ticketBeans = getMapper().mapAsList(tickets, TicketBean.class);
 
 		filterTicketOnShowStatus(false, TicketStatus.DRAFT, ticketBeans);
-		filterTicketOnShowStatus(true, TicketStatus.CANCELLED, ticketBeans);
+		filterTicketOnShowStatus(false, TicketStatus.CANCELLED, ticketBeans);
 		Set<String> displayOrderIds = ticketBeans.stream()
 				.filter(ticket -> ticket.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString()) && ticket.getMetadata()
 						.getOrderDetails() != null && !StringUtils.isEmpty(ticket.getMetadata().getOrderDetails().getDisplayOrderId()))
