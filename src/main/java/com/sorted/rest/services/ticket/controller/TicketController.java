@@ -533,11 +533,11 @@ public class TicketController implements BaseController {
 		}
 	}
 
-	private void filterTicketOnShowDraft(Boolean showDraft, List<TicketBean> ticketBeans) {
+	private void filterTicketOnShowStatus(Boolean show, TicketStatus status, List<TicketBean> ticketBeans) {
 		List<TicketBean> removeList = new ArrayList<>();
 		for (TicketBean ticketBean : ticketBeans) {
-			List<TicketItemBean> filteredItems = ticketBean.getItems().stream()
-					.filter(item -> !(showDraft ^ item.getStatus().equals(TicketStatus.DRAFT.toString()))).collect(Collectors.toList());
+			List<TicketItemBean> filteredItems = ticketBean.getItems().stream().filter(item -> !(show ^ item.getStatus().equals(status.toString())))
+					.collect(Collectors.toList());
 			if (filteredItems.isEmpty()) {
 				removeList.add(ticketBean);
 			}
@@ -662,7 +662,7 @@ public class TicketController implements BaseController {
 		List<TicketBean> ticketBeans = new ArrayList<>();
 		ticketBeans.add(ticketBean);
 		if (showOnlyDraft) {
-			filterTicketOnShowDraft(true, ticketBeans);
+			filterTicketOnShowStatus(true, TicketStatus.DRAFT, ticketBeans);
 		}
 		if (ticketBean.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
 			Set<String> displayOrderIds = ticketBean.getMetadata().getOrderDetails() != null && !StringUtils.isEmpty(
@@ -708,7 +708,8 @@ public class TicketController implements BaseController {
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
 		List<TicketBean> ticketBeans = getMapper().mapAsList(tickets, TicketBean.class);
 
-		filterTicketOnShowDraft(false, ticketBeans);
+		filterTicketOnShowStatus(false, TicketStatus.DRAFT, ticketBeans);
+		filterTicketOnShowStatus(true, TicketStatus.CANCELLED, ticketBeans);
 		Set<String> displayOrderIds = ticketBeans.stream()
 				.filter(ticket -> ticket.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString()) && ticket.getMetadata()
 						.getOrderDetails() != null && !StringUtils.isEmpty(ticket.getMetadata().getOrderDetails().getDisplayOrderId()))
