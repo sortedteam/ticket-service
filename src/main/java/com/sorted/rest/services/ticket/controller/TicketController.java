@@ -367,7 +367,7 @@ public class TicketController implements BaseController {
 		itemOptional = ticket.getItems().stream().filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId())).findFirst();
 		if (itemOptional.isPresent()) {
 			TicketItemBean itemBean = getMapper().mapSrcToDest(itemOptional.get(), TicketItemBean.newInstance());
-			List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+			List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
 			setTicketActionsAndCategory(itemBean, ticket.getCategoryRootId(), ticketCategoryEntities);
 			return itemBean;
 		} else {
@@ -414,7 +414,7 @@ public class TicketController implements BaseController {
 		itemOptional = ticket.getItems().stream().filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId())).findFirst();
 		if (itemOptional.isPresent()) {
 			TicketItemBean itemBean = getMapper().mapSrcToDest(itemOptional.get(), TicketItemBean.newInstance());
-			List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+			List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
 			setTicketActionsAndCategory(itemBean, ticket.getCategoryRootId(), ticketCategoryEntities);
 			return itemBean;
 		} else {
