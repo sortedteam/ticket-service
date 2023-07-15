@@ -79,7 +79,7 @@ public class TicketActionUtils {
 		ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketUpdateActions.DRAFT_TICKET_UPDATED.toString(), actionDetailsBean);
 	}
 
-	public void invokeTicketRaiseAction(TicketItemEntity item, Long ticketId) {
+	public void invokeTicketRaiseAction(TicketItemEntity item, TicketEntity ticket) {
 		List<String> actions = item.getCategoryLeaf().getOnCreateActions();
 		Boolean terminate = false;
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
@@ -101,8 +101,8 @@ public class TicketActionUtils {
 				_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 				continue;
 			}
-			if (ticketAction.isApplicable(item, ticketId, action, actionDetailsBean)) {
-				if (ticketAction.apply(item, ticketId, action, actionDetailsBean)) {
+			if (ticketAction.isApplicable(item, ticket, action, actionDetailsBean)) {
+				if (ticketAction.apply(item, ticket, action, actionDetailsBean)) {
 					terminate = true;
 					break;
 				}
@@ -110,16 +110,16 @@ public class TicketActionUtils {
 		}
 		//		todo: tickets escalation not allowed in V1, add in subsequent releases
 		//		if (!terminate) {
-		//			executeDefaultAction(item, ticketId, actionDetailsBean);
+		//			executeDefaultAction(item, ticket, actionDetailsBean);
 		//		}
 		//	}
 
-		//	private void executeDefaultAction(TicketItemEntity item, Long ticketId, TicketActionDetailsBean actionDetailsBean) {
+		//	private void executeDefaultAction(TicketItemEntity item, TicketEntity ticket, TicketActionDetailsBean actionDetailsBean) {
 		//		String action = TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.toString();
 		//		TicketActionsInterface ticketAction = escalateToTeamAction;
 		//		escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(), TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.getRemarks());
-		//		if (ticketAction.isApplicable(item, ticketId, action, actionDetailsBean)) {
-		//			ticketAction.apply(item, ticketId, action, TicketActionDetailsBean.newInstance());
+		//		if (ticketAction.isApplicable(item, ticket, action, actionDetailsBean)) {
+		//			ticketAction.apply(item, ticket, action, TicketActionDetailsBean.newInstance());
 		//		}
 	}
 
@@ -145,6 +145,8 @@ public class TicketActionUtils {
 					orderDetailsBean.setChallanUrl(orderResponseBean.getChallanUrl());
 					orderDetailsBean.setDeliveryDate(orderResponseBean.getDeliveryDate());
 					orderDetailsBean.setDeliverySlot(orderResponseBean.getSlot());
+					orderDetailsBean.setTotalRefundableAmount(0d);
+					orderDetailsBean.setTotalRefundAmount(0d);
 					ticketMetadata.setOrderDetails(orderDetailsBean);
 					requestTicket.setMetadata(ticketMetadata);
 				}
@@ -211,7 +213,7 @@ public class TicketActionUtils {
 		}
 	}
 
-	public void invokeTicketUpdateAction(TicketItemEntity item, Long ticketId, UpdateTicketBean updateTicketBean) {
+	public void invokeTicketUpdateAction(TicketItemEntity item, TicketEntity ticket, UpdateTicketBean updateTicketBean) {
 		String action = updateTicketBean.getAction();
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 		actionDetailsBean.setUserDetail(setRequesterDetails());
@@ -238,8 +240,8 @@ public class TicketActionUtils {
 			_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 		}
 
-		if (ticketAction != null && ticketAction.isApplicable(item, ticketId, action, actionDetailsBean)) {
-			ticketAction.apply(item, ticketId, action, actionDetailsBean);
+		if (ticketAction != null && ticketAction.isApplicable(item, ticket, action, actionDetailsBean)) {
+			ticketAction.apply(item, ticket, action, actionDetailsBean);
 		} else {
 			throw new ValidationException(
 					ErrorBean.withError(Errors.INVALID_REQUEST, String.format("Ticket can not be updated with action : %s", action), null));
