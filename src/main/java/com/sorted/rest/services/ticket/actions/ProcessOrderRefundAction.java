@@ -15,11 +15,13 @@ import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketUpdateActions;
 import com.sorted.rest.services.ticket.constants.TicketConstants.UserRoles;
+import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
 import com.sorted.rest.services.ticket.services.TicketHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -57,7 +59,7 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 	}
 
 	@Override
-	public Boolean isApplicable(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
+	public Boolean isApplicable(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
 		if (!SessionUtils.getAuthUserRoles().contains(UserRoles.CCMANAGER.toString())) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Refund Order can only be processed by Partner Care Manager.", null));
 		}
@@ -66,9 +68,9 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 	}
 
 	@Override
-	public Boolean apply(TicketItemEntity item, Long ticketId, String action, TicketActionDetailsBean actionDetailsBean) {
-		FranchiseOrderResponseBean refundResponse = ticketClientService.imsProcessFranchiseRefundOrder(createRefundBean(item, ticketId),
-				generateClientKeyForRefund(ticketId, item.getId()));
+	public Boolean apply(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
+		FranchiseOrderResponseBean refundResponse = ticketClientService.imsProcessFranchiseRefundOrder(createRefundBean(item, ticket.getId()),
+				generateClientKeyForRefund(ticket.getId(), item.getId()));
 		item.getDetails().getOrderDetails().setRefundAmount(refundResponse.getFinalBillAmount());
 		item.getDetails().getOrderDetails().setResolvedQty(resolvedQuantity);
 		setRemarks(String.format(TicketUpdateActions.PROCESS_ORDER_REFUND.getRemarks(), resolvedQuantity, item.getDetails().getOrderDetails().getIssueQty(),
@@ -78,9 +80,16 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 		item.setRemarks(remarks);
 		item.getDetails().setResolvedRemarks(remarks);
 		item.setStatus(TicketStatus.CLOSED);
+
+		if (ticket.getMetadata().getOrderDetails() != null) {
+			ticket.getMetadata().getOrderDetails().setTotalRefundAmount(BigDecimal.valueOf(
+							ticket.getMetadata().getOrderDetails().getTotalRefundAmount() != null ? ticket.getMetadata().getOrderDetails().getTotalRefundAmount() : 0d)
+					.add(BigDecimal.valueOf(item.getDetails().getOrderDetails().getRefundAmount())).doubleValue());
+		}
+
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
-		ticketHistoryService.addTicketHistory(ticketId, item.getId(), action, actionDetailsBean);
+		ticketHistoryService.addTicketHistory(ticket.getId(), item.getId(), action, actionDetailsBean);
 		return true;
 	}
 

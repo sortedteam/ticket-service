@@ -306,7 +306,7 @@ public class TicketController implements BaseController {
 				}
 
 				if (item.getStatus().equals(TicketStatus.IN_PROGRESS)) {
-					ticketActionUtils.invokeTicketRaiseAction(item, requestTicket.getId());
+					ticketActionUtils.invokeTicketRaiseAction(item, requestTicket);
 				}
 			}
 			ticketRequestUtils.clearTicketRequest();
@@ -367,7 +367,7 @@ public class TicketController implements BaseController {
 		itemOptional = ticket.getItems().stream().filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId())).findFirst();
 		if (itemOptional.isPresent()) {
 			TicketItemBean itemBean = getMapper().mapSrcToDest(itemOptional.get(), TicketItemBean.newInstance());
-			List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+			List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
 			setTicketActionsAndCategory(itemBean, ticket.getCategoryRootId(), ticketCategoryEntities);
 			return itemBean;
 		} else {
@@ -414,7 +414,7 @@ public class TicketController implements BaseController {
 		itemOptional = ticket.getItems().stream().filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId())).findFirst();
 		if (itemOptional.isPresent()) {
 			TicketItemBean itemBean = getMapper().mapSrcToDest(itemOptional.get(), TicketItemBean.newInstance());
-			List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+			List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
 			setTicketActionsAndCategory(itemBean, ticket.getCategoryRootId(), ticketCategoryEntities);
 			return itemBean;
 		} else {
@@ -427,7 +427,7 @@ public class TicketController implements BaseController {
 	private void populateTicketDetailsAndInvokeUpdateActions(TicketEntity requestTicket, TicketItemEntity requestItem, UpdateTicketBean updateTicketBean) {
 		try {
 			ticketRequestUtils.populateTicketRequestAsPerCategoryRoot(requestTicket, Collections.singletonList(requestItem));
-			ticketActionUtils.invokeTicketUpdateAction(requestItem, requestTicket.getId(), updateTicketBean);
+			ticketActionUtils.invokeTicketUpdateAction(requestItem, requestTicket, updateTicketBean);
 			ticketRequestUtils.clearTicketRequest();
 		} catch (Exception e) {
 			ticketRequestUtils.clearTicketRequest();
@@ -484,7 +484,7 @@ public class TicketController implements BaseController {
 		} else {
 			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.POS_ISSUE.toString()));
 			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.PAYMENT_ISSUE.toString()));
-			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.PRICING_ISSUE.toString()));
+			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.OTHER_ISSUE.toString()));
 			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.APP_ISSUE.toString()));
 		}
 		List<Integer> categoryRootIds = new ArrayList<>();
@@ -533,11 +533,11 @@ public class TicketController implements BaseController {
 		}
 	}
 
-	private void filterTicketOnShowDraft(Boolean showDraft, List<TicketBean> ticketBeans) {
+	private void filterTicketOnShowStatus(Boolean show, TicketStatus status, List<TicketBean> ticketBeans) {
 		List<TicketBean> removeList = new ArrayList<>();
 		for (TicketBean ticketBean : ticketBeans) {
-			List<TicketItemBean> filteredItems = ticketBean.getItems().stream()
-					.filter(item -> !(showDraft ^ item.getStatus().equals(TicketStatus.DRAFT.toString()))).collect(Collectors.toList());
+			List<TicketItemBean> filteredItems = ticketBean.getItems().stream().filter(item -> !(show ^ item.getStatus().equals(status.toString())))
+					.collect(Collectors.toList());
 			if (filteredItems.isEmpty()) {
 				removeList.add(ticketBean);
 			}
@@ -559,7 +559,7 @@ public class TicketController implements BaseController {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Order id not given", null));
 		}
 
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getVisibleTicketCategories();
 		Map<String, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getLabel, Function.identity(), (o1, o2) -> o1, HashMap::new));
 		if (!categoryMap.containsKey(TicketCategoryRoot.ORDER_ISSUE.toString()) || !categoryMap.containsKey(
@@ -657,12 +657,12 @@ public class TicketController implements BaseController {
 		if (ticket == null) {
 			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket with id : %s", id), null));
 		}
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
 		TicketBean ticketBean = getMapper().mapSrcToDest(ticket, TicketBean.newInstance());
 		List<TicketBean> ticketBeans = new ArrayList<>();
 		ticketBeans.add(ticketBean);
 		if (showOnlyDraft) {
-			filterTicketOnShowDraft(true, ticketBeans);
+			filterTicketOnShowStatus(true, TicketStatus.DRAFT, ticketBeans);
 		}
 		if (ticketBean.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
 			Set<String> displayOrderIds = ticketBean.getMetadata().getOrderDetails() != null && !StringUtils.isEmpty(
@@ -705,10 +705,11 @@ public class TicketController implements BaseController {
 					String.format("No tickets found for storeId : %s for the last : %d days", requesterEntityId, sinceDays), null));
 		}
 
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
 		List<TicketBean> ticketBeans = getMapper().mapAsList(tickets, TicketBean.class);
 
-		filterTicketOnShowDraft(false, ticketBeans);
+		filterTicketOnShowStatus(false, TicketStatus.DRAFT, ticketBeans);
+		filterTicketOnShowStatus(false, TicketStatus.CANCELLED, ticketBeans);
 		Set<String> displayOrderIds = ticketBeans.stream()
 				.filter(ticket -> ticket.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString()) && ticket.getMetadata()
 						.getOrderDetails() != null && !StringUtils.isEmpty(ticket.getMetadata().getOrderDetails().getDisplayOrderId()))
