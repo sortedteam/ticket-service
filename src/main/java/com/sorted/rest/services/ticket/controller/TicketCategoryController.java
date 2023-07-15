@@ -5,6 +5,7 @@ import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.websupport.base.BaseController;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.beans.TicketCategoryNode;
+import com.sorted.rest.services.ticket.beans.TicketCategoryViewBean;
 import com.sorted.rest.services.ticket.entity.TicketCategoryEntity;
 import com.sorted.rest.services.ticket.services.TicketCategoryService;
 import io.swagger.annotations.Api;
@@ -16,7 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @Api(tags = "Ticket Categories Services", description = "Manage Ticket Categories related services.")
@@ -43,7 +46,7 @@ public class TicketCategoryController implements BaseController {
 		}
 
 		if (label == null) {
-			ticketCategoryNodes = ticketCategoryService.getVisibleTicketCategoryNodes(ticketCategoryEntities);
+			ticketCategoryNodes = ticketCategoryService.getAllTicketCategoryNodes(ticketCategoryEntities);
 		} else {
 			TicketCategoryNode ticketCategoryNode = ticketCategoryService.getTicketCategoryNodeByLabel(ticketCategoryEntities, label);
 			if (ticketCategoryNode != null) {
@@ -51,6 +54,14 @@ public class TicketCategoryController implements BaseController {
 			}
 		}
 		return ResponseEntity.ok(ticketCategoryNodes);
+	}
+
+	@ApiOperation(value = "get leaf filters", nickname = "getAllLeafFilters")
+	@GetMapping(path = "/tickets/categories/leaf-filter")
+	public ResponseEntity<List<TicketCategoryViewBean>> getAllLeafFilters(@RequestParam Integer filterGroup) {
+		Map<String, Object> filters = new HashMap<>();
+		filters.put("filterGroup", filterGroup);
+		return ResponseEntity.ok(getMapper().mapAsList(ticketCategoryService.findAllRecords(filters), TicketCategoryViewBean.class));
 	}
 
 	@Override

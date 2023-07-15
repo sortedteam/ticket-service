@@ -71,7 +71,7 @@ public class TicketConstants {
 	}
 
 	public enum TicketCategoryRoot {
-		ORDER_ISSUE, POS_ISSUE, PAYMENT_ISSUE, OTHER_ISSUE, APP_ISSUE
+		ORDER_ISSUE, OTHER_ISSUES //other issues contains all non orders
 	}
 
 	public enum TicketPlatform {

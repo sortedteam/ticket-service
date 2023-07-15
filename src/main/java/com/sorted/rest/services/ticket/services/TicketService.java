@@ -1,21 +1,28 @@
 package com.sorted.rest.services.ticket.services;
 
 import com.sorted.rest.common.beans.ErrorBean;
+import com.sorted.rest.common.dbsupport.constants.Operation;
 import com.sorted.rest.common.dbsupport.crud.BaseCrudRepository;
+import com.sorted.rest.common.dbsupport.pagination.FilterCriteria;
 import com.sorted.rest.common.dbsupport.pagination.PageAndSortRequest;
 import com.sorted.rest.common.dbsupport.pagination.PageAndSortResult;
 import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
+import com.sorted.rest.common.utils.DateUtils;
 import com.sorted.rest.common.utils.ParamsUtils;
 import com.sorted.rest.common.websupport.base.BaseService;
 import com.sorted.rest.services.common.upload.UploadService;
+import com.sorted.rest.services.ticket.beans.TicketCategoryNode;
+import com.sorted.rest.services.ticket.constants.TicketConstants.TicketCategoryRoot;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
+import com.sorted.rest.services.ticket.entity.TicketCategoryEntity;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
 import com.sorted.rest.services.ticket.repository.TicketRepository;
 import com.sorted.rest.services.ticket.utils.TicketActionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -23,6 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,6 +49,9 @@ public class TicketService implements BaseService<TicketEntity> {
 
 	@Autowired
 	private TicketActionUtils ticketActionUtils;
+
+	@Autowired
+	private TicketCategoryService ticketCategoryService;
 
 	AppLogger _LOGGER = LoggingManager.getLogger(TicketService.class);
 
@@ -148,6 +161,80 @@ public class TicketService implements BaseService<TicketEntity> {
 			throw new ValidationException(ErrorBean.withError("FETCH_ERROR", e.getMessage(), null));
 		}
 		return tickets;
+	}
+
+	public Map<String, Object> getFilters(String requesterEntityId, String requesterEntityCategory, Boolean orderRelated, String lastAddedOn, Boolean hasDraft,
+			Boolean hasPending, Boolean hasClosed, List<TicketCategoryEntity> ticketCategoryEntities) throws ParseException {
+		Map<String, Object> filters = new HashMap<>();
+		if (requesterEntityId != null) {
+			filters.put("requesterEntityId", requesterEntityId);
+		}
+		if (requesterEntityCategory != null) {
+			filters.put("requesterEntityCategory", requesterEntityCategory);
+		}
+		List<Integer> categoryRootIds = getCategoryRoots(ticketCategoryEntities, orderRelated);
+		filters.remove("orderRelated");
+		filters.put("categoryRootId", categoryRootIds);
+
+		Pair<Date, Date> dates = getFilterDates(lastAddedOn);
+		if (filters.containsKey("lastAddedOn")) {
+			filters.remove("lastAddedOn");
+		}
+		filters.put("fromDate", new FilterCriteria("lastAddedAt", dates.getLeft(), Operation.GTE));
+		filters.put("toDate", new FilterCriteria("lastAddedAt", dates.getRight(), Operation.LTE));
+
+		if (hasDraft != null) {
+			filters.put("hasDraft", new FilterCriteria("draftCount", 0, hasDraft ? Operation.GT : Operation.EQUALS));
+		}
+
+		if (hasPending != null) {
+			filters.put("hasPending", new FilterCriteria("pendingCount", 0, hasPending ? Operation.GT : Operation.EQUALS));
+		}
+
+		if (hasClosed != null) {
+			filters.put("hasClosed", new FilterCriteria("closedCount", 0, hasClosed ? Operation.GT : Operation.EQUALS));
+		}
+		return filters;
+	}
+
+	private List<Integer> getCategoryRoots(List<TicketCategoryEntity> ticketCategoryEntities, Boolean orderRelated) {
+		TicketCategoryNode categoryNode = ticketCategoryService.getTicketCategoryNodeByLabel(ticketCategoryEntities,
+				orderRelated ? TicketCategoryRoot.ORDER_ISSUE.toString() : TicketCategoryRoot.OTHER_ISSUES.toString());
+		List<Integer> categoryRootIds = new ArrayList<>();
+		if (orderRelated) {
+			categoryRootIds.add(categoryNode.getId());
+		} else {
+			for (TicketCategoryNode child : categoryNode.getChildren()) {
+				categoryRootIds.add(child.getId());
+			}
+		}
+		if (categoryRootIds.isEmpty()) {
+			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Any relevant issue ticket category not found", null));
+		}
+		return categoryRootIds;
+	}
+
+	private Pair<Date, Date> getFilterDates(String lastAddedOn) throws ParseException {
+		Date fromDate, toDate;
+		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+		formatter.setTimeZone(TimeZone.getDefault());
+		if (lastAddedOn != null) {
+			fromDate = DateUtils.addMinutes(formatter.parse(lastAddedOn), -330);
+			toDate = DateUtils.addDays(fromDate, 1);
+		} else {
+			toDate = new Date();
+			fromDate = DateUtils.addDays(toDate, -1);
+		}
+		return Pair.of(fromDate, toDate);
+	}
+
+	public List<TicketEntity> getCategoryLeafFilteredTickets(String requesterEntityId, String requesterEntityCategory, Boolean orderRelated, String lastAddedOn,
+			Boolean hasDraft, Boolean hasPending, Boolean hasClosed, List<TicketCategoryEntity> ticketCategoryEntities, Integer categoryLeafParent)
+			throws ParseException {
+		Pair<Date, Date> lastAddedDates = getFilterDates(lastAddedOn);
+		List<Integer> categoryRootsIn = getCategoryRoots(ticketCategoryEntities, orderRelated);
+		return ticketRepository.findCustomWithCategoryLeafFilter(requesterEntityId, requesterEntityCategory, lastAddedDates.getLeft(),
+				lastAddedDates.getRight(), hasDraft, hasPending, hasClosed, categoryRootsIn, categoryLeafParent);
 	}
 
 	@Override

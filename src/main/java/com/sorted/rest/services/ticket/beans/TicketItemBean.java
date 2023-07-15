@@ -45,7 +45,7 @@ public class TicketItemBean implements Serializable {
 
 	private String leafCategoryDesc;
 
-	private String leafPrevCategoryDesc;
+	private String leafParentCategoryDesc;
 
 	public static TicketItemBean newInstance() {
 		return new TicketItemBean();
