@@ -190,9 +190,9 @@ public class TicketClientService {
 		}
 	}
 
-	public FranchiseOrderResponseBean imsProcessFranchiseRefundOrder(ImsFranchiseOrderRefundBean request) {
+	public FranchiseOrderResponseBean imsProcessFranchiseRefundOrder(ImsFranchiseOrderRefundBean request, String key) {
 		try {
-			return ticketOrderClient.imsProcessFranchiseRefundOrder(request);
+			return ticketOrderClient.imsProcessFranchiseRefundOrder(request, key);
 		} catch (FeignClientException f) {
 			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing order refund", null);
 			try {
