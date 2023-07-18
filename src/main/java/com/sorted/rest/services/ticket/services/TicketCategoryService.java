@@ -16,7 +16,7 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 	@Autowired
 	private TicketCategoryRepository ticketCategoryRepository;
 
-	public List<TicketCategoryNode> getVisibleTicketCategoryNodes(List<TicketCategoryEntity> ticketCategoryEntities) {
+	public List<TicketCategoryNode> getAllTicketCategoryNodes(List<TicketCategoryEntity> ticketCategoryEntities) {
 		return getTicketCategoryNodeList(ticketCategoryEntities);
 	}
 

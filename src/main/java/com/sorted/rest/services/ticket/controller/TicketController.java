@@ -40,11 +40,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -439,9 +436,11 @@ public class TicketController implements BaseController {
 	@GetMapping(path = "/tickets/ims")
 	public PageAndSortResult<TicketListViewBean> fetchTicketsIms(@RequestParam(defaultValue = "1") Integer pageNo,
 			@RequestParam(defaultValue = "25") Integer pageSize, @RequestParam(required = false) String sortBy,
-			@RequestParam(required = false) PageAndSortRequest.SortDirection sortDirection, HttpServletRequest request, @RequestParam Boolean orderRelated,
+			@RequestParam(required = false) PageAndSortRequest.SortDirection sortDirection, @RequestParam(required = false) String requesterEntityId,
+			@RequestParam(required = false) String requesterEntityCategory, @RequestParam Boolean orderRelated,
 			@RequestParam(required = false) String lastAddedOn, @RequestParam(required = false) Boolean hasDraft,
-			@RequestParam(required = false) Boolean hasPending, @RequestParam(required = false) Boolean hasClosed) throws ParseException {
+			@RequestParam(required = false) Boolean hasPending, @RequestParam(required = false) Boolean hasClosed,
+			@RequestParam(required = false) Integer categoryLeafParentId) throws ParseException {
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
 
 		Map<String, SortDirection> sort;
@@ -451,11 +450,19 @@ public class TicketController implements BaseController {
 			sort = new LinkedHashMap<>();
 			sort.put("lastAddedAt", PageAndSortRequest.SortDirection.DESC);
 		}
-		final Map<String, Object> filters = getSearchParams(request, TicketEntity.class);
-		updateFilters(filters, orderRelated, lastAddedOn, hasDraft, hasPending, hasClosed, ticketCategoryEntities);
+		final Map<String, Object> filters = ticketService.getFilters(requesterEntityId, requesterEntityCategory, orderRelated, lastAddedOn, hasDraft,
+				hasPending, hasClosed, ticketCategoryEntities);
+		PageAndSortResult<TicketListViewBean> response;
+		if (categoryLeafParentId != null) {
+			List<TicketListViewBean> tickets = getMapper().mapAsList(
+					ticketService.getCategoryLeafFilteredTickets(requesterEntityId, requesterEntityCategory, orderRelated, lastAddedOn, hasDraft, hasPending,
+							hasClosed, ticketCategoryEntities, categoryLeafParentId), TicketListViewBean.class);
+			response = new PageAndSortResult<>(1, tickets.size(), 1, tickets.size(), tickets);
+		} else {
+			PageAndSortResult<TicketEntity> tickets = ticketService.getAllTicketsPaginated(pageSize, pageNo, filters, sort);
+			response = prepareResponsePageData(tickets, TicketListViewBean.class);
+		}
 
-		PageAndSortResult<TicketEntity> tickets = ticketService.getAllTicketsPaginated(pageSize, pageNo, filters, sort);
-		PageAndSortResult<TicketListViewBean> response = prepareResponsePageData(tickets, TicketListViewBean.class);
 		if (orderRelated) {
 			Set<String> displayOrderIds = response.getData().stream().filter(ticket -> ticket.getMetadata().getOrderDetails() != null && !StringUtils.isEmpty(
 							ticket.getMetadata().getOrderDetails().getDisplayOrderId())).map(ticket -> ticket.getMetadata().getOrderDetails().getDisplayOrderId())
@@ -471,66 +478,6 @@ public class TicketController implements BaseController {
 			}
 		}
 		return response;
-	}
-
-	private void updateFilters(Map<String, Object> filters, Boolean orderRelated, String lastAddedOn, Boolean hasDraft, Boolean hasPending, Boolean hasClosed,
-			List<TicketCategoryEntity> ticketCategoryEntities) throws ParseException {
-
-		Map<String, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
-				.collect(Collectors.toMap(TicketCategoryEntity::getLabel, Function.identity(), (o1, o2) -> o1, HashMap::new));
-		List<TicketCategoryEntity> categoryRootsIn = new ArrayList<>();
-		if (orderRelated) {
-			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.ORDER_ISSUE.toString()));
-		} else {
-			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.POS_ISSUE.toString()));
-			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.PAYMENT_ISSUE.toString()));
-			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.OTHER_ISSUE.toString()));
-			categoryRootsIn.add(categoryMap.get(TicketCategoryRoot.APP_ISSUE.toString()));
-		}
-		List<Integer> categoryRootIds = new ArrayList<>();
-		for (TicketCategoryEntity category : categoryRootsIn) {
-			if (category != null && category.getId() != null)
-				categoryRootIds.add(category.getId());
-		}
-		if (categoryRootIds.isEmpty()) {
-			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Any relevant issue ticket category not found", null));
-		}
-		filters.remove("orderRelated");
-		filters.put("categoryRootId", categoryRootIds);
-
-		if (lastAddedOn != null) {
-			DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-			formatter.setTimeZone(TimeZone.getDefault());
-			Date fromDate = DateUtils.addMinutes(formatter.parse(lastAddedOn), -330);
-
-			filters.put("fromDate", new FilterCriteria("lastAddedAt", fromDate, Operation.GTE));
-			filters.put("toDate", new FilterCriteria("lastAddedAt", DateUtils.addDays(fromDate, 1), Operation.LTE));
-			filters.remove("lastAddedOn");
-		}
-
-		if (hasDraft != null) {
-			if (hasDraft) {
-				filters.put("hasDraft", new FilterCriteria("draftCount", 0, Operation.GT));
-			} else {
-				filters.put("hasDraft", new FilterCriteria("draftCount", 0, Operation.EQUALS));
-			}
-		}
-
-		if (hasPending != null) {
-			if (hasPending) {
-				filters.put("hasPending", new FilterCriteria("pendingCount", 0, Operation.GT));
-			} else {
-				filters.put("hasPending", new FilterCriteria("pendingCount", 0, Operation.EQUALS));
-			}
-		}
-
-		if (hasClosed != null) {
-			if (hasClosed) {
-				filters.put("hasClosed", new FilterCriteria("closedCount", 0, Operation.GT));
-			} else {
-				filters.put("hasClosed", new FilterCriteria("closedCount", 0, Operation.EQUALS));
-			}
-		}
 	}
 
 	private void filterTicketOnShowStatus(Boolean show, TicketStatus status, List<TicketBean> ticketBeans) {
@@ -679,6 +626,7 @@ public class TicketController implements BaseController {
 		}
 		for (TicketItemBean itemBean : ticketBean.getItems()) {
 			setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+			setTicketCategoryDesc(itemBean);
 		}
 		return ResponseEntity.ok(ticketBean);
 	}
@@ -727,9 +675,21 @@ public class TicketController implements BaseController {
 			}
 			for (TicketItemBean itemBean : ticketBean.getItems()) {
 				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+				setTicketCategoryDesc(itemBean);
 			}
 		}
 		return ResponseEntity.ok(ticketBeans);
+	}
+
+	private void setTicketCategoryDesc(TicketItemBean itemBean) {
+		itemBean.setLeafParentCategoryDesc(itemBean.getCategoryLeaf().getDescription());
+		if (itemBean.getCategoryLeaf().getParentId() != null) {
+			TicketCategoryEntity categoryLeafPrevious = ticketCategoryService.findRecordById(itemBean.getCategoryLeaf().getParentId());
+			if (categoryLeafPrevious != null) {
+				itemBean.setLeafCategoryDesc(itemBean.getCategoryLeaf().getDescription());
+				itemBean.setLeafParentCategoryDesc(categoryLeafPrevious.getDescription());
+			}
+		}
 	}
 
 	@Override

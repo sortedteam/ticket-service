@@ -43,6 +43,10 @@ public class TicketItemBean implements Serializable {
 
 	private List<String> updateActions;
 
+	private String leafCategoryDesc;
+
+	private String leafParentCategoryDesc;
+
 	public static TicketItemBean newInstance() {
 		return new TicketItemBean();
 	}

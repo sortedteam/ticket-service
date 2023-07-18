@@ -10,7 +10,7 @@ public class TicketCategoryBean implements Serializable {
 
 	private static final long serialVersionUID = -7538803140039235801L;
 
-	private Long id;
+	private Integer id;
 
 	private String label;
 
