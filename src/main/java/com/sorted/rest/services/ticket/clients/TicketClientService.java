@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TicketClientService {
@@ -27,7 +28,7 @@ public class TicketClientService {
 	private TicketStoreClient ticketStoreClient;
 
 	@Autowired
-	private TicketAuthConsumerClient authConsumerClient;
+	private TicketAuthConsumerClient ticketAuthClient;
 
 	@Autowired
 	private TicketOrderClient ticketOrderClient;
@@ -52,7 +53,7 @@ public class TicketClientService {
 		String customerIdString = customerId.toString();
 		Map<String, Object> headerMap = new HashMap<>();
 		try {
-			return authConsumerClient.getUserDetailsFromCustomerId(headerMap, customerIdString);
+			return ticketAuthClient.getUserDetailsFromCustomerId(headerMap, customerIdString);
 		} catch (Exception e) {
 			_LOGGER.error(String.format("Error while getting userDetails for customerId  ", customerIdString), e);
 			return null;
@@ -206,6 +207,26 @@ public class TicketClientService {
 			_LOGGER.error(String.format("Error while refunding with request : %s ", request), e);
 			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing order refund"));
 		}
+	}
+
+	public Set<String> getMappedStores(UUID userId) {
+		List<UserStoreMappingResponse> response = null;
+		try {
+			response = ticketAuthClient.getUserStoreMappingFromUserId(userId.toString());
+			if (response == null || response.isEmpty()) {
+				throw new ValidationException(new ErrorBean("user_store_mapping_not_found", "There are no active store mapped to user id :" + userId));
+			}
+
+		} catch (Exception e) {
+			_LOGGER.error("Error while fetching getMappedStores", e);
+			if (e instanceof ValidationException) {
+				throw e;
+			} else {
+				throw new ValidationException(new ErrorBean("user_store_mapping_not_found", "Something went wrong. Kindly try again."));
+			}
+		}
+		Set<String> mappedStores = response.stream().map(UserStoreMappingResponse::getStoreId).collect(Collectors.toSet());
+		return mappedStores;
 	}
 
 }

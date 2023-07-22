@@ -440,7 +440,7 @@ public class TicketController implements BaseController {
 			@RequestParam(required = false) String requesterEntityCategory, @RequestParam Boolean orderRelated,
 			@RequestParam(required = false) String lastAddedOn, @RequestParam(required = false) Boolean hasDraft,
 			@RequestParam(required = false) Boolean hasPending, @RequestParam(required = false) Boolean hasClosed,
-			@RequestParam(required = false) Integer categoryLeafParentId) throws ParseException {
+			@RequestParam(required = false) Integer categoryLeafParentId, @RequestParam(required = false) Boolean showOnlyMappedStores) throws ParseException {
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
 
 		Map<String, SortDirection> sort;
@@ -450,15 +450,29 @@ public class TicketController implements BaseController {
 			sort = new LinkedHashMap<>();
 			sort.put("lastAddedAt", PageAndSortRequest.SortDirection.DESC);
 		}
-		final Map<String, Object> filters = ticketService.getFilters(requesterEntityId, requesterEntityCategory, orderRelated, lastAddedOn, hasDraft,
-				hasPending, hasClosed, ticketCategoryEntities);
+		List requesterEntityIds = new ArrayList();
+		if (showOnlyMappedStores != null && showOnlyMappedStores) {
+			Set<String> mappedStores = ticketClientService.getMappedStores(SessionUtils.getAuthUserId());
+			if (mappedStores.isEmpty() || (requesterEntityId != null && !mappedStores.contains(requesterEntityId))) {
+				throw new ValidationException(
+						new ErrorBean(Errors.INVALID_REQUEST, "Store(s) not mapped to the user, please try disabling show only mapped stores filter"));
+			} else {
+				if (requesterEntityId != null)
+					requesterEntityIds.add(requesterEntityId);
+				else
+					requesterEntityIds.addAll(mappedStores);
+			}
+		}
+
 		PageAndSortResult<TicketListViewBean> response;
 		if (categoryLeafParentId != null) {
 			List<TicketListViewBean> tickets = getMapper().mapAsList(
-					ticketService.getCategoryLeafFilteredTickets(requesterEntityId, requesterEntityCategory, orderRelated, lastAddedOn, hasDraft, hasPending,
-							hasClosed, ticketCategoryEntities, categoryLeafParentId), TicketListViewBean.class);
+					ticketService.getCategoryLeafFilteredTickets(requesterEntityId, requesterEntityIds, requesterEntityCategory, orderRelated, lastAddedOn,
+							hasDraft, hasPending, hasClosed, ticketCategoryEntities, categoryLeafParentId), TicketListViewBean.class);
 			response = new PageAndSortResult<>(1, tickets.size(), 1, tickets.size(), tickets);
 		} else {
+			final Map<String, Object> filters = ticketService.getFilters(requesterEntityId, requesterEntityIds, requesterEntityCategory, orderRelated,
+					lastAddedOn, hasDraft, hasPending, hasClosed, ticketCategoryEntities);
 			PageAndSortResult<TicketEntity> tickets = ticketService.getAllTicketsPaginated(pageSize, pageNo, filters, sort);
 			response = prepareResponsePageData(tickets, TicketListViewBean.class);
 		}
