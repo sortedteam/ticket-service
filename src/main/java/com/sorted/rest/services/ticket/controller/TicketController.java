@@ -451,17 +451,16 @@ public class TicketController implements BaseController {
 			sort.put("lastAddedAt", PageAndSortRequest.SortDirection.DESC);
 		}
 		List requesterEntityIds = new ArrayList();
+		if (requesterEntityId != null) {
+			requesterEntityIds.add(requesterEntityId);
+		}
 		if (showOnlyMappedStores != null && showOnlyMappedStores) {
 			Set<String> mappedStores = ticketClientService.getMappedStores(SessionUtils.getAuthUserId());
 			if (mappedStores.isEmpty() || (requesterEntityId != null && !mappedStores.contains(requesterEntityId))) {
 				throw new ValidationException(
 						new ErrorBean(Errors.INVALID_REQUEST, "Store(s) not mapped to the user, please try disabling show only mapped stores filter"));
-			} else {
-				if (requesterEntityId != null)
-					requesterEntityIds.add(requesterEntityId);
-				else
-					requesterEntityIds.addAll(mappedStores);
 			}
+			requesterEntityIds.addAll(mappedStores);
 		}
 
 		PageAndSortResult<TicketListViewBean> response;
