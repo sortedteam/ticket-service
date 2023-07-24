@@ -208,4 +208,22 @@ public class TicketClientService {
 		}
 	}
 
+	public FranchiseOrderResponseBean imsProcessFranchiseRefundAllOrder(ImsFranchiseOrderRefundAllBean request, String key) {
+		try {
+			return ticketOrderClient.imsProcessFranchiseRefundAllOrder(request, key);
+		} catch (FeignClientException f) {
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing full order refund", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
+			}
+			throw new ValidationException(error);
+		} catch (Exception e) {
+			_LOGGER.error(String.format("Error while refunding with request : %s ", request), e);
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing full order refund"));
+		}
+	}
+
 }

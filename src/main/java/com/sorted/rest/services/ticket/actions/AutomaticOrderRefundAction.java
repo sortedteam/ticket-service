@@ -1,7 +1,10 @@
 package com.sorted.rest.services.ticket.actions;
 
+import com.sorted.rest.common.beans.ErrorBean;
+import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
+import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
@@ -11,7 +14,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Date;
 import java.util.List;
 
 @Component
@@ -39,7 +41,12 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean isApplicable(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		if (item.getDetails().getOrderDetails() != null && ticket.getMetadata().getOrderDetails() != null) {
+		if (item.getDetails().getOrderDetails() == null || item.getDetails().getOrderDetails().getIssueQty() == null || item.getDetails().getOrderDetails()
+				.getSkuCode() == null) {
+			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Order related ticket missing issue quantity or sku code", ""));
+		}
+
+		if (ticket.getMetadata().getOrderDetails() != null) {
 			item.getDetails().getOrderDetails().setIsReturnIssue(true);
 			if (item.getDetails().getOrderDetails().getProrataAmount() != null && item.getDetails().getOrderDetails().getIssueQty() != null && item.getDetails()
 					.getOrderDetails().getDeliveredQty() != null && item.getDetails().getOrderDetails().getDeliveredQty().compareTo(0d) == 1) {
@@ -61,8 +68,8 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 	@Override
 	public Boolean apply(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
 		item.getDetails().getOrderDetails().setIsAutoRefundEligible(true);
-		item.setAssignedTeam(team);
-		item.setAssignedAt(new Date());
+		//		item.setAssignedTeam(team);
+		//		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
