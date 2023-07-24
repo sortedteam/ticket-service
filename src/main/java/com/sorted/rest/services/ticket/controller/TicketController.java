@@ -460,7 +460,9 @@ public class TicketController implements BaseController {
 				throw new ValidationException(
 						new ErrorBean(Errors.INVALID_REQUEST, "Store(s) not mapped to the user, please try disabling show only mapped stores filter"));
 			}
-			requesterEntityIds.addAll(mappedStores);
+			if (requesterEntityId == null) {
+				requesterEntityIds.addAll(mappedStores);
+			}
 		}
 
 		PageAndSortResult<TicketListViewBean> response;
