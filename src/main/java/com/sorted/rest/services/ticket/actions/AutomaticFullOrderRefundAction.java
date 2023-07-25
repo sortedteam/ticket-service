@@ -11,6 +11,7 @@ import com.sorted.rest.services.ticket.services.TicketHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Component
@@ -38,18 +39,26 @@ public class AutomaticFullOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean isApplicable(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		return ticket.getMetadata().getOrderDetails() != null && ticket.getMetadata().getOrderDetails().getOrderId() != null && ticket.getMetadata()
-				.getOrderDetails().getFinalOrderBillAmount() != null;
+		if (ticket.getMetadata().getOrderDetails() != null && ticket.getMetadata().getOrderDetails().getOrderId() != null && ticket.getMetadata()
+				.getOrderDetails().getFinalOrderBillAmount() != null) {
+			OrderItemDetailsBean orderItemDetailsBean = OrderItemDetailsBean.newInstance();
+			orderItemDetailsBean.setProductName(TicketConstants.FULL_ORDER_REFUND_PRODUCT_NAME);
+			orderItemDetailsBean.setOrderId(ticket.getMetadata().getOrderDetails().getOrderId());
+			orderItemDetailsBean.setRefundableAmount(ticket.getMetadata().getOrderDetails().getFinalOrderBillAmount());
+			orderItemDetailsBean.setIsReturnIssue(true);
+			item.getDetails().setOrderDetails(orderItemDetailsBean);
+
+			ticket.getMetadata().getOrderDetails().setTotalRefundableAmount(BigDecimal.valueOf(
+					ticket.getMetadata().getOrderDetails().getTotalRefundableAmount() != null ?
+							ticket.getMetadata().getOrderDetails().getTotalRefundableAmount() :
+							0d).add(BigDecimal.valueOf(item.getDetails().getOrderDetails().getRefundableAmount())).doubleValue());
+			return true;
+		}
+		return false;
 	}
 
 	@Override
 	public Boolean apply(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		OrderItemDetailsBean orderItemDetailsBean = OrderItemDetailsBean.newInstance();
-		orderItemDetailsBean.setProductName(TicketConstants.FULL_ORDER_REFUND_PRODUCT_NAME);
-		orderItemDetailsBean.setOrderId(ticket.getMetadata().getOrderDetails().getOrderId());
-		orderItemDetailsBean.setRefundableAmount(ticket.getMetadata().getOrderDetails().getFinalOrderBillAmount());
-		orderItemDetailsBean.setIsReturnIssue(true);
-		item.getDetails().setOrderDetails(orderItemDetailsBean);
 		item.setRemarks(remarks);
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
