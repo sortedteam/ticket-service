@@ -440,7 +440,8 @@ public class TicketController implements BaseController {
 			@RequestParam(required = false) String requesterEntityCategory, @RequestParam Boolean orderRelated,
 			@RequestParam(required = false) String lastAddedOn, @RequestParam(required = false) Boolean hasDraft,
 			@RequestParam(required = false) Boolean hasPending, @RequestParam(required = false) Boolean hasClosed,
-			@RequestParam(required = false) Integer categoryLeafParentId, @RequestParam(required = false) Boolean showOnlyMappedStores) throws ParseException {
+			@RequestParam(required = false) Integer categoryLeafParentId, @RequestParam(defaultValue = "false") Boolean showOnlyMappedStores)
+			throws ParseException {
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
 
 		Map<String, SortDirection> sort;
