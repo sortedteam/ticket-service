@@ -52,7 +52,7 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 					.getOrderDetails().getDeliveredQty() != null && item.getDetails().getOrderDetails().getDeliveredQty().compareTo(0d) == 1) {
 				item.getDetails().getOrderDetails().setRefundableAmount(BigDecimal.valueOf(item.getDetails().getOrderDetails().getProrataAmount())
 						.multiply(BigDecimal.valueOf(item.getDetails().getOrderDetails().getIssueQty()))
-						.divide(BigDecimal.valueOf(item.getDetails().getOrderDetails().getDeliveredQty()), 2, RoundingMode.HALF_UP).doubleValue());
+						.divide(BigDecimal.valueOf(item.getDetails().getOrderDetails().getDeliveredQty()), 0, RoundingMode.FLOOR).doubleValue());
 			}
 			if (item.getDetails().getOrderDetails().getIssueQty() != null && item.getDetails().getOrderDetails().getRefundableQty() != null) {
 				ticket.getMetadata().getOrderDetails().setTotalRefundableAmount(BigDecimal.valueOf(
