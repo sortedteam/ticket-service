@@ -48,17 +48,20 @@ public class AutomaticOrderRefundAction implements TicketActionsInterface {
 
 		if (ticket.getMetadata().getOrderDetails() != null) {
 			item.getDetails().getOrderDetails().setIsReturnIssue(true);
-			if (item.getDetails().getOrderDetails().getProrataAmount() != null && item.getDetails().getOrderDetails().getIssueQty() != null && item.getDetails()
-					.getOrderDetails().getDeliveredQty() != null && item.getDetails().getOrderDetails().getDeliveredQty().compareTo(0d) == 1) {
+			item.getDetails().getOrderDetails()
+					.setIssueQty(BigDecimal.valueOf(item.getDetails().getOrderDetails().getIssueQty()).setScale(3, RoundingMode.FLOOR).doubleValue());
+			if (item.getDetails().getOrderDetails().getProrataAmount() != null && item.getDetails().getOrderDetails()
+					.getDeliveredQty() != null && item.getDetails().getOrderDetails().getDeliveredQty().compareTo(0d) == 1) {
 				item.getDetails().getOrderDetails().setRefundableAmount(BigDecimal.valueOf(item.getDetails().getOrderDetails().getProrataAmount())
 						.multiply(BigDecimal.valueOf(item.getDetails().getOrderDetails().getIssueQty()))
 						.divide(BigDecimal.valueOf(item.getDetails().getOrderDetails().getDeliveredQty()), 0, RoundingMode.FLOOR).doubleValue());
-			}
-			if (item.getDetails().getOrderDetails().getIssueQty() != null && item.getDetails().getOrderDetails().getRefundableQty() != null) {
+
 				ticket.getMetadata().getOrderDetails().setTotalRefundableAmount(BigDecimal.valueOf(
 						ticket.getMetadata().getOrderDetails().getTotalRefundableAmount() != null ?
 								ticket.getMetadata().getOrderDetails().getTotalRefundableAmount() :
 								0d).add(BigDecimal.valueOf(item.getDetails().getOrderDetails().getRefundableAmount())).doubleValue());
+			}
+			if (item.getDetails().getOrderDetails().getRefundableQty() != null) {
 				return item.getDetails().getOrderDetails().getRefundableQty().compareTo(item.getDetails().getOrderDetails().getIssueQty()) != -1;
 			}
 		}
