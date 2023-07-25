@@ -266,10 +266,10 @@ public class TicketActionUtils {
 			Integer cancelledCountOld) {
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 		actionDetailsBean.setUserDetail(setRequesterDetails());
-		if (draftCountOld > 0 && ticket.getDraftCount() == 0) {
+		if (draftCountOld != null && draftCountOld > 0 && ticket.getDraftCount() == 0) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_DRAFT_CHILDREN_MOVED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_DRAFT_CHILDREN_MOVED.toString(), actionDetailsBean);
-		} else if (pendingCountOld > 0 && ticket.getPendingCount() == 0 && ticket.getDraftCount() == 0) {
+		} else if (pendingCountOld != null && pendingCountOld > 0 && ticket.getPendingCount() == 0 && ticket.getDraftCount() == 0) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_PENDING_CHILDREN_MOVED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_PENDING_CHILDREN_MOVED.toString(), actionDetailsBean);
 		}
