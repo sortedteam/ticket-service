@@ -15,6 +15,7 @@ import com.sorted.rest.common.utils.ParamsUtils;
 import com.sorted.rest.common.websupport.base.BaseService;
 import com.sorted.rest.services.common.upload.UploadService;
 import com.sorted.rest.services.ticket.beans.TicketCategoryNode;
+import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketCategoryRoot;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
 import com.sorted.rest.services.ticket.entity.TicketCategoryEntity;
@@ -52,6 +53,9 @@ public class TicketService implements BaseService<TicketEntity> {
 
 	@Autowired
 	private TicketCategoryService ticketCategoryService;
+
+	@Autowired
+	private TicketClientService ticketClientService;
 
 	AppLogger _LOGGER = LoggingManager.getLogger(TicketService.class);
 
@@ -126,14 +130,14 @@ public class TicketService implements BaseService<TicketEntity> {
 				String fileName = file.getOriginalFilename();
 				int index = fileName.indexOf(fileExt);
 				fileName = String.format("%s-%s.%s", fileName.substring(0, index - 1), Instant.now().toEpochMilli(), fileExt);
-				_LOGGER.info(String.format("Uploading image - %s to s3", fileName));
+				_LOGGER.info(String.format("Uploading attachment - %s to s3", fileName));
 				Object response = uploadService.uploadFile(bucketName, subDirectory, file.getBytes(), fileName);
 				uploadedFiles.add(ParamsUtils.getParam("CLOUDFRONT_URL").concat("/").concat(response.toString()));
 			}
 			return uploadedFiles;
 		} catch (IOException err) {
 			_LOGGER.error("Files Uploading ", err);
-			throw new ValidationException(new ErrorBean(Errors.UPDATE_FAILED, "Error while uploading images", "images"));
+			throw new ValidationException(new ErrorBean(Errors.UPDATE_FAILED, "Error while uploading attachments", "attachments"));
 		}
 	}
 
@@ -163,11 +167,12 @@ public class TicketService implements BaseService<TicketEntity> {
 		return tickets;
 	}
 
-	public Map<String, Object> getFilters(String requesterEntityId, String requesterEntityCategory, Boolean orderRelated, String lastAddedOn, Boolean hasDraft,
-			Boolean hasPending, Boolean hasClosed, List<TicketCategoryEntity> ticketCategoryEntities) throws ParseException {
+	public Map<String, Object> getFilters(String requesterEntityId, List<String> requesterEntityIds, String requesterEntityCategory, Boolean orderRelated,
+			String lastAddedOn, Boolean hasDraft, Boolean hasPending, Boolean hasClosed, List<TicketCategoryEntity> ticketCategoryEntities)
+			throws ParseException {
 		Map<String, Object> filters = new HashMap<>();
-		if (requesterEntityId != null) {
-			filters.put("requesterEntityId", requesterEntityId);
+		if (!requesterEntityIds.isEmpty()) {
+			filters.put("requesterEntityId", requesterEntityIds);
 		}
 		if (requesterEntityCategory != null) {
 			filters.put("requesterEntityCategory", requesterEntityCategory);
@@ -176,12 +181,14 @@ public class TicketService implements BaseService<TicketEntity> {
 		filters.remove("orderRelated");
 		filters.put("categoryRootId", categoryRootIds);
 
-		Pair<Date, Date> dates = getFilterDates(lastAddedOn);
-		if (filters.containsKey("lastAddedOn")) {
-			filters.remove("lastAddedOn");
+		if (requesterEntityId == null) {
+			Pair<Date, Date> dates = getFilterDates(lastAddedOn);
+			if (filters.containsKey("lastAddedOn")) {
+				filters.remove("lastAddedOn");
+			}
+			filters.put("fromDate", new FilterCriteria("lastAddedAt", dates.getLeft(), Operation.GTE));
+			filters.put("toDate", new FilterCriteria("lastAddedAt", dates.getRight(), Operation.LTE));
 		}
-		filters.put("fromDate", new FilterCriteria("lastAddedAt", dates.getLeft(), Operation.GTE));
-		filters.put("toDate", new FilterCriteria("lastAddedAt", dates.getRight(), Operation.LTE));
 
 		if (hasDraft != null) {
 			filters.put("hasDraft", new FilterCriteria("draftCount", 0, hasDraft ? Operation.GT : Operation.EQUALS));
@@ -228,13 +235,16 @@ public class TicketService implements BaseService<TicketEntity> {
 		return Pair.of(fromDate, toDate);
 	}
 
-	public List<TicketEntity> getCategoryLeafFilteredTickets(String requesterEntityId, String requesterEntityCategory, Boolean orderRelated, String lastAddedOn,
-			Boolean hasDraft, Boolean hasPending, Boolean hasClosed, List<TicketCategoryEntity> ticketCategoryEntities, Integer categoryLeafParent)
-			throws ParseException {
+	public List<TicketEntity> getCategoryLeafFilteredTickets(String requesterEntityId, List<String> requesterEntityIds, String requesterEntityCategory,
+			Boolean orderRelated, String lastAddedOn, Boolean hasDraft, Boolean hasPending, Boolean hasClosed,
+			List<TicketCategoryEntity> ticketCategoryEntities, Integer categoryLeafParent) throws ParseException {
 		Pair<Date, Date> lastAddedDates = getFilterDates(lastAddedOn);
 		List<Integer> categoryRootsIn = getCategoryRoots(ticketCategoryEntities, orderRelated);
-		return ticketRepository.findCustomWithCategoryLeafFilter(requesterEntityId, requesterEntityCategory, lastAddedDates.getLeft(),
-				lastAddedDates.getRight(), hasDraft, hasPending, hasClosed, categoryRootsIn, categoryLeafParent);
+		Boolean skipCheckRequesterEntity = requesterEntityIds.isEmpty();
+		Boolean skipCheckDates = requesterEntityId != null;
+		requesterEntityIds.add("dummy_string");
+		return ticketRepository.findCustomWithCategoryLeafFilter(skipCheckRequesterEntity, skipCheckDates, requesterEntityIds, requesterEntityCategory,
+				lastAddedDates.getLeft(), lastAddedDates.getRight(), hasDraft, hasPending, hasClosed, categoryRootsIn, categoryLeafParent);
 	}
 
 	@Override
