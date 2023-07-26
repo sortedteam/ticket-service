@@ -28,6 +28,8 @@ public class TicketConstants {
 
 	public static final String CLIENT_KEY_FOR_REFUND = "REFUND_VIA_TICKET";
 
+	public static final String FULL_ORDER_REFUND_PRODUCT_NAME = "Full Order";
+
 	public enum TicketStatus {
 
 		DRAFT, IN_PROGRESS, CLOSED, CANCELLED
@@ -85,7 +87,7 @@ public class TicketConstants {
 
 		NEW_TICKET_CREATED("New Ticket Created"), DRAFT_TICKET_CREATED("Draft Ticket Created"), ESCALATE_TO_CUSTOMERCARE(
 				"Ticket escalated to customer care executive"), ESCALATE_TO_WAREHOUSE("Ticket escalated to warehouse executive"), AUTOMATIC_ORDER_REFUND(
-				"Automatic refund initiated");
+				"Automatic refund initiated"), AUTOMATIC_FULL_ORDER_REFUND("Automatic full order refund initiated");
 
 		private String remarks;
 
@@ -102,7 +104,8 @@ public class TicketConstants {
 
 		DRAFT_TICKET_UPDATED("Draft Ticket Updated"), STORE_RETURN_DATA_UPDATED("Store Return Data Updated"), PROCESS_ORDER_REFUND(
 				"Ticket closed after generating refund for the order for quantity %s against issue raised for %s %s with remarks %s"), ONLY_ADD_REMARKS(
-				"Ticket updated with remarks %s"), CLOSE_WITH_REMARKS("Ticket closed with remarks %s"), CANCEL_WITH_REMARKS("Ticket cancelled with remarks %s");
+				"Ticket updated with remarks %s"), CLOSE_WITH_REMARKS("Ticket closed with remarks %s"), CANCEL_WITH_REMARKS(
+				"Ticket cancelled with remarks %s"), PROCESS_FULL_ORDER_REFUND("Ticket closed after generating refund for the complete order with remarks %s");
 
 		private String remarks;
 
@@ -117,8 +120,7 @@ public class TicketConstants {
 
 	public enum ParentTicketUpdateActions {
 
-		NEW_PARENT_CREATED("New parent ticket created"), NEW_CHILDREN_ADDED("New child ticket(s) added"), ALL_DRAFT_CHILDREN_MOVED(
-				"All draft child ticket(s) moved"), ALL_PENDING_CHILDREN_MOVED("All pending child ticket(s) moved");
+		ALL_DRAFT_CHILDREN_MOVED("All draft child ticket(s) moved"), ALL_PENDING_CHILDREN_MOVED("All pending child ticket(s) moved");
 
 		private String remarks;
 
