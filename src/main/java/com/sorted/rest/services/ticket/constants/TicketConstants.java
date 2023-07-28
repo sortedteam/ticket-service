@@ -105,7 +105,9 @@ public class TicketConstants {
 		DRAFT_TICKET_UPDATED("Draft Ticket Updated"), STORE_RETURN_DATA_UPDATED("Store Return Data Updated"), PROCESS_ORDER_REFUND(
 				"Ticket closed after generating refund for the order for quantity %s against issue raised for %s %s with remarks %s"), ONLY_ADD_REMARKS(
 				"Ticket updated with remarks %s"), CLOSE_WITH_REMARKS("Ticket closed with remarks %s"), CANCEL_WITH_REMARKS(
-				"Ticket cancelled with remarks %s"), PROCESS_FULL_ORDER_REFUND("Ticket closed after generating refund for the complete order with remarks %s");
+				"Ticket cancelled with remarks %s"), PROCESS_FULL_ORDER_REFUND(
+				"Ticket closed after generating refund for the complete order with remarks %s"), CHANGE_ISSUE_CATEGORY(
+				"Ticket issue category updated with remarks %s");
 
 		private String remarks;
 

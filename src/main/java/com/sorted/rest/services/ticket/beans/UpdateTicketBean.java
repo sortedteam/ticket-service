@@ -26,6 +26,8 @@ public class UpdateTicketBean implements Serializable {
 
 	private Double resolvedQuantity;
 
+	private Integer categoryLeafId;
+
 	public static UpdateTicketBean newInstance() {
 		return new UpdateTicketBean();
 	}

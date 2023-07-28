@@ -58,6 +58,9 @@ public class TicketActionUtils {
 	private ProcessFullOrderRefundAction processFullOrderRefundAction;
 
 	@Autowired
+	private ChangeIssueCategoryAction changeIssueCategoryAction;
+
+	@Autowired
 	private BaseMapper<?, ?> mapper;
 
 	public void invokeTicketCreateAction(TicketItemEntity item, Long ticketId) {
@@ -233,6 +236,11 @@ public class TicketActionUtils {
 			ticketAction = onlyAddRemarksAction;
 			onlyAddRemarksAction.setAttachments(updateTicketBean.getAttachments());
 			onlyAddRemarksAction.setRemarks(updateTicketBean.getRemarks());
+		} else if (action.equals(TicketUpdateActions.CHANGE_ISSUE_CATEGORY.toString())) {
+			ticketAction = changeIssueCategoryAction;
+			changeIssueCategoryAction.setAttachments(updateTicketBean.getAttachments());
+			changeIssueCategoryAction.setCategoryLeafId(updateTicketBean.getCategoryLeafId());
+			changeIssueCategoryAction.setRemarks(updateTicketBean.getRemarks());
 		} else if (action.equals(TicketUpdateActions.PROCESS_ORDER_REFUND.toString())) {
 			ticketAction = processOrderRefundAction;
 			processOrderRefundAction.setAttachments(updateTicketBean.getAttachments());
