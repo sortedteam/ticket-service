@@ -153,6 +153,7 @@ public class TicketController implements BaseController {
 		ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
 	}
 
+/*
 	// todo: API not in use, to be integrated in subsequent releases
 	@ApiOperation(value = "create tickets for middle mile app", nickname = "createTicketsForMiddleMileApp")
 	@PostMapping(path = "/tickets/middle-mile-app")
@@ -191,6 +192,7 @@ public class TicketController implements BaseController {
 		populateTicketDetailsAndInvokeCreateOrUpdateActions(requestTicket, requestTicketItems);
 		ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
 	}
+*/
 
 	private String getStoreCategoryForTicket(String storeId, String entityType) {
 		List<String> storeCategoryForTicketParam = Arrays.stream(paramService.getParam("STORE_CATEGORY_FOR_TICKET", "Good|Good,Bad,Ugly").split("\\|"))
@@ -316,7 +318,8 @@ public class TicketController implements BaseController {
 
 	private void setTicketActionsAndCategory(TicketItemBean itemBean, Integer categoryRootId, List<TicketCategoryEntity> ticketCategoryEntities) {
 		itemBean.setUpdateActions(itemBean.getCategoryLeaf().getOnUpdateActions());
-		itemBean.setCategory(ticketCategoryService.getRootToLeafPathUsingCategoryList(ticketCategoryEntities, categoryRootId, itemBean.getCategoryLeafId()));
+		itemBean.setCategory(
+				ticketCategoryService.getRootToLeafPathUsingCategoryList(ticketCategoryEntities, categoryRootId, itemBean.getCategoryLeaf().getId()));
 	}
 
 	@ApiOperation(value = "update ticket from draft for ims", nickname = "updateTicketFromDraftForIms")
@@ -361,17 +364,7 @@ public class TicketController implements BaseController {
 		ticket.setHasUpdatedDraft(true);
 		populateTicketDetailsAndInvokeCreateOrUpdateActions(ticket, Collections.singletonList(item));
 		ticket = ticketService.saveTicketWithUpdatedItems(ticket);
-		itemOptional = ticket.getItems().stream().filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId())).findFirst();
-		if (itemOptional.isPresent()) {
-			TicketItemBean itemBean = getMapper().mapSrcToDest(itemOptional.get(), TicketItemBean.newInstance());
-			List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
-			setTicketActionsAndCategory(itemBean, ticket.getCategoryRootId(), ticketCategoryEntities);
-			return itemBean;
-		} else {
-			throw new ValidationException(
-					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found after updating ticket with id : %s", updateTicketBean.getItemId()),
-							null));
-		}
+		return getItemBean(ticket, updateTicketBean.getItemId());
 	}
 
 	@ApiOperation(value = "update ticket for backoffice", nickname = "updateTicketForIms")
@@ -408,7 +401,11 @@ public class TicketController implements BaseController {
 
 		populateTicketDetailsAndInvokeUpdateActions(ticket, item, updateTicketBean);
 		ticket = ticketService.saveTicketWithUpdatedItems(ticket);
-		itemOptional = ticket.getItems().stream().filter(i -> Objects.equals(i.getId(), updateTicketBean.getItemId())).findFirst();
+		return getItemBean(ticket, updateTicketBean.getItemId());
+	}
+
+	private TicketItemBean getItemBean(TicketEntity ticket, Long itemId) {
+		Optional<TicketItemEntity> itemOptional = ticket.getItems().stream().filter(i -> Objects.equals(i.getId(), itemId)).findFirst();
 		if (itemOptional.isPresent()) {
 			TicketItemBean itemBean = getMapper().mapSrcToDest(itemOptional.get(), TicketItemBean.newInstance());
 			List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
@@ -416,8 +413,7 @@ public class TicketController implements BaseController {
 			return itemBean;
 		} else {
 			throw new ValidationException(
-					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found after updating ticket with id : %s", updateTicketBean.getItemId()),
-							null));
+					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found after updating ticket with id : %s", itemId), null));
 		}
 	}
 
@@ -597,7 +593,6 @@ public class TicketController implements BaseController {
 
 		TicketItemEntity ticketItem = TicketItemEntity.newInstance();
 		ticketItem.setDetails(ticketDetailsBean);
-		ticketItem.setCategoryLeafId(category.getId());
 		ticketItem.setCategoryLeaf(category);
 		ticketItem.setStatus(getTicketStatus(ticketItem.getCategoryLeaf().getIsTerminal(), ticketItem.getCategoryLeaf().getDescription()));
 		ticketItem.setPlatform(TicketPlatform.STORE_RETURN.toString());

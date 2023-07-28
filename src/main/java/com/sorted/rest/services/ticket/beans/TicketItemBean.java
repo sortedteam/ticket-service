@@ -17,8 +17,6 @@ public class TicketItemBean implements Serializable {
 
 	private Long ticketId;
 
-	private Integer categoryLeafId;
-
 	private Integer priority;
 
 	private String assignedTeam;
