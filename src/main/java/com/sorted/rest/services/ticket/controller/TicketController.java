@@ -153,6 +153,7 @@ public class TicketController implements BaseController {
 		ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
 	}
 
+/*
 	// todo: API not in use, to be integrated in subsequent releases
 	@ApiOperation(value = "create tickets for middle mile app", nickname = "createTicketsForMiddleMileApp")
 	@PostMapping(path = "/tickets/middle-mile-app")
@@ -191,6 +192,7 @@ public class TicketController implements BaseController {
 		populateTicketDetailsAndInvokeCreateOrUpdateActions(requestTicket, requestTicketItems);
 		ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
 	}
+*/
 
 	private String getStoreCategoryForTicket(String storeId, String entityType) {
 		List<String> storeCategoryForTicketParam = Arrays.stream(paramService.getParam("STORE_CATEGORY_FOR_TICKET", "Good|Good,Bad,Ugly").split("\\|"))

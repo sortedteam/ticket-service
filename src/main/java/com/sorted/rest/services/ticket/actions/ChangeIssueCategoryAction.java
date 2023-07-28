@@ -57,7 +57,8 @@ public class ChangeIssueCategoryAction implements TicketActionsInterface {
 			if (categoryLeaf == null) {
 				throw new ValidationException(
 						ErrorBean.withError(Errors.INVALID_REQUEST, String.format("No data found for ticket category with id : %s", categoryLeafId), null));
-			} else if (categoryLeaf.getIsTerminal() != 1 || !item.getCategoryLeaf().getOnCreateActions().containsAll(categoryLeaf.getOnCreateActions())) {
+			} else if (categoryLeaf.getIsTerminal() != 1 || !item.getCategoryLeaf().getOnCreateActions().stream().sorted()
+					.equals(categoryLeaf.getOnCreateActions().stream().sorted())) {
 				throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST,
 						String.format("Cannot change issue category to %s from %s", categoryLeaf.getDescription(), item.getCategoryLeaf().getDescription()),
 						null));
