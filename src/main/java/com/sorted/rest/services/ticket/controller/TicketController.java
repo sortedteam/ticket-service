@@ -527,7 +527,7 @@ public class TicketController implements BaseController {
 		}
 		TicketCategoryEntity categoryRoot = categoryMap.get(TicketCategoryRoot.ORDER_ISSUE.toString());
 		TicketCategoryEntity categoryLeaf = categoryMap.get(TicketConstants.STORE_RETURN_TICKET_CATEGORY_LEAF_LABEL);
-		Map<String, TicketItemEntity> ticketItemSkuMap = new HashMap<>();
+		Map<String, List<TicketItemEntity>> ticketItemSkuMap = new HashMap<>();
 
 		TicketEntity ticket = ticketService.findByReferenceIdAndCategoryRootId(request.getOrderId(), categoryRoot.getId()).get(0);
 
@@ -535,9 +535,9 @@ public class TicketController implements BaseController {
 			ticket = createTicketForStoreReturn(request, categoryRoot);
 		} else {
 			ticketItemSkuMap = ticket.getItems().stream()
-					.filter(item -> !item.getStatus().equals(TicketStatus.CLOSED) && !item.getStatus().equals(TicketStatus.CANCELLED) && item.getDetails()
-							.getOrderDetails() != null && item.getDetails().getOrderDetails().getSkuCode() != null)
-					.collect(Collectors.toMap(item -> item.getDetails().getOrderDetails().getSkuCode(), Function.identity(), (o1, o2) -> o1, HashMap::new));
+					.filter(item -> item.getDetails().getOrderDetails() != null && item.getDetails().getOrderDetails().getSkuCode() != null).collect(
+							Collectors.groupingBy(item -> item.getDetails().getOrderDetails().getSkuCode(),
+									Collectors.mapping(Function.identity(), Collectors.toList())));
 		}
 
 		List<TicketItemEntity> insertTicketItems = new ArrayList<>();
@@ -545,7 +545,7 @@ public class TicketController implements BaseController {
 
 		for (StoreReturnItemData requestItem : request.getItems()) {
 			if (ticketItemSkuMap.containsKey(requestItem.getSkuCode())) {
-				updateTicketItems.add(ticketItemSkuMap.get(requestItem.getSkuCode()));
+				updateTicketItems.addAll(ticketItemSkuMap.get(requestItem.getSkuCode()));
 			} else {
 				TicketItemEntity ticketItem = createTicketItemForStoreReturn(requestItem, categoryLeaf);
 				insertTicketItems.add(ticketItem);
@@ -555,20 +555,18 @@ public class TicketController implements BaseController {
 		ticket.setHasNew(!insertTicketItems.isEmpty());
 		if (ticket.getHasNew() || ticket.getId() == null) {
 			populateTicketDetailsAndInvokeCreateOrUpdateActions(ticket, insertTicketItems);
+			ticket.addTicketItems(insertTicketItems);
 		}
 
-		ticketItemSkuMap = Stream.concat(updateTicketItems.stream(), insertTicketItems.stream())
-				.collect(Collectors.toMap(item -> item.getDetails().getOrderDetails().getSkuCode(), Function.identity(), (o1, o2) -> o1, HashMap::new));
+		ticketItemSkuMap = Stream.concat(updateTicketItems.stream(), insertTicketItems.stream()).collect(
+				Collectors.groupingBy(item -> item.getDetails().getOrderDetails().getSkuCode(), Collectors.mapping(Function.identity(), Collectors.toList())));
 
 		for (StoreReturnItemData requestItem : request.getItems()) {
 			if (ticketItemSkuMap.containsKey(requestItem.getSkuCode())) {
-				ticketActionUtils.invokeUpdateStoreReturnInfoAction(ticketItemSkuMap.get(requestItem.getSkuCode()), ticket.getId(), requestItem);
+				for (TicketItemEntity item : ticketItemSkuMap.get(requestItem.getSkuCode())) {
+					ticketActionUtils.invokeUpdateStoreReturnInfoAction(item, ticket.getId(), requestItem);
+				}
 			}
-		}
-
-		ticket.addTicketItems(insertTicketItems);
-		for (TicketItemEntity item : ticket.getItems()) {
-			item.setTicket(ticket);
 		}
 		ticketService.saveTicketWithUpdatedItems(ticket);
 	}
