@@ -248,6 +248,9 @@ public class TicketService implements BaseService<TicketEntity> {
 	}
 
 	public List<TicketEntity> getOrderRelatedFilteredTickets(Date createdFrom, Date createdTo, Integer categoryRootId, String storeId, String skuCode) {
+		if (skuCode == null) {
+			skuCode = "dummy_string";
+		}
 		return ticketRepository.findCustomOrderRelated(createdFrom, createdTo, List.of(TicketStatus.IN_PROGRESS, TicketStatus.CLOSED), categoryRootId, storeId,
 				skuCode);
 	}

@@ -20,8 +20,7 @@ public interface TicketRepository extends BaseCrudRepository<TicketEntity, Long>
 			String requesterEntityCategory, Date fromDate, Date toDate, Boolean hasDraft, Boolean hasPending, Boolean hasClosed, List<Integer> categoryRootsIn,
 			Integer categoryLeafParentId);
 
-	@Query(value = "SELECT DISTINCT t FROM TicketEntity t JOIN FETCH t.items ti WHERE t.active = 1 AND ti.active = 1 AND (t.requesterEntityId = :storeId OR :storeId IS NULL) AND ti.createdAt >= :createdFrom AND ti.createdAt <= :createdTo AND t.categoryRootId = :categoryRootId AND t.pendingCount >= 0 AND t.closedCount >= 0 AND ti.status IN :ticketStatuses AND JSON_VALUE(ti.details, '$.orderDetails.skuCode') = COALESCE(:skuCode, JSON_VALUE(ti.details, '$.orderDetails.skuCode')) ORDER BY ti.createdAt")
+	@Query(value = "SELECT DISTINCT t FROM TicketEntity t JOIN FETCH t.items ti WHERE t.active = 1 AND ti.active = 1 AND (:storeId IS NULL OR t.requesterEntityId = :storeId) AND ti.createdAt >= :createdFrom AND ti.createdAt <= :createdTo AND t.categoryRootId = :categoryRootId AND t.pendingCount >= 0 AND t.closedCount >= 0 AND ti.status IN :ticketStatuses AND (:skuCode = 'dummy_string' OR JSONB_EXTRACT_PATH_TEXT(ti.details, 'orderDetails', 'skuCode') = :skuCode) ORDER BY ti.createdAt DESC")
 	List<TicketEntity> findCustomOrderRelated(Date createdFrom, Date createdTo, List<TicketStatus> ticketStatuses, Integer categoryRootId, String storeId,
 			String skuCode);
-
 }
