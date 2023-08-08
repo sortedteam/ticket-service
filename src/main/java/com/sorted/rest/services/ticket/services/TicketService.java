@@ -216,7 +216,7 @@ public class TicketService implements BaseService<TicketEntity> {
 			}
 		}
 		if (categoryRootIds.isEmpty()) {
-			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Any relevant issue ticket category not found", null));
+			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Any relevant issue ticket category root not found", null));
 		}
 		return categoryRootIds;
 	}
@@ -245,6 +245,11 @@ public class TicketService implements BaseService<TicketEntity> {
 		requesterEntityIds.add("dummy_string");
 		return ticketRepository.findCustomWithCategoryLeafFilter(skipCheckRequesterEntity, skipCheckDates, requesterEntityIds, requesterEntityCategory,
 				lastAddedDates.getLeft(), lastAddedDates.getRight(), hasDraft, hasPending, hasClosed, categoryRootsIn, categoryLeafParent);
+	}
+
+	public List<TicketEntity> getOrderRelatedFilteredTickets(Date createdFrom, Date createdTo, Integer categoryRootId, String storeId, String skuCode) {
+		return ticketRepository.findCustomOrderRelated(createdFrom, createdTo, List.of(TicketStatus.IN_PROGRESS, TicketStatus.CLOSED), categoryRootId, storeId,
+				skuCode);
 	}
 
 	@Override
