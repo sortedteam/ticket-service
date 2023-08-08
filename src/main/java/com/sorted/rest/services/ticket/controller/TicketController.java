@@ -727,7 +727,6 @@ public class TicketController implements BaseController {
 			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "No tickets found", null));
 		}
 		List<TicketBean> ticketBeans = getMapper().mapAsList(tickets, TicketBean.class);
-		updateOrderDetailsFromClient(ticketBeans);
 		for (TicketBean ticketBean : ticketBeans) {
 			for (TicketItemBean itemBean : ticketBean.getItems()) {
 				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
