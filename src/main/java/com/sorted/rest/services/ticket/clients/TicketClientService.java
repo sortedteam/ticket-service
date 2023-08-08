@@ -119,7 +119,7 @@ public class TicketClientService {
 		try {
 			Map<String, Object> headerMap = new HashMap<>();
 			headerMap.put("rz-auth-key", RZ_AUTH_VALUE);
-			return ticketWmsClient.getStoreSkuInventoryForBulkRequest(headerMap, skuCodes, storeId);
+			return ticketWmsClient.getStoreSkuInventoryForBulkRequest(headerMap, skuCodes, storeId, true);
 		} catch (FeignClientException f) {
 			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching while fetching wh skus data from warehouse", null);
 			try {
