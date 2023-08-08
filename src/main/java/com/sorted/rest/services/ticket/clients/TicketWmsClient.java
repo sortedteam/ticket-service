@@ -17,7 +17,7 @@ public interface TicketWmsClient {
 
 	@GetMapping(value = "/api/v1/catalog/bulk-request/store-sku")
 	List<WhSkuResponse> getStoreSkuInventoryForBulkRequest(@RequestHeader Map<String, Object> headers, @RequestParam Set<String> skuCodes,
-			@RequestParam String storeId);
+			@RequestParam String storeId, @RequestParam Boolean skipPriceOverride);
 
 	@GetMapping("/api/v1/storeReturns/order-id/{id}")
 	StoreReturnResponseBean getStoreReturnByOrderId(@RequestHeader Map<String, Object> headers, @PathVariable String id);
