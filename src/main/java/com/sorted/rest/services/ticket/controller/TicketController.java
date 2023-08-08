@@ -476,20 +476,28 @@ public class TicketController implements BaseController {
 		}
 
 		if (orderRelated) {
-			Set<String> displayOrderIds = response.getData().stream().filter(ticket -> ticket.getMetadata().getOrderDetails() != null && !StringUtils.isEmpty(
-							ticket.getMetadata().getOrderDetails().getDisplayOrderId())).map(ticket -> ticket.getMetadata().getOrderDetails().getDisplayOrderId())
-					.collect(Collectors.toSet());
-			Map<String, FranchiseOrderListBean> ordersDisplayIdMap = ticketClientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
-					.collect(Collectors.toMap(FranchiseOrderListBean::getDisplayOrderId, Function.identity()));
-			for (TicketListViewBean ticketBean : response.getData()) {
-				if (ticketBean.getMetadata().getOrderDetails() != null && ticketBean.getMetadata().getOrderDetails()
-						.getDisplayOrderId() != null && ordersDisplayIdMap.containsKey(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId())) {
-					FranchiseOrderListBean orderListBean = ordersDisplayIdMap.get(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId());
-					ticketBean.getMetadata().getOrderDetails().setOrderStatus(orderListBean.getStatus());
-				}
-			}
+			updateOrderDetailsFromClient(response.getData());
 		}
 		return response;
+	}
+
+	private <T extends TicketListViewBean> void updateOrderDetailsFromClient(List<T> ticketBeans) {
+		Set<String> displayOrderIds = ticketBeans.stream()
+				.filter(ticket -> ticket.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString()) && ticket.getMetadata()
+						.getOrderDetails() != null && !StringUtils.isEmpty(ticket.getMetadata().getOrderDetails().getDisplayOrderId()))
+				.map(ticket -> ticket.getMetadata().getOrderDetails().getDisplayOrderId()).collect(Collectors.toSet());
+		Map<String, FranchiseOrderListBean> ordersDisplayIdMap = !displayOrderIds.isEmpty() ?
+				ticketClientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
+						.collect(Collectors.toMap(FranchiseOrderListBean::getDisplayOrderId, Function.identity())) :
+				new HashMap<>();
+
+		for (T ticketBean : ticketBeans) {
+			if (ticketBean.getMetadata().getOrderDetails() != null && ticketBean.getMetadata().getOrderDetails()
+					.getDisplayOrderId() != null && ordersDisplayIdMap.containsKey(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId())) {
+				FranchiseOrderListBean orderListBean = ordersDisplayIdMap.get(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId());
+				ticketBean.getMetadata().getOrderDetails().setOrderStatus(orderListBean.getStatus());
+			}
+		}
 	}
 
 	private void filterTicketOnShowStatus(Boolean show, TicketStatus status, List<TicketBean> ticketBeans) {
@@ -620,19 +628,7 @@ public class TicketController implements BaseController {
 		if (showOnlyDraft) {
 			filterTicketOnShowStatus(true, TicketStatus.DRAFT, ticketBeans);
 		}
-		if (ticketBean.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
-			Set<String> displayOrderIds = ticketBean.getMetadata().getOrderDetails() != null && !StringUtils.isEmpty(
-					ticketBean.getMetadata().getOrderDetails().getDisplayOrderId()) ?
-					Collections.singleton(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId()) :
-					new HashSet<>();
-			Map<String, FranchiseOrderListBean> ordersDisplayIdMap = ticketClientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
-					.collect(Collectors.toMap(FranchiseOrderListBean::getDisplayOrderId, Function.identity()));
-			if (ticketBean.getMetadata().getOrderDetails() != null && ticketBean.getMetadata().getOrderDetails()
-					.getDisplayOrderId() != null && ordersDisplayIdMap.containsKey(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId())) {
-				FranchiseOrderListBean orderListBean = ordersDisplayIdMap.get(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId());
-				ticketBean.getMetadata().getOrderDetails().setOrderStatus(orderListBean.getStatus());
-			}
-		}
+		updateOrderDetailsFromClient(ticketBeans);
 		for (TicketItemBean itemBean : ticketBean.getItems()) {
 			setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
 			setTicketCategoryDesc(itemBean);
@@ -667,21 +663,8 @@ public class TicketController implements BaseController {
 
 		filterTicketOnShowStatus(false, TicketStatus.DRAFT, ticketBeans);
 		filterTicketOnShowStatus(false, TicketStatus.CANCELLED, ticketBeans);
-		Set<String> displayOrderIds = ticketBeans.stream()
-				.filter(ticket -> ticket.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString()) && ticket.getMetadata()
-						.getOrderDetails() != null && !StringUtils.isEmpty(ticket.getMetadata().getOrderDetails().getDisplayOrderId()))
-				.map(ticket -> ticket.getMetadata().getOrderDetails().getDisplayOrderId()).collect(Collectors.toSet());
-		Map<String, FranchiseOrderListBean> ordersDisplayIdMap = !displayOrderIds.isEmpty() ?
-				ticketClientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
-						.collect(Collectors.toMap(FranchiseOrderListBean::getDisplayOrderId, Function.identity())) :
-				new HashMap<>();
-
+		updateOrderDetailsFromClient(ticketBeans);
 		for (TicketBean ticketBean : ticketBeans) {
-			if (ticketBean.getMetadata().getOrderDetails() != null && ticketBean.getMetadata().getOrderDetails()
-					.getDisplayOrderId() != null && ordersDisplayIdMap.containsKey(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId())) {
-				FranchiseOrderListBean orderListBean = ordersDisplayIdMap.get(ticketBean.getMetadata().getOrderDetails().getDisplayOrderId());
-				ticketBean.getMetadata().getOrderDetails().setOrderStatus(orderListBean.getStatus());
-			}
 			for (TicketItemBean itemBean : ticketBean.getItems()) {
 				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
 				setTicketCategoryDesc(itemBean);
@@ -699,6 +682,30 @@ public class TicketController implements BaseController {
 				itemBean.setLeafParentCategoryDesc(categoryLeafPrevious.getDescription());
 			}
 		}
+	}
+
+	@ApiOperation(value = "fetch custom order tickets for ims", nickname = "fetchCustomOrderTicketsForIms")
+	@GetMapping(path = "/tickets/ims/orders")
+	public ResponseEntity<List<TicketBean>> fetchCustomOrderTicketsForIms(@RequestParam java.sql.Date createdFrom, @RequestParam java.sql.Date createdTo,
+			@RequestParam(required = false) String storeId, @RequestParam(required = false) String skuCode) {
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
+		TicketCategoryNode categoryRoot = ticketCategoryService.getTicketCategoryNodeByLabel(ticketCategoryEntities, TicketCategoryRoot.ORDER_ISSUE.toString());
+		if (categoryRoot == null) {
+			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Any relevant issue ticket category root not found", null));
+		}
+		List<TicketEntity> tickets = ticketService.getOrderRelatedFilteredTickets(DateUtils.addMinutes(createdFrom, -330),
+				DateUtils.addDays(DateUtils.addMinutes(createdTo, -330), 1), categoryRoot.getId(), storeId, skuCode);
+		if (tickets == null || tickets.isEmpty()) {
+			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "No tickets found", null));
+		}
+		List<TicketBean> ticketBeans = getMapper().mapAsList(tickets, TicketBean.class);
+		for (TicketBean ticketBean : ticketBeans) {
+			for (TicketItemBean itemBean : ticketBean.getItems()) {
+				setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+				setTicketCategoryDesc(itemBean);
+			}
+		}
+		return ResponseEntity.ok(ticketBeans);
 	}
 
 	@Override
