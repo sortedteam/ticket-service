@@ -613,7 +613,11 @@ public class TicketController implements BaseController {
 		orderDetailsRequestBean.setSkuCode(requestItem.getSkuCode());
 		orderDetailsRequestBean.setIssueQty(requestItem.getQuantity());
 		ticketDetailsBean.setOrderDetails(orderDetailsRequestBean);
-		return createTicketItemForStoreReturn(category, ticketDetailsBean);
+		TicketItemEntity ticketItem = createTicketItemForStoreReturn(category, ticketDetailsBean);
+		if (requestItem.getAttachments() != null && !requestItem.getAttachments().isEmpty()) {
+			ticketItem.setAttachments(requestItem.getAttachments());
+		}
+		return ticketItem;
 	}
 
 	private TicketItemEntity createTicketItemForStoreReturn(TicketCategoryEntity category, ResolutionDetailsBean ticketDetailsBean) {
