@@ -21,6 +21,14 @@ public class StoreReturnTicketRequest implements Serializable {
 	@Valid
 	private List<StoreReturnItemData> items;
 
+	private Integer isFullSrReturn;
+
+	private String ticketCategoryLabel;
+
+	private String remarks;
+
+	private String qaResult;
+
 	public static StoreReturnTicketRequest newInstance() {
 		return new StoreReturnTicketRequest();
 	}

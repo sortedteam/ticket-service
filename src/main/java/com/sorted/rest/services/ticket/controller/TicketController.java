@@ -526,15 +526,17 @@ public class TicketController implements BaseController {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Order id not given", null));
 		}
 
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getVisibleTicketCategories();
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
 		Map<String, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getLabel, Function.identity(), (o1, o2) -> o1, HashMap::new));
 		if (!categoryMap.containsKey(TicketCategoryRoot.ORDER_ISSUE.toString()) || !categoryMap.containsKey(
-				TicketConstants.STORE_RETURN_TICKET_CATEGORY_LEAF_LABEL)) {
+				TicketConstants.STORE_RETURN_TICKET_CATEGORY_LEAF_LABEL) || (request.getTicketCategoryLabel() != null && !categoryMap.containsKey(
+				request.getTicketCategoryLabel()))) {
 			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Relevant order issue ticket category not found", null));
 		}
 		TicketCategoryEntity categoryRoot = categoryMap.get(TicketCategoryRoot.ORDER_ISSUE.toString());
 		TicketCategoryEntity categoryLeaf = categoryMap.get(TicketConstants.STORE_RETURN_TICKET_CATEGORY_LEAF_LABEL);
+		TicketCategoryEntity fullSrCategoryLeaf = request.getTicketCategoryLabel() != null ? categoryMap.get(request.getTicketCategoryLabel()) : null;
 		Map<String, List<TicketItemEntity>> ticketItemSkuMap = new HashMap<>();
 
 		TicketEntity ticket = ticketService.findByReferenceIdAndCategoryRootId(request.getOrderId(), categoryRoot.getId()).get(0);
@@ -554,10 +556,20 @@ public class TicketController implements BaseController {
 		for (StoreReturnItemData requestItem : request.getItems()) {
 			if (ticketItemSkuMap.containsKey(requestItem.getSkuCode())) {
 				updateTicketItems.addAll(ticketItemSkuMap.get(requestItem.getSkuCode()));
-			} else {
+			} else if (request.getIsFullSrReturn() == null || request.getIsFullSrReturn() == 0) {
 				TicketItemEntity ticketItem = createTicketItemForStoreReturn(requestItem, categoryLeaf);
 				insertTicketItems.add(ticketItem);
 			}
+		}
+
+		TicketItemEntity fullSrReturnTicketItem = null;
+		StoreReturnItemData fullSrItemData = null;
+		if (request.getIsFullSrReturn() != null && request.getIsFullSrReturn() == 1) {
+			fullSrItemData = new StoreReturnItemData();
+			fullSrItemData.setQaResult(request.getQaResult());
+			fullSrItemData.setRemarks(request.getRemarks());
+			fullSrReturnTicketItem = createTicketItemForFullSrStoreReturn(request, fullSrCategoryLeaf);
+			insertTicketItems.add(fullSrReturnTicketItem);
 		}
 
 		ticket.setHasNew(!insertTicketItems.isEmpty());
@@ -566,8 +578,10 @@ public class TicketController implements BaseController {
 			ticket.addTicketItems(insertTicketItems);
 		}
 
-		ticketItemSkuMap = Stream.concat(updateTicketItems.stream(), insertTicketItems.stream()).collect(
-				Collectors.groupingBy(item -> item.getDetails().getOrderDetails().getSkuCode(), Collectors.mapping(Function.identity(), Collectors.toList())));
+		ticketItemSkuMap = Stream.concat(updateTicketItems.stream(), insertTicketItems.stream())
+				.filter(item -> item.getDetails().getOrderDetails() != null && item.getDetails().getOrderDetails().getSkuCode() != null).collect(
+						Collectors.groupingBy(item -> item.getDetails().getOrderDetails().getSkuCode(),
+								Collectors.mapping(Function.identity(), Collectors.toList())));
 
 		for (StoreReturnItemData requestItem : request.getItems()) {
 			if (ticketItemSkuMap.containsKey(requestItem.getSkuCode())) {
@@ -575,6 +589,9 @@ public class TicketController implements BaseController {
 					ticketActionUtils.invokeUpdateStoreReturnInfoAction(item, ticket.getId(), requestItem);
 				}
 			}
+		}
+		if (fullSrItemData != null && fullSrReturnTicketItem != null) {
+			ticketActionUtils.invokeUpdateStoreReturnInfoAction(fullSrReturnTicketItem, ticket.getId(), fullSrItemData);
 		}
 		ticketService.saveTicketWithUpdatedItems(ticket);
 	}
@@ -596,7 +613,10 @@ public class TicketController implements BaseController {
 		orderDetailsRequestBean.setSkuCode(requestItem.getSkuCode());
 		orderDetailsRequestBean.setIssueQty(requestItem.getQuantity());
 		ticketDetailsBean.setOrderDetails(orderDetailsRequestBean);
+		return createTicketItemForStoreReturn(category, ticketDetailsBean);
+	}
 
+	private TicketItemEntity createTicketItemForStoreReturn(TicketCategoryEntity category, ResolutionDetailsBean ticketDetailsBean) {
 		TicketItemEntity ticketItem = TicketItemEntity.newInstance();
 		ticketItem.setDetails(ticketDetailsBean);
 		ticketItem.setCategoryLeaf(category);
@@ -606,6 +626,14 @@ public class TicketController implements BaseController {
 		ticketItem.setAssignedTeam(TicketResolutionTeam.CUSTOMERCARE.toString());
 		ticketItem.setAssignedAt(new Date());
 		return ticketItem;
+	}
+
+	private TicketItemEntity createTicketItemForFullSrStoreReturn(StoreReturnTicketRequest request, TicketCategoryEntity category) {
+		ResolutionDetailsBean ticketDetailsBean = ResolutionDetailsBean.newInstance();
+		ticketDetailsBean.setDescription(TicketConstants.STORE_RETURN_TICKET_DESCRIPTION);
+		OrderItemDetailsBean orderDetailsRequestBean = OrderItemDetailsBean.newInstance();
+		ticketDetailsBean.setOrderDetails(orderDetailsRequestBean);
+		return createTicketItemForStoreReturn(category, ticketDetailsBean);
 	}
 
 	@ApiOperation(value = "upload files", nickname = "uploadFiles")
