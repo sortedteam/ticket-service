@@ -5,6 +5,7 @@ import lombok.Data;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 public class StoreReturnItemData implements Serializable {
@@ -22,4 +23,6 @@ public class StoreReturnItemData implements Serializable {
 	private String qaResult;
 
 	private Double refundQty;
+
+	private List<String> attachments;
 }
