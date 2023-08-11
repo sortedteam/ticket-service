@@ -657,11 +657,32 @@ public class TicketController implements BaseController {
 			filterTicketOnShowStatus(true, TicketStatus.DRAFT, ticketBeans);
 		}
 		updateOrderDetailsFromClient(ticketBeans);
+		updateStoreSalesDetailsFromClient(ticketBeans);
 		for (TicketItemBean itemBean : ticketBean.getItems()) {
 			setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
 			setTicketCategoryDesc(itemBean);
 		}
 		return ResponseEntity.ok(ticketBean);
+	}
+
+	private <T extends TicketListViewBean> void updateStoreSalesDetailsFromClient(List<T> ticketBeans) {
+		// do API call
+		/*
+		Set<String> displayOrderIds = ticketBeans.stream()
+				.filter(ticket -> ticket.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString()) && ticket.getMetadata()
+						.getOrderDetails() != null && !StringUtils.isEmpty(ticket.getMetadata().getOrderDetails().getDisplayOrderId()))
+				.map(ticket -> ticket.getMetadata().getOrderDetails().getDisplayOrderId()).collect(Collectors.toSet());
+		Map<String, FranchiseOrderListBean> ordersDisplayIdMap = !displayOrderIds.isEmpty() ?
+				ticketClientService.getFranchiseOrderByDisplayIds(displayOrderIds).stream()
+						.collect(Collectors.toMap(FranchiseOrderListBean::getDisplayOrderId, Function.identity())) :
+				new HashMap<>();
+		 */
+		for (T ticketBean : ticketBeans) {
+			if (ticketBean.getMetadata() != null) {
+				StoreSalesDetailsBean storeSalesDetailsBean = null; // get requirement
+				ticketBean.getMetadata().setStoreSalesDetails(storeSalesDetailsBean);
+			}
+		}
 	}
 
 	@ApiOperation(value = "fetch tickets for partner app", nickname = "fetchTicketsForPartnerApp")

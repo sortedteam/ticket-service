@@ -23,7 +23,7 @@ public class TicketListViewBean implements Serializable {
 
 	private Integer categoryRootId;
 
-	private TicketMetadataBean metadata;
+	private TicketSuperMetadataBean metadata;
 
 	@JsonIgnore
 	private TicketCategoryBean categoryRoot;
