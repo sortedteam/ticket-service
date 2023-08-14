@@ -5,6 +5,7 @@ import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
+import com.sorted.rest.common.utils.CollectionUtils;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.actions.*;
@@ -21,6 +22,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class TicketActionUtils {
@@ -328,11 +331,17 @@ public class TicketActionUtils {
 			item.getDetails().getOrderDetails().setReturnRefundQty(storeReturnItemResponse.getRefundQty());
 		}
 
+		if (CollectionUtils.isNotEmpty(storeReturnItemResponse.getAttachments())) {
+			if (!updated)
+				updated = true;
+			item.setAttachments(Stream.concat(storeReturnItemResponse.getAttachments().stream(), item.getAttachments().stream()).collect(Collectors.toList()));
+		}
+
 		if (updated) {
 			TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 			actionDetailsBean.setUserDetail(setRequesterDetails());
 			actionDetailsBean.setRemarks(TicketUpdateActions.STORE_RETURN_DATA_UPDATED.getRemarks());
-			if (storeReturnItemResponse.getAttachments() != null && !storeReturnItemResponse.getAttachments().isEmpty()) {
+			if (CollectionUtils.isNotEmpty(storeReturnItemResponse.getAttachments())) {
 				actionDetailsBean.setAttachments(storeReturnItemResponse.getAttachments());
 			}
 			ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketUpdateActions.STORE_RETURN_DATA_UPDATED.toString(), actionDetailsBean);
