@@ -10,6 +10,7 @@ import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
+import com.sorted.rest.common.utils.CollectionUtils;
 import com.sorted.rest.common.utils.DateUtils;
 import com.sorted.rest.common.utils.ParamsUtils;
 import com.sorted.rest.common.utils.SessionUtils;
@@ -613,7 +614,11 @@ public class TicketController implements BaseController {
 		orderDetailsRequestBean.setSkuCode(requestItem.getSkuCode());
 		orderDetailsRequestBean.setIssueQty(requestItem.getQuantity());
 		ticketDetailsBean.setOrderDetails(orderDetailsRequestBean);
-		return createTicketItemForStoreReturn(category, ticketDetailsBean);
+		TicketItemEntity ticketItem = createTicketItemForStoreReturn(category, ticketDetailsBean);
+		if (CollectionUtils.isNotEmpty(requestItem.getAttachments())) {
+			ticketItem.setAttachments(requestItem.getAttachments());
+		}
+		return ticketItem;
 	}
 
 	private TicketItemEntity createTicketItemForStoreReturn(TicketCategoryEntity category, ResolutionDetailsBean ticketDetailsBean) {
