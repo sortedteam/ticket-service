@@ -332,6 +332,9 @@ public class TicketActionUtils {
 			TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 			actionDetailsBean.setUserDetail(setRequesterDetails());
 			actionDetailsBean.setRemarks(TicketUpdateActions.STORE_RETURN_DATA_UPDATED.getRemarks());
+			if (storeReturnItemResponse.getAttachments() != null && !storeReturnItemResponse.getAttachments().isEmpty()) {
+				actionDetailsBean.setAttachments(storeReturnItemResponse.getAttachments());
+			}
 			ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketUpdateActions.STORE_RETURN_DATA_UPDATED.toString(), actionDetailsBean);
 		}
 	}

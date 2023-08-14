@@ -615,7 +615,7 @@ public class TicketController implements BaseController {
 		ticketDetailsBean.setOrderDetails(orderDetailsRequestBean);
 		TicketItemEntity ticketItem = createTicketItemForStoreReturn(category, ticketDetailsBean);
 		if (requestItem.getAttachments() != null && !requestItem.getAttachments().isEmpty()) {
-			ticketItem.setAttachments(requestItem.getAttachments());
+			ticketItem.getAttachments().addAll(requestItem.getAttachments());
 		}
 		return ticketItem;
 	}
