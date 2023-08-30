@@ -264,4 +264,8 @@ public class TicketService implements BaseService<TicketEntity> {
 	public BaseCrudRepository getRepository() {
 		return ticketRepository;
 	}
+
+	public List<String> getPendingRefundTickets(List<String> orderIds) {
+		return ticketRepository.getPendingTickets(orderIds);
+	}
 }

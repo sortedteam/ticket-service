@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * The Interface OrderRepository.
@@ -23,4 +24,7 @@ public interface TicketRepository extends BaseCrudRepository<TicketEntity, Long>
 	@Query(value = "SELECT DISTINCT t FROM TicketEntity t JOIN FETCH t.items ti WHERE t.active = 1 AND ti.active = 1 AND (:storeId IS NULL OR t.requesterEntityId = :storeId) AND ti.createdAt >= :createdFrom AND ti.createdAt <= :createdTo AND t.categoryRootId = :categoryRootId AND t.pendingCount >= 0 AND t.closedCount >= 0 AND ti.status IN :ticketStatuses AND (:skuCode = 'dummy_string' OR JSONB_EXTRACT_PATH_TEXT(ti.details, 'orderDetails', 'skuCode') = :skuCode) ORDER BY ti.createdAt DESC")
 	List<TicketEntity> findCustomOrderRelated(Date createdFrom, Date createdTo, List<TicketStatus> ticketStatuses, Integer categoryRootId, String storeId,
 			String skuCode);
+  
+  @Query(value = "SELECT distinct t.reference_id FROM ticket.tickets t JOIN ticket.ticket_items ti ON ti.ticket_id = t.id WHERE t.active = 1 AND ti.active = 1 and ti.status = 'IN_PROGRESS' and t.pending_count > 0 and t.reference_id in :orderIds and ti.details->>'orderDetails' is not null and ti.details->'orderDetails'->>'isReturnIssue'='true'", nativeQuery = true)
+	List<String> getPendingTickets(List<String> orderIds);
 }
