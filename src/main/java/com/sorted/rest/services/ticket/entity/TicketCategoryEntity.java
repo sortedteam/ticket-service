@@ -52,12 +52,6 @@ public class TicketCategoryEntity extends BaseEntity {
 	@Column
 	private Integer filterGroup;
 
-	@OneToMany(mappedBy = "categoryRoot", fetch = FetchType.LAZY)
-	private List<TicketEntity> ticketRoots;
-
-	@OneToMany(mappedBy = "categoryLeaf", fetch = FetchType.LAZY)
-	private List<TicketItemEntity> ticketLeafs;
-
 	public static TicketCategoryEntity newInstance() {
 		return new TicketCategoryEntity();
 	}

@@ -5,6 +5,7 @@ import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
+import com.sorted.rest.common.utils.CollectionUtils;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.actions.*;
@@ -21,6 +22,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class TicketActionUtils {
@@ -50,6 +53,15 @@ public class TicketActionUtils {
 
 	@Autowired
 	private CancelTicketAction cancelTicketAction;
+
+	@Autowired
+	private AutomaticFullOrderRefundAction automaticFullOrderRefundAction;
+
+	@Autowired
+	private ProcessFullOrderRefundAction processFullOrderRefundAction;
+
+	@Autowired
+	private ChangeIssueCategoryAction changeIssueCategoryAction;
 
 	@Autowired
 	private BaseMapper<?, ?> mapper;
@@ -90,6 +102,10 @@ public class TicketActionUtils {
 				ticketAction = automaticOrderRefundAction;
 				automaticOrderRefundAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(),
 						TicketCreateActions.AUTOMATIC_ORDER_REFUND.getRemarks());
+			} else if (action.equals(TicketCreateActions.AUTOMATIC_FULL_ORDER_REFUND.toString())) {
+				ticketAction = automaticFullOrderRefundAction;
+				automaticFullOrderRefundAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(),
+						TicketCreateActions.AUTOMATIC_FULL_ORDER_REFUND.getRemarks());
 				//			todo: tickets escalation not allowed in V1, add in subsequent releases
 				//			} else if (action.equals(TicketCreateActions.ESCALATE_TO_WAREHOUSE.toString())) {
 				//				ticketAction = escalateToTeamAction;
@@ -175,6 +191,13 @@ public class TicketActionUtils {
 							orderItemDetailsBean.setOrderedQty(orderItemResponseBean.getOrderedQty());
 							orderItemDetailsBean.setDeliveredQty(orderItemResponseBean.getFinalQuantity());
 
+							// hardcoded check for fewer items delivered on partner app
+							if (item.getPlatform()
+									.equals(TicketPlatform.PARTNER_APP.toString()) && item.getCategoryLeafId() == 73 && orderItemDetailsBean.getIssueQty() != null && orderItemDetailsBean.getDeliveredQty() != null) {
+								orderItemDetailsBean.setIssueQty(BigDecimal.valueOf(orderItemDetailsBean.getDeliveredQty())
+										.subtract(BigDecimal.valueOf(orderItemDetailsBean.getIssueQty())).doubleValue());
+							}
+
 							WhSkuResponse whSkuResponse = ticketRequestBean.getWhSkuResponseMap().get(orderItemDetailsBean.getSkuCode());
 							if (whSkuResponse == null) {
 								throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND,
@@ -223,6 +246,11 @@ public class TicketActionUtils {
 			ticketAction = onlyAddRemarksAction;
 			onlyAddRemarksAction.setAttachments(updateTicketBean.getAttachments());
 			onlyAddRemarksAction.setRemarks(updateTicketBean.getRemarks());
+		} else if (action.equals(TicketUpdateActions.CHANGE_ISSUE_CATEGORY.toString())) {
+			ticketAction = changeIssueCategoryAction;
+			changeIssueCategoryAction.setAttachments(updateTicketBean.getAttachments());
+			changeIssueCategoryAction.setCategoryLeafId(updateTicketBean.getCategoryLeafId());
+			changeIssueCategoryAction.setRemarks(updateTicketBean.getRemarks());
 		} else if (action.equals(TicketUpdateActions.PROCESS_ORDER_REFUND.toString())) {
 			ticketAction = processOrderRefundAction;
 			processOrderRefundAction.setAttachments(updateTicketBean.getAttachments());
@@ -236,6 +264,10 @@ public class TicketActionUtils {
 			ticketAction = cancelTicketAction;
 			cancelTicketAction.setAttachments(updateTicketBean.getAttachments());
 			cancelTicketAction.setRemarks(updateTicketBean.getRemarks());
+		} else if (action.equals(TicketUpdateActions.PROCESS_FULL_ORDER_REFUND.toString())) {
+			ticketAction = processFullOrderRefundAction;
+			processFullOrderRefundAction.setAttachments(updateTicketBean.getAttachments());
+			processFullOrderRefundAction.setRemarks(updateTicketBean.getRemarks());
 		} else {
 			_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 		}
@@ -252,16 +284,10 @@ public class TicketActionUtils {
 			Integer cancelledCountOld) {
 		TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 		actionDetailsBean.setUserDetail(setRequesterDetails());
-		if (draftCountOld == null && pendingCountOld == null && closedCountOld == null && cancelledCountOld == null) {
-			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_PARENT_CREATED.getRemarks());
-			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_PARENT_CREATED.toString(), actionDetailsBean);
-		} else if (hasNew) {
-			actionDetailsBean.setRemarks(ParentTicketUpdateActions.NEW_CHILDREN_ADDED.getRemarks());
-			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.NEW_CHILDREN_ADDED.toString(), actionDetailsBean);
-		} else if (draftCountOld > 0 && ticket.getDraftCount() == 0) {
+		if (draftCountOld != null && draftCountOld > 0 && ticket.getDraftCount() == 0) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_DRAFT_CHILDREN_MOVED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_DRAFT_CHILDREN_MOVED.toString(), actionDetailsBean);
-		} else if (pendingCountOld > 0 && ticket.getPendingCount() == 0 && ticket.getDraftCount() == 0) {
+		} else if (pendingCountOld != null && pendingCountOld > 0 && ticket.getPendingCount() == 0 && ticket.getDraftCount() == 0) {
 			actionDetailsBean.setRemarks(ParentTicketUpdateActions.ALL_PENDING_CHILDREN_MOVED.getRemarks());
 			ticketHistoryService.addTicketHistory(ticket.getId(), null, ParentTicketUpdateActions.ALL_PENDING_CHILDREN_MOVED.toString(), actionDetailsBean);
 		}
@@ -305,10 +331,19 @@ public class TicketActionUtils {
 			item.getDetails().getOrderDetails().setReturnRefundQty(storeReturnItemResponse.getRefundQty());
 		}
 
+		if (CollectionUtils.isNotEmpty(storeReturnItemResponse.getAttachments())) {
+			if (!updated)
+				updated = true;
+			item.setAttachments(Stream.concat(storeReturnItemResponse.getAttachments().stream(), item.getAttachments().stream()).collect(Collectors.toList()));
+		}
+
 		if (updated) {
 			TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 			actionDetailsBean.setUserDetail(setRequesterDetails());
 			actionDetailsBean.setRemarks(TicketUpdateActions.STORE_RETURN_DATA_UPDATED.getRemarks());
+			if (CollectionUtils.isNotEmpty(storeReturnItemResponse.getAttachments())) {
+				actionDetailsBean.setAttachments(storeReturnItemResponse.getAttachments());
+			}
 			ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketUpdateActions.STORE_RETURN_DATA_UPDATED.toString(), actionDetailsBean);
 		}
 	}
