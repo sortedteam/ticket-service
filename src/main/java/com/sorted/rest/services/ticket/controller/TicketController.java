@@ -692,6 +692,15 @@ public class TicketController implements BaseController {
 		}
 	}
 
+	@ApiOperation(value = "fetch pending order tickets", nickname = "fetchPendingOrderTickets")
+	@PostMapping(path = "/tickets/internal/pending-ticket-orders")
+	public ResponseEntity<PendingOrderRefundTicketsResponse> fetchTicketsForPartnerApp(@Valid @RequestBody PendingOrderRefundTicketsRequest pendingOrderRefundTicketsRequest) {
+		List<String> pendingRefundOrderIds = ticketService.getPendingRefundTickets(pendingOrderRefundTicketsRequest.getOrderIds());
+		PendingOrderRefundTicketsResponse response = new PendingOrderRefundTicketsResponse();
+		response.setOrderIds(pendingRefundOrderIds);
+		return ResponseEntity.ok(response);
+	}
+
 	@Override
 	public BaseMapper<?, ?> getMapper() {
 		return mapper;
