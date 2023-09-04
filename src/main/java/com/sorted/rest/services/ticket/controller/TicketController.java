@@ -43,7 +43,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -371,8 +375,14 @@ public class TicketController implements BaseController {
 	@ApiOperation(value = "update ticket for backoffice", nickname = "updateTicketForIms")
 	@PutMapping(path = "/tickets/ims")
 	@ResponseStatus(HttpStatus.OK)
-	@Transactional(propagation = Propagation.REQUIRED)
 	public TicketItemBean updateTicketForIms(@Valid @RequestBody UpdateTicketBean updateTicketBean) {
+		TicketEntity ticket = updateImsTicket(updateTicketBean);
+		checkTicketAndGiveTargetCashback(ticket, updateTicketBean);
+		return getItemBean(ticket, updateTicketBean.getItemId());
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	private TicketEntity updateImsTicket(UpdateTicketBean updateTicketBean) {
 		_LOGGER.info(String.format("updateTicketForIms:: request %s", updateTicketBean));
 		TicketEntity ticket = ticketService.findById(updateTicketBean.getId());
 		if (ticket == null) {
@@ -391,7 +401,6 @@ public class TicketController implements BaseController {
 							itemOptional.get().getStatus()), null));
 		}
 		TicketItemEntity item = itemOptional.get();
-
 		if (updateTicketBean.getAttachments() != null && !updateTicketBean.getAttachments().isEmpty()) {
 			item.setNewAttachments(updateTicketBean.getAttachments());
 			item.setAttachments(Stream.concat(item.getAttachments().stream(), updateTicketBean.getAttachments().stream()).collect(Collectors.toList()));
@@ -399,10 +408,38 @@ public class TicketController implements BaseController {
 		if (StringUtils.isEmpty(updateTicketBean.getRemarks())) {
 			updateTicketBean.setRemarks(TicketConstants.UPDATED_TICKET_DEFAULT_REMARKS);
 		}
-
 		populateTicketDetailsAndInvokeUpdateActions(ticket, item, updateTicketBean);
-		ticket = ticketService.saveTicketWithUpdatedItems(ticket);
-		return getItemBean(ticket, updateTicketBean.getItemId());
+		return ticketService.saveTicketWithUpdatedItems(ticket);
+	}
+
+	private void checkTicketAndGiveTargetCashback(TicketEntity ticket, UpdateTicketBean updateTicketBean) {
+		try {
+			if (Objects.equals(updateTicketBean.getAction(), TicketUpdateActions.PROCESS_ORDER_REFUND.toString())) {
+				if (ticket.getPendingCount() == 0 && ticket.getMetadata().getOrderDetails() != null && ticket.getMetadata().getOrderDetails()
+						.getDeliveryDate() != null && checkCashbackDateConditions(ticket.getMetadata().getOrderDetails().getDeliveryDate())) {
+					this.ticketClientService.giveTargetCashbackForStoreIdAndDate(ticket.getRequesterEntityId(),
+							ticket.getMetadata().getOrderDetails().getDeliveryDate());
+				}
+			}
+		} catch (Exception e) {
+			_LOGGER.info(String.format("error while running cashback cron : %s", e));
+		}
+	}
+
+	private boolean checkCashbackDateConditions(Date orderDeliveryDate) {
+		Date currentDateIST = new Date();
+		return ((isSameDay(new Date(), orderDeliveryDate) && LocalTime.now(ZoneId.of("Asia/Kolkata")).isAfter(LocalTime.of(20, 0)) || isBeforeDay(
+				currentDateIST, orderDeliveryDate)));
+	}
+
+	private boolean isSameDay(Date date1, Date date2) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		return sdf.format(date1).equals(sdf.format(date2));
+	}
+
+	private boolean isBeforeDay(Date date1, Date date2) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		return date1.before(date2) && !sdf.format(date1).equals(sdf.format(date2));
 	}
 
 	private TicketItemBean getItemBean(TicketEntity ticket, Long itemId) {

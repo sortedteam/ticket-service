@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,9 @@ public class TicketClientService {
 
 	@Autowired
 	private TicketWidgetClient ticketWidgetClient;
+
+	@Autowired
+	private TicketOfferClient ticketOfferClient;
 
 	@Value("${client.wms.auth_key}")
 	@Getter
@@ -247,4 +251,10 @@ public class TicketClientService {
 		return mappedStores;
 	}
 
+	public void giveTargetCashbackForStoreIdAndDate(String requesterEntityId, Date deliveryDate) {
+		TargetCashbackCronRequest targetCashbackCronRequest =  new TargetCashbackCronRequest();
+		targetCashbackCronRequest.setDate((new SimpleDateFormat("yyyy-MM-dd")).format(deliveryDate));
+		targetCashbackCronRequest.setStoreIds(List.of(requesterEntityId));
+		ticketOfferClient.runDailyCashbackCronForStoreIdAndDate(targetCashbackCronRequest);
+	}
 }
