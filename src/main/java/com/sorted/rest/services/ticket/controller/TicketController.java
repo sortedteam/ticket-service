@@ -428,8 +428,8 @@ public class TicketController implements BaseController {
 
 	private boolean checkCashbackDateConditions(Date orderDeliveryDate) {
 		Date currentDateIST = new Date();
-		return ((isSameDay(new Date(), orderDeliveryDate) && LocalTime.now(ZoneId.of("Asia/Kolkata")).isAfter(LocalTime.of(20, 0)) || isBeforeDay(
-				currentDateIST, orderDeliveryDate)));
+		return ((isSameDay(new Date(), orderDeliveryDate) && LocalTime.now(ZoneId.of("Asia/Kolkata"))
+				.isAfter(LocalTime.of(ParamsUtils.getIntegerParam("TARGET_CASHBACK_TIME", 8), 0)) || isBeforeDay(currentDateIST, orderDeliveryDate)));
 	}
 
 	private boolean isSameDay(Date date1, Date date2) {
