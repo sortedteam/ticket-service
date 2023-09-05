@@ -47,7 +47,6 @@ import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -377,7 +376,7 @@ public class TicketController implements BaseController {
 	@ResponseStatus(HttpStatus.OK)
 	public TicketItemBean updateTicketForIms(@Valid @RequestBody UpdateTicketBean updateTicketBean) {
 		TicketEntity ticket = updateImsTicket(updateTicketBean);
-		checkTicketAndGiveTargetCashback(ticket, updateTicketBean);
+		checkTicketAndGiveTargetCashback(ticket);
 		return getItemBean(ticket, updateTicketBean.getItemId());
 	}
 
@@ -412,7 +411,7 @@ public class TicketController implements BaseController {
 		return ticketService.saveTicketWithUpdatedItems(ticket);
 	}
 
-	private void checkTicketAndGiveTargetCashback(TicketEntity ticket, UpdateTicketBean updateTicketBean) {
+	private void checkTicketAndGiveTargetCashback(TicketEntity ticket) {
 		try {
 			if (ticket.getPendingCount() == 0 && ticket.getMetadata().getOrderDetails() != null && ticket.getMetadata().getOrderDetails()
 					.getDeliveryDate() != null && checkCashbackDateConditions(ticket.getMetadata().getOrderDetails().getDeliveryDate())) {
@@ -426,8 +425,11 @@ public class TicketController implements BaseController {
 
 	private boolean checkCashbackDateConditions(Date orderDeliveryDate) {
 		Date currentDateIST = new Date();
-		return ((isSameDay(new Date(), orderDeliveryDate) && LocalTime.now(ZoneId.of("Asia/Kolkata"))
-				.isAfter(LocalTime.of(ParamsUtils.getIntegerParam("TARGET_CASHBACK_TIME", 20), 0)) || isBeforeDay(currentDateIST, orderDeliveryDate)));
+		if ((isSameDay(currentDateIST, orderDeliveryDate) && LocalTime.now(ZoneId.of("Asia/Kolkata"))
+				.isAfter(LocalTime.of(ParamsUtils.getIntegerParam("TARGET_CASHBACK_TIME", 20), 0)))) {
+			return true;
+		}
+		return isBeforeDay(orderDeliveryDate, currentDateIST);
 	}
 
 	private boolean isSameDay(Date date1, Date date2) {

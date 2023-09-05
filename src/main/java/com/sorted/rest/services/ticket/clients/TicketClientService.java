@@ -255,6 +255,7 @@ public class TicketClientService {
 		TargetCashbackCronRequest targetCashbackCronRequest =  new TargetCashbackCronRequest();
 		targetCashbackCronRequest.setDate((new SimpleDateFormat("yyyy-MM-dd")).format(deliveryDate));
 		targetCashbackCronRequest.setStoreIds(List.of(requesterEntityId));
+		_LOGGER.info(String.format("Cashback Cron Triggered for store : %s ", requesterEntityId));
 		ticketOfferClient.runDailyCashbackCronForStoreIdAndDate(targetCashbackCronRequest);
 	}
 }
