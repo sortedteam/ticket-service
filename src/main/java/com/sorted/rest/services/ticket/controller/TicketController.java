@@ -44,6 +44,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.validation.Valid;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -424,22 +425,13 @@ public class TicketController implements BaseController {
 	}
 
 	private boolean checkCashbackDateConditions(Date orderDeliveryDate) {
-		Date currentDateIST = new Date();
-		if ((isSameDay(currentDateIST, orderDeliveryDate) && LocalTime.now(ZoneId.of("Asia/Kolkata"))
+		LocalDateTime currentTime = LocalDateTime.now().plusHours(5).plusMinutes(30);
+		LocalDateTime deliveryDate = orderDeliveryDate.toInstant().atZone(ZoneId.of("Asia/Kolkata")).toLocalDateTime();
+		if ((currentTime.toLocalDate().isEqual(deliveryDate.toLocalDate()) && LocalTime.now(ZoneId.of("Asia/Kolkata"))
 				.isAfter(LocalTime.of(ParamsUtils.getIntegerParam("TARGET_CASHBACK_TIME", 20), 0)))) {
 			return true;
 		}
-		return isBeforeDay(orderDeliveryDate, currentDateIST);
-	}
-
-	private boolean isSameDay(Date date1, Date date2) {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-		return sdf.format(date1).equals(sdf.format(date2));
-	}
-
-	private boolean isBeforeDay(Date date1, Date date2) {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-		return date1.before(date2) && !sdf.format(date1).equals(sdf.format(date2));
+		return deliveryDate.toLocalDate().isBefore(currentTime.toLocalDate());
 	}
 
 	private TicketItemBean getItemBean(TicketEntity ticket, Long itemId) {
