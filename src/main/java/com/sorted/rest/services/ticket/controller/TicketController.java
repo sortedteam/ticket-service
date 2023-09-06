@@ -382,7 +382,7 @@ public class TicketController implements BaseController {
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
-	private TicketEntity updateImsTicket(UpdateTicketBean updateTicketBean) {
+	public TicketEntity updateImsTicket(UpdateTicketBean updateTicketBean) {
 		_LOGGER.info(String.format("updateTicketForIms:: request %s", updateTicketBean));
 		TicketEntity ticket = ticketService.findById(updateTicketBean.getId());
 		if (ticket == null) {
