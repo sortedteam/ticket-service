@@ -43,6 +43,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -371,8 +375,14 @@ public class TicketController implements BaseController {
 	@ApiOperation(value = "update ticket for backoffice", nickname = "updateTicketForIms")
 	@PutMapping(path = "/tickets/ims")
 	@ResponseStatus(HttpStatus.OK)
-	@Transactional(propagation = Propagation.REQUIRED)
 	public TicketItemBean updateTicketForIms(@Valid @RequestBody UpdateTicketBean updateTicketBean) {
+		TicketEntity ticket = updateImsTicket(updateTicketBean);
+		checkTicketAndGiveTargetCashback(ticket);
+		return getItemBean(ticket, updateTicketBean.getItemId());
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	public TicketEntity updateImsTicket(UpdateTicketBean updateTicketBean) {
 		_LOGGER.info(String.format("updateTicketForIms:: request %s", updateTicketBean));
 		TicketEntity ticket = ticketService.findById(updateTicketBean.getId());
 		if (ticket == null) {
@@ -391,7 +401,6 @@ public class TicketController implements BaseController {
 							itemOptional.get().getStatus()), null));
 		}
 		TicketItemEntity item = itemOptional.get();
-
 		if (updateTicketBean.getAttachments() != null && !updateTicketBean.getAttachments().isEmpty()) {
 			item.setNewAttachments(updateTicketBean.getAttachments());
 			item.setAttachments(Stream.concat(item.getAttachments().stream(), updateTicketBean.getAttachments().stream()).collect(Collectors.toList()));
@@ -399,10 +408,30 @@ public class TicketController implements BaseController {
 		if (StringUtils.isEmpty(updateTicketBean.getRemarks())) {
 			updateTicketBean.setRemarks(TicketConstants.UPDATED_TICKET_DEFAULT_REMARKS);
 		}
-
 		populateTicketDetailsAndInvokeUpdateActions(ticket, item, updateTicketBean);
-		ticket = ticketService.saveTicketWithUpdatedItems(ticket);
-		return getItemBean(ticket, updateTicketBean.getItemId());
+		return ticketService.saveTicketWithUpdatedItems(ticket);
+	}
+
+	private void checkTicketAndGiveTargetCashback(TicketEntity ticket) {
+		try {
+			if (ticket.getPendingCount() == 0 && ticket.getMetadata().getOrderDetails() != null && ticket.getMetadata().getOrderDetails()
+					.getDeliveryDate() != null && checkCashbackDateConditions(ticket.getMetadata().getOrderDetails().getDeliveryDate())) {
+				this.ticketClientService.giveTargetCashbackForStoreIdAndDate(ticket.getRequesterEntityId(),
+						ticket.getMetadata().getOrderDetails().getDeliveryDate());
+			}
+		} catch (Exception e) {
+			_LOGGER.info(String.format("error while running cashback cron : %s", e));
+		}
+	}
+
+	private boolean checkCashbackDateConditions(Date orderDeliveryDate) {
+		LocalDateTime currentTime = LocalDateTime.now().plusHours(5).plusMinutes(30);
+		LocalDateTime deliveryDate = orderDeliveryDate.toInstant().atZone(ZoneId.of("Asia/Kolkata")).toLocalDateTime();
+		if ((currentTime.toLocalDate().isEqual(deliveryDate.toLocalDate()) && LocalTime.now(ZoneId.of("Asia/Kolkata"))
+				.isAfter(LocalTime.of(ParamsUtils.getIntegerParam("TARGET_CASHBACK_TIME", 20), 0)))) {
+			return true;
+		}
+		return deliveryDate.toLocalDate().isBefore(currentTime.toLocalDate());
 	}
 
 	private TicketItemBean getItemBean(TicketEntity ticket, Long itemId) {
@@ -717,6 +746,15 @@ public class TicketController implements BaseController {
 		}
 	}
 
+	@ApiOperation(value = "fetch pending order tickets", nickname = "fetchPendingOrderTickets")
+	@PostMapping(path = "/tickets/internal/pending-ticket-orders")
+	public ResponseEntity<PendingOrderRefundTicketsResponse> fetchTicketsForPartnerApp(@Valid @RequestBody PendingOrderRefundTicketsRequest pendingOrderRefundTicketsRequest) {
+		List<String> pendingRefundOrderIds = ticketService.getPendingRefundTickets(pendingOrderRefundTicketsRequest.getOrderIds());
+		PendingOrderRefundTicketsResponse response = new PendingOrderRefundTicketsResponse();
+		response.setOrderIds(pendingRefundOrderIds);
+		return ResponseEntity.ok(response);
+  }
+  
 	@ApiOperation(value = "fetch custom order tickets for ims", nickname = "fetchCustomOrderTicketsForIms")
 	@GetMapping(path = "/tickets/ims/orders")
 	public ResponseEntity<List<TicketBean>> fetchCustomOrderTicketsForIms(@RequestParam java.sql.Date createdFrom, @RequestParam java.sql.Date createdTo,
