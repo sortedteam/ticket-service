@@ -10,7 +10,6 @@ import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
-import com.sorted.rest.common.utils.CollectionUtils;
 import com.sorted.rest.common.utils.DateUtils;
 import com.sorted.rest.common.utils.ParamsUtils;
 import com.sorted.rest.common.utils.SessionUtils;
@@ -43,7 +42,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -382,7 +380,7 @@ public class TicketController implements BaseController {
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
-	private TicketEntity updateImsTicket(UpdateTicketBean updateTicketBean) {
+	public TicketEntity updateImsTicket(UpdateTicketBean updateTicketBean) {
 		_LOGGER.info(String.format("updateTicketForIms:: request %s", updateTicketBean));
 		TicketEntity ticket = ticketService.findById(updateTicketBean.getId());
 		if (ticket == null) {
@@ -644,9 +642,6 @@ public class TicketController implements BaseController {
 		orderDetailsRequestBean.setIssueQty(requestItem.getQuantity());
 		ticketDetailsBean.setOrderDetails(orderDetailsRequestBean);
 		TicketItemEntity ticketItem = createTicketItemForStoreReturn(category, ticketDetailsBean);
-		if (CollectionUtils.isNotEmpty(requestItem.getAttachments())) {
-			ticketItem.setAttachments(requestItem.getAttachments());
-		}
 		return ticketItem;
 	}
 
@@ -748,13 +743,14 @@ public class TicketController implements BaseController {
 
 	@ApiOperation(value = "fetch pending order tickets", nickname = "fetchPendingOrderTickets")
 	@PostMapping(path = "/tickets/internal/pending-ticket-orders")
-	public ResponseEntity<PendingOrderRefundTicketsResponse> fetchTicketsForPartnerApp(@Valid @RequestBody PendingOrderRefundTicketsRequest pendingOrderRefundTicketsRequest) {
+	public ResponseEntity<PendingOrderRefundTicketsResponse> fetchTicketsForPartnerApp(
+			@Valid @RequestBody PendingOrderRefundTicketsRequest pendingOrderRefundTicketsRequest) {
 		List<String> pendingRefundOrderIds = ticketService.getPendingRefundTickets(pendingOrderRefundTicketsRequest.getOrderIds());
 		PendingOrderRefundTicketsResponse response = new PendingOrderRefundTicketsResponse();
 		response.setOrderIds(pendingRefundOrderIds);
 		return ResponseEntity.ok(response);
-  }
-  
+	}
+
 	@ApiOperation(value = "fetch custom order tickets for ims", nickname = "fetchCustomOrderTicketsForIms")
 	@GetMapping(path = "/tickets/ims/orders")
 	public ResponseEntity<List<TicketBean>> fetchCustomOrderTicketsForIms(@RequestParam java.sql.Date createdFrom, @RequestParam java.sql.Date createdTo,
