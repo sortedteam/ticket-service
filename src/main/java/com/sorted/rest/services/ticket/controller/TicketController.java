@@ -375,7 +375,7 @@ public class TicketController implements BaseController {
 	@ResponseStatus(HttpStatus.OK)
 	public TicketItemBean updateTicketForIms(@Valid @RequestBody UpdateTicketBean updateTicketBean) {
 		TicketEntity ticket = updateImsTicket(updateTicketBean);
-		checkTicketAndGiveTargetCashback(ticket);
+		//checkTicketAndGiveTargetCashback(ticket);
 		return getItemBean(ticket, updateTicketBean.getItemId());
 	}
 
