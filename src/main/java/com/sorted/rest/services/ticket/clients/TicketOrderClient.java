@@ -1,10 +1,7 @@
 package com.sorted.rest.services.ticket.clients;
 
 import com.sorted.rest.common.openfeign.FeignCustomConfiguration;
-import com.sorted.rest.services.ticket.beans.FranchiseOrderListBean;
-import com.sorted.rest.services.ticket.beans.FranchiseOrderResponseBean;
-import com.sorted.rest.services.ticket.beans.ImsFranchiseOrderRefundAllBean;
-import com.sorted.rest.services.ticket.beans.ImsFranchiseOrderRefundBean;
+import com.sorted.rest.services.ticket.beans.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,4 +25,7 @@ public interface TicketOrderClient {
 	@PostMapping("/orders/franchise/ims/refund/all")
 	FranchiseOrderResponseBean imsProcessFranchiseRefundAllOrder(@RequestBody ImsFranchiseOrderRefundAllBean request, @RequestParam String key);
 
+	@PostMapping("/orders/franchise/{orderId}/cancel/post-delivery")
+	FranchiseOrderResponseBean cancelFranchiseOrderPostBilling(@RequestBody FranchiseOrderCancelPostBillingRequest request, @RequestParam String key,
+			@PathVariable UUID orderId);
 }

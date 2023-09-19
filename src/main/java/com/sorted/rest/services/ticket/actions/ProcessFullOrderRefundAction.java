@@ -6,6 +6,7 @@ import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.common.utils.SessionUtils;
+import com.sorted.rest.services.ticket.beans.FranchiseOrderCancelPostBillingRequest;
 import com.sorted.rest.services.ticket.beans.FranchiseOrderResponseBean;
 import com.sorted.rest.services.ticket.beans.ImsFranchiseOrderRefundAllBean;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
@@ -57,8 +58,14 @@ public class ProcessFullOrderRefundAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean apply(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		FranchiseOrderResponseBean refundResponse = ticketClientService.imsProcessFranchiseRefundAllOrder(createRefundAllBean(item, ticket.getId()),
-				generateClientKeyForRefund(ticket.getId(), item.getId()));
+		FranchiseOrderResponseBean refundResponse ;
+		if (action.equals(TicketUpdateActions.CANCEL_ORDER_WITH_REMARKS.toString())) {
+			refundResponse = ticketClientService.cancelFranchiseOrderPostBilling(createCancelFORequest(item, ticket.getId()),
+					generateClientKeyForRefund(ticket.getId(), item.getId()),ticket.getMetadata().getOrderDetails().getOrderId());
+		} else {
+			refundResponse = ticketClientService.imsProcessFranchiseRefundAllOrder(createRefundAllBean(item, ticket.getId()),
+					generateClientKeyForRefund(ticket.getId(), item.getId()));
+		}
 		item.getDetails().getOrderDetails().setRefundAmount(refundResponse.getFinalBillAmount());
 		setRemarks(String.format(TicketUpdateActions.PROCESS_FULL_ORDER_REFUND.getRemarks(), remarks));
 		item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
@@ -77,6 +84,12 @@ public class ProcessFullOrderRefundAction implements TicketActionsInterface {
 		actionDetailsBean.setAttachments(attachments);
 		ticketHistoryService.addTicketHistory(ticket.getId(), item.getId(), action, actionDetailsBean);
 		return true;
+	}
+
+	private FranchiseOrderCancelPostBillingRequest createCancelFORequest(TicketItemEntity item, Long id) {
+		FranchiseOrderCancelPostBillingRequest request = new FranchiseOrderCancelPostBillingRequest();
+		request.setRemarks(remarks);
+		return request;
 	}
 
 	private ImsFranchiseOrderRefundAllBean createRefundAllBean(TicketItemEntity item, Long ticketId) {

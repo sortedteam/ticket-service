@@ -264,7 +264,8 @@ public class TicketActionUtils {
 			ticketAction = cancelTicketAction;
 			cancelTicketAction.setAttachments(updateTicketBean.getAttachments());
 			cancelTicketAction.setRemarks(updateTicketBean.getRemarks());
-		} else if (action.equals(TicketUpdateActions.PROCESS_FULL_ORDER_REFUND.toString())) {
+		} else if (action.equals(TicketUpdateActions.PROCESS_FULL_ORDER_REFUND.toString()) || action.equals(
+				TicketUpdateActions.CANCEL_ORDER_WITH_REMARKS.toString())) {
 			ticketAction = processFullOrderRefundAction;
 			processFullOrderRefundAction.setAttachments(updateTicketBean.getAttachments());
 			processFullOrderRefundAction.setRemarks(updateTicketBean.getRemarks());
