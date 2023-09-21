@@ -6,7 +6,6 @@ import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.common.utils.SessionUtils;
-import com.sorted.rest.services.ticket.beans.FranchiseOrderCancelPostBillingRequest;
 import com.sorted.rest.services.ticket.beans.FranchiseOrderResponseBean;
 import com.sorted.rest.services.ticket.beans.ImsFranchiseOrderRefundAllBean;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;

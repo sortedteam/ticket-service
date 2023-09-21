@@ -50,10 +50,8 @@ public class AutomaticOrderCancelAction implements TicketActionsInterface {
 
 	@Override
 	public Boolean isApplicable(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		OrderDetailsBean order = ticket.getMetadata().getOrderDetails();
 		if (ticket.getMetadata().getOrderDetails() != null && ticket.getMetadata().getOrderDetails().getOrderId() != null && ticket.getMetadata()
-				.getOrderDetails().getFinalOrderBillAmount() != null && (order.getOrderStatus().equals("ORDER_BILLED") || order.getOrderStatus()
-				.equals("ORDER_DELIVERED") || order.getOrderStatus().equals("PARTIALLY_DISPATCHED"))) {
+				.getOrderDetails().getFinalOrderBillAmount() != null) {
 			OrderItemDetailsBean orderItemDetailsBean = OrderItemDetailsBean.newInstance();
 			orderItemDetailsBean.setProductName(TicketConstants.FULL_ORDER_REFUND_PRODUCT_NAME);
 			orderItemDetailsBean.setOrderId(ticket.getMetadata().getOrderDetails().getOrderId());
@@ -76,7 +74,7 @@ public class AutomaticOrderCancelAction implements TicketActionsInterface {
 			FranchiseOrderResponseBean refundResponse = ticketClientService.cancelFranchiseOrderPostBilling(createCancelFORequest(item, ticket.getId()),
 					generateClientKeyForCancel(ticket.getId(), item.getId()), ticket.getMetadata().getOrderDetails().getOrderId());
 			item.getDetails().getOrderDetails().setRefundAmount(refundResponse.getFinalBillAmount());
-			setRemarks(String.format(TicketCreateActions.CANCEL_ORDER_WITH_REMARKS.getRemarks(), remarks));
+			setRemarks(String.format(TicketCreateActions.CANCEL_ORDER_WITH_REMARKS.toString()));
 			item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 			item.setAssignedAt(new Date());
 			item.getDetails().setResolvedRemarks(remarks);

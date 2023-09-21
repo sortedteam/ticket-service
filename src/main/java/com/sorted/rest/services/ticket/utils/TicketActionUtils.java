@@ -118,7 +118,7 @@ public class TicketActionUtils {
 				//				escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(), TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.getRemarks());
 			} else if (action.equals(TicketCreateActions.CANCEL_ORDER_WITH_REMARKS.toString())) {
 				ticketAction = automaticOrderCancelAction;
-				automaticFullOrderRefundAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(),
+				automaticOrderCancelAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(),
 						TicketCreateActions.CANCEL_ORDER_WITH_REMARKS.getRemarks());
 			} else {
 				_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
