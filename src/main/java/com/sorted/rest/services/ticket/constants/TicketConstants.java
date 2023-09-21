@@ -28,6 +28,8 @@ public class TicketConstants {
 
 	public static final String CLIENT_KEY_FOR_REFUND = "REFUND_VIA_TICKET";
 
+	public static final String CLIENT_KEY_FOR_CANCEL = "ORDER_CANCELLED_VIA_TICKET";
+
 	public static final String FULL_ORDER_REFUND_PRODUCT_NAME = "Full Order";
 
 	public enum TicketStatus {
@@ -87,7 +89,7 @@ public class TicketConstants {
 
 		NEW_TICKET_CREATED("New Ticket Created"), DRAFT_TICKET_CREATED("Draft Ticket Created"), ESCALATE_TO_CUSTOMERCARE(
 				"Ticket escalated to customer care executive"), ESCALATE_TO_WAREHOUSE("Ticket escalated to warehouse executive"), AUTOMATIC_ORDER_REFUND(
-				"Automatic refund initiated"), AUTOMATIC_FULL_ORDER_REFUND("Automatic full order refund initiated");
+				"Automatic refund initiated"), AUTOMATIC_FULL_ORDER_REFUND("Automatic full order refund initiated"), CANCEL_ORDER_WITH_REMARKS("Order cancelled with remarks initiated %s");
 
 		private String remarks;
 
@@ -107,7 +109,7 @@ public class TicketConstants {
 				"Ticket updated with remarks %s"), CLOSE_WITH_REMARKS("Ticket closed with remarks %s"), CANCEL_WITH_REMARKS(
 				"Ticket cancelled with remarks %s"), PROCESS_FULL_ORDER_REFUND(
 				"Ticket closed after generating refund for the complete order with remarks %s"), CHANGE_ISSUE_CATEGORY(
-				"Ticket issue category updated with remarks %s"), CANCEL_ORDER_WITH_REMARKS("Order cancelled with remarks %s");
+				"Ticket issue category updated with remarks %s");
 
 		private String remarks;
 
