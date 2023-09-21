@@ -82,7 +82,7 @@ public class AutomaticOrderCancelAction implements TicketActionsInterface {
 		} catch (Exception e) {
 			_LOGGER.error("something went wrong while cancelling order automatically", e);
 			if (e instanceof ValidationException) {
-				setRemarks(e.getMessage());
+				setRemarks("something went wrong while cancelling order automatically :" + e.getMessage());
 			} else {
 				setRemarks("something went wrong while cancelling order automatically, please process it manually" + e.getMessage());
 			}
