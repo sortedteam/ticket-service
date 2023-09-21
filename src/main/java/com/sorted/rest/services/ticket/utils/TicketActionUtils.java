@@ -116,10 +116,10 @@ public class TicketActionUtils {
 				//			} else if (action.equals(TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.toString())) {
 				//				ticketAction = escalateToTeamAction;
 				//				escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(), TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.getRemarks());
-			} else if (action.equals(TicketCreateActions.CANCEL_ORDER_WITH_REMARKS.toString())) {
+			} else if (action.equals(TicketCreateActions.AUTOMATIC_ORDER_CANCEL.toString())) {
 				ticketAction = automaticOrderCancelAction;
 				automaticOrderCancelAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(),
-						TicketCreateActions.CANCEL_ORDER_WITH_REMARKS.getRemarks());
+						TicketCreateActions.AUTOMATIC_ORDER_CANCEL.getRemarks());
 			} else {
 				_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 				continue;
