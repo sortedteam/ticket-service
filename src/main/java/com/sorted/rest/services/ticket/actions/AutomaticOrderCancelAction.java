@@ -74,7 +74,8 @@ public class AutomaticOrderCancelAction implements TicketActionsInterface {
 			FranchiseOrderResponseBean refundResponse = ticketClientService.cancelFranchiseOrderPostBilling(createCancelFORequest(item, ticket.getId()),
 					generateClientKeyForCancel(ticket.getId(), item.getId()), ticket.getMetadata().getOrderDetails().getOrderId());
 			item.getDetails().getOrderDetails().setRefundAmount(refundResponse.getFinalBillAmount());
-			setRemarks(String.format(TicketCreateActions.CANCEL_ORDER_WITH_REMARKS.toString()));
+			setRemarks(String.format(TicketCreateActions.CANCEL_ORDER_WITH_REMARKS.getRemarks().toString(),
+					item.getDetails().getOrderDetails().getReturnRemarks()));
 			item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 			item.setAssignedAt(new Date());
 			item.getDetails().setResolvedRemarks(remarks);
