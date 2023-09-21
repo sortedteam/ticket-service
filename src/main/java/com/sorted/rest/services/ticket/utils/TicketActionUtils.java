@@ -61,6 +61,9 @@ public class TicketActionUtils {
 	private ProcessFullOrderRefundAction processFullOrderRefundAction;
 
 	@Autowired
+	private AutomaticOrderCancelAction automaticOrderCancelAction;
+
+	@Autowired
 	private ChangeIssueCategoryAction changeIssueCategoryAction;
 
 	@Autowired
@@ -113,6 +116,10 @@ public class TicketActionUtils {
 				//			} else if (action.equals(TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.toString())) {
 				//				ticketAction = escalateToTeamAction;
 				//				escalateToTeamAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(), TicketCreateActions.ESCALATE_TO_CUSTOMERCARE.getRemarks());
+			} else if (action.equals(TicketCreateActions.AUTOMATIC_ORDER_CANCEL.toString())) {
+				ticketAction = automaticOrderCancelAction;
+				automaticOrderCancelAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(),
+						TicketCreateActions.AUTOMATIC_ORDER_CANCEL.getRemarks());
 			} else {
 				_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 				continue;

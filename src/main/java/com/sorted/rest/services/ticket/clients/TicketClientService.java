@@ -258,4 +258,22 @@ public class TicketClientService {
 		_LOGGER.info(String.format("Cashback Cron Triggered for store : %s ", requesterEntityId));
 		ticketOfferClient.runDailyCashbackCronForStoreIdAndDate(targetCashbackCronRequest);
 	}
+	public FranchiseOrderResponseBean cancelFranchiseOrderPostBilling(FranchiseOrderCancelPostBillingRequest request, String key, UUID orderId) {
+		try {
+			return ticketOrderClient.cancelFranchiseOrderPostBilling(request, key, orderId);
+		} catch (FeignClientException f) {
+			_LOGGER.error("Something went wrong while cancelling full order", f);
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while cancelling full order", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
+			}
+			throw new ValidationException(error);
+		} catch (Exception e) {
+			_LOGGER.error(String.format("Error while cancelling full order with request : %s ", request), e);
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while cancelling full order"));
+		}
+	}
 }
