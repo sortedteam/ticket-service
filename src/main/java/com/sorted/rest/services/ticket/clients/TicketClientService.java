@@ -262,8 +262,8 @@ public class TicketClientService {
 		try {
 			return ticketOrderClient.cancelFranchiseOrderPostBilling(request, key, orderId);
 		} catch (FeignClientException f) {
-			_LOGGER.error("cancelFranchiseOrderPostBilling:: Something went wrong while processing full order refund", f);
-			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing full order refund", null);
+			_LOGGER.error("Something went wrong while cancelling full order", f);
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while cancelling full order", null);
 			try {
 				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
 				error.setCode(Errors.SERVER_EXCEPTION);
@@ -272,8 +272,8 @@ public class TicketClientService {
 			}
 			throw new ValidationException(error);
 		} catch (Exception e) {
-			_LOGGER.error(String.format("Error while refunding with request : %s ", request), e);
-			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing full order refund"));
+			_LOGGER.error(String.format("Error while cancelling full order with request : %s ", request), e);
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while cancelling full order"));
 		}
 	}
 }
