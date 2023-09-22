@@ -55,6 +55,8 @@ public class FranchiseOrderResponseBean implements Serializable {
 
 	private UUID parentOrderId;
 
+	private FranchiseOrderMetadata metadata = new FranchiseOrderMetadata();
+
 	public static FranchiseOrderResponseBean newInstance() {
 		return new FranchiseOrderResponseBean();
 	}

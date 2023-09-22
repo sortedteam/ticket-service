@@ -163,6 +163,7 @@ public class TicketActionUtils {
 					orderDetailsBean.setDeliverySlot(orderResponseBean.getSlot());
 					orderDetailsBean.setTotalRefundableAmount(0d);
 					orderDetailsBean.setTotalRefundAmount(0d);
+					orderDetailsBean.setDeliveryDetails(orderResponseBean.getMetadata().getDeliveryDetails());
 					ticketMetadata.setOrderDetails(orderDetailsBean);
 					requestTicket.setMetadata(ticketMetadata);
 				}

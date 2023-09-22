@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @ApiModel(description = "Order Details Bean")
@@ -30,6 +31,8 @@ public class OrderDetailsBean implements Serializable {
 	private Double totalRefundableAmount;
 
 	private Double totalRefundAmount;
+
+	private List<FranchiseOrderDeliveryBean> deliveryDetails;
 
 	public static OrderDetailsBean newInstance() {
 		return new OrderDetailsBean();
