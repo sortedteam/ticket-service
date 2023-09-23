@@ -11,5 +11,5 @@ public class FranchiseOrderMetadata implements Serializable {
 
 	private static final long serialVersionUID = 7649495743589360269L;
 
-	private List<FranchiseOrderDeliveryBean> deliveryDetails = new ArrayList<>();
+	private List<FranchiseOrderDeliveryBean> deliveryDetails;
 }
