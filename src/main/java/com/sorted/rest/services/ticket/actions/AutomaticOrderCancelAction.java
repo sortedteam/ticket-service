@@ -55,14 +55,9 @@ public class AutomaticOrderCancelAction implements TicketActionsInterface {
 			OrderItemDetailsBean orderItemDetailsBean = OrderItemDetailsBean.newInstance();
 			orderItemDetailsBean.setProductName(TicketConstants.FULL_ORDER_REFUND_PRODUCT_NAME);
 			orderItemDetailsBean.setOrderId(ticket.getMetadata().getOrderDetails().getOrderId());
-			orderItemDetailsBean.setRefundableAmount(ticket.getMetadata().getOrderDetails().getFinalOrderBillAmount());
-			orderItemDetailsBean.setIsReturnIssue(true);
+			orderItemDetailsBean.setIsReturnIssue(false);
 			item.getDetails().setOrderDetails(orderItemDetailsBean);
 
-			ticket.getMetadata().getOrderDetails().setTotalRefundableAmount(BigDecimal.valueOf(
-					ticket.getMetadata().getOrderDetails().getTotalRefundableAmount() != null ?
-							ticket.getMetadata().getOrderDetails().getTotalRefundableAmount() :
-							0d).add(BigDecimal.valueOf(item.getDetails().getOrderDetails().getRefundableAmount())).doubleValue());
 			return true;
 		}
 		return false;
@@ -73,7 +68,6 @@ public class AutomaticOrderCancelAction implements TicketActionsInterface {
 		try {
 			FranchiseOrderResponseBean refundResponse = ticketClientService.cancelFranchiseOrderPostBilling(createCancelFORequest(item, ticket.getId()),
 					generateClientKeyForCancel(ticket.getId(), item.getId()), ticket.getMetadata().getOrderDetails().getOrderId());
-			item.getDetails().getOrderDetails().setRefundAmount(refundResponse.getFinalBillAmount());
 			setRemarks(String.format(TicketCreateActions.AUTOMATIC_ORDER_CANCEL.getRemarks().toString()));
 			item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 			item.setAssignedAt(new Date());
