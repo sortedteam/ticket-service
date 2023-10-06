@@ -28,5 +28,5 @@ public class StoreReturnItemData implements Serializable {
 
 	private Double pickedQty;
 
-	private String pickedRemarks;
+	private String pickerRemarks;
 }

@@ -56,7 +56,7 @@ public class OrderItemDetailsBean implements Serializable {
 
 	private Double returnPickedQty;
 
-	private String returnPickedRemarks;
+	private String returnPickerRemarks;
 
 	public static OrderItemDetailsBean newInstance() {
 		return new OrderItemDetailsBean();

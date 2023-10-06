@@ -352,11 +352,11 @@ public class TicketActionUtils {
 			item.getDetails().getOrderDetails().setReturnPickedQty(storeReturnItemResponse.getPickedQty());
 		}
 
-		if (storeReturnItemResponse.getPickedRemarks() != null && !storeReturnItemResponse.getPickedRemarks()
-				.equals(item.getDetails().getOrderDetails().getReturnPickedRemarks())) {
+		if (storeReturnItemResponse.getPickerRemarks() != null && !storeReturnItemResponse.getPickerRemarks()
+				.equals(item.getDetails().getOrderDetails().getReturnPickerRemarks())) {
 			if (!updated)
 				updated = true;
-			item.getDetails().getOrderDetails().setReturnPickedRemarks(storeReturnItemResponse.getPickedRemarks());
+			item.getDetails().getOrderDetails().setReturnPickerRemarks(storeReturnItemResponse.getPickerRemarks());
 		}
 
 		if (updated) {
