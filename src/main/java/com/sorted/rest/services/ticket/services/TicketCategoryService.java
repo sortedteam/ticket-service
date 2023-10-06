@@ -87,6 +87,12 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 		return leafNode;
 	}
 
+	public List<TicketCategoryEntity> getTicketCategoryByLabels(List<String> labels) {
+		Map<String, Object> filters = new HashMap<>();
+		filters.put("label", labels);
+		return findAllRecords(filters);
+	}
+
 	@Override
 	public Class<TicketCategoryEntity> getEntity() {
 		return TicketCategoryEntity.class;
