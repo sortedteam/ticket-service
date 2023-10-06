@@ -345,6 +345,20 @@ public class TicketActionUtils {
 			item.setAttachments(Stream.concat(storeReturnItemResponse.getAttachments().stream(), item.getAttachments().stream()).collect(Collectors.toList()));
 		}
 
+		if (storeReturnItemResponse.getPickedQty() != null && !storeReturnItemResponse.getPickedQty()
+				.equals(item.getDetails().getOrderDetails().getReturnPickedQty())) {
+			if (!updated)
+				updated = true;
+			item.getDetails().getOrderDetails().setReturnPickedQty(storeReturnItemResponse.getPickedQty());
+		}
+
+		if (storeReturnItemResponse.getPickerRemarks() != null && !storeReturnItemResponse.getPickerRemarks()
+				.equals(item.getDetails().getOrderDetails().getReturnPickerRemarks())) {
+			if (!updated)
+				updated = true;
+			item.getDetails().getOrderDetails().setReturnPickerRemarks(storeReturnItemResponse.getPickerRemarks());
+		}
+
 		if (updated) {
 			TicketActionDetailsBean actionDetailsBean = TicketActionDetailsBean.newInstance();
 			actionDetailsBean.setUserDetail(setRequesterDetails());

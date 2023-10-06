@@ -10,6 +10,7 @@ import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
+import com.sorted.rest.common.utils.CollectionUtils;
 import com.sorted.rest.common.utils.DateUtils;
 import com.sorted.rest.common.utils.ParamsUtils;
 import com.sorted.rest.common.utils.SessionUtils;
@@ -42,6 +43,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.text.ParseException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -535,8 +537,9 @@ public class TicketController implements BaseController {
 					.collect(Collectors.toList());
 			if (filteredItems.isEmpty()) {
 				removeList.add(ticketBean);
+			} else {
+				ticketBean.setItems(filteredItems);
 			}
-			ticketBean.setItems(filteredItems);
 		}
 		ticketBeans.removeAll(removeList);
 	}
@@ -773,6 +776,48 @@ public class TicketController implements BaseController {
 			}
 		}
 		return ResponseEntity.ok(ticketBeans);
+	}
+
+	@ApiOperation(value = "fetch lists of tickets for internal", nickname = "fetchTicketsInternalForReturnPickup")
+	@GetMapping(path = "/tickets/internal/return-pickup")
+	public ResponseEntity<List<ReturnPickupBean>> fetchTicketsInternalForReturnPickup() {
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getTicketCategoryByLabels(
+				Arrays.asList(TicketCategoryRoot.ORDER_ISSUE.toString()));
+		if (CollectionUtils.isEmpty(ticketCategoryEntities)) {
+			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Any relevant issue ticket category root not found", null));
+		}
+		Map<String, Object> filters = new HashMap<>();
+		Date currentDateIst = java.sql.Date.valueOf(LocalDate.now(ZoneId.of("Asia/Kolkata")));
+		filters.put("categoryRoot", ticketCategoryEntities.stream().map(TicketCategoryEntity::getId).collect(Collectors.toList()));
+		filters.put("requesterEntityType", EntityType.STORE.toString());
+		filters.put("fromDate", new FilterCriteria("lastAddedAt", currentDateIst, Operation.GTE));
+		Map<String, PageAndSortRequest.SortDirection> sort = new LinkedHashMap<>();
+		sort.put("lastAddedAt", PageAndSortRequest.SortDirection.DESC);
+		List<TicketEntity> tickets = ticketService.findAllRecords(filters, sort);
+		if (CollectionUtils.isEmpty(tickets)) {
+			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No tickets found"), null));
+		}
+		List<ReturnPickupBean> ticketBeans = getReturnPickupBeans(currentDateIst, Arrays.asList(TicketStatus.IN_PROGRESS, TicketStatus.CLOSED), tickets);
+		return ResponseEntity.ok(ticketBeans);
+	}
+
+	private List<ReturnPickupBean> getReturnPickupBeans(Date deliveryDate, List<TicketStatus> statusList, List<TicketEntity> ticketEntities) {
+		List<ReturnPickupBean> returnPickupBeans = new ArrayList<>();
+		for (TicketEntity ticket : ticketEntities) {
+			if (ticket.getMetadata().getOrderDetails() != null && ticket.getMetadata().getOrderDetails().getDeliveryDate().equals(deliveryDate)) {
+				ReturnPickupBean returnPickupBean = ReturnPickupBean.newInstance();
+				returnPickupBean.setStoreId(ticket.getRequesterEntityId());
+				returnPickupBean.setOrderId(ticket.getReferenceId());
+				returnPickupBean.setItems(getMapper().mapAsList(ticket.getItems().stream()
+						.filter(item -> statusList.stream().anyMatch(status -> status.toString().equals(item.getStatus())) && item.getDetails()
+								.getOrderDetails() != null && item.getDetails().getOrderDetails().getIsReturnIssue())
+						.map(item -> item.getDetails().getOrderDetails()).collect(Collectors.toList()), ReturnPickupItemDetailsBean.class));
+				if (CollectionUtils.isNotEmpty(returnPickupBean.getItems())) {
+					returnPickupBeans.add(returnPickupBean);
+				}
+			}
+		}
+		return returnPickupBeans;
 	}
 
 	@Override

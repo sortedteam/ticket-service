@@ -25,4 +25,8 @@ public class StoreReturnItemData implements Serializable {
 	private Double refundQty;
 
 	private List<String> attachments;
+
+	private Double pickedQty;
+
+	private String pickerRemarks;
 }
