@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -803,6 +804,7 @@ public class TicketController implements BaseController {
 
 	private List<ReturnPickupBean> getReturnPickupBeans(Date deliveryDate, List<TicketStatus> statusList, List<TicketEntity> ticketEntities) {
 		List<ReturnPickupBean> returnPickupBeans = new ArrayList<>();
+		Double issueToDeliveredQtyPickupRatio = Double.valueOf(ParamsUtils.getParam("ISSUE_TO_DELIVERED_QTY_PICKUP_RATIO", "0"));
 		for (TicketEntity ticket : ticketEntities) {
 			if (ticket.getMetadata().getOrderDetails() != null && ticket.getMetadata().getOrderDetails().getDeliveryDate().equals(deliveryDate)) {
 				ReturnPickupBean returnPickupBean = ReturnPickupBean.newInstance();
@@ -810,7 +812,11 @@ public class TicketController implements BaseController {
 				returnPickupBean.setOrderId(ticket.getReferenceId());
 				returnPickupBean.setItems(getMapper().mapAsList(ticket.getItems().stream()
 						.filter(item -> statusList.stream().anyMatch(status -> status.toString().equals(item.getStatus())) && item.getDetails()
-								.getOrderDetails() != null && item.getDetails().getOrderDetails().getIsReturnIssue())
+								.getOrderDetails() != null && item.getDetails().getOrderDetails().getSkuCode() != null && item.getDetails().getOrderDetails()
+								.getIssueQty() != null && item.getDetails().getOrderDetails().getDeliveredQty() != null && item.getDetails().getOrderDetails()
+								.getIsReturnIssue() && item.getDetails().getOrderDetails().getIssueQty().compareTo(
+								BigDecimal.valueOf(item.getDetails().getOrderDetails().getDeliveredQty())
+										.multiply(BigDecimal.valueOf(issueToDeliveredQtyPickupRatio)).doubleValue()) >= 0)
 						.map(item -> item.getDetails().getOrderDetails()).collect(Collectors.toList()), ReturnPickupItemDetailsBean.class));
 				if (CollectionUtils.isNotEmpty(returnPickupBean.getItems())) {
 					returnPickupBeans.add(returnPickupBean);

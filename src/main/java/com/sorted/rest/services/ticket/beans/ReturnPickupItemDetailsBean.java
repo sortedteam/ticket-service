@@ -13,6 +13,8 @@ public class ReturnPickupItemDetailsBean implements Serializable {
 
 	private String skuCode;
 
+	private String productName;
+
 	private Double deliveredQty;
 
 	private Double issueQty;
