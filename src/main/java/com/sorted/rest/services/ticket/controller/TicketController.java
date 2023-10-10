@@ -811,7 +811,7 @@ public class TicketController implements BaseController {
 				returnPickupBean.setStoreId(ticket.getRequesterEntityId());
 				returnPickupBean.setOrderId(ticket.getReferenceId());
 				returnPickupBean.setItems(getMapper().mapAsList(ticket.getItems().stream()
-						.filter(item -> statusList.stream().anyMatch(status -> status.toString().equals(item.getStatus())) && item.getDetails()
+						.filter(item -> statusList.stream().anyMatch(status -> status.equals(item.getStatus())) && item.getDetails()
 								.getOrderDetails() != null && item.getDetails().getOrderDetails().getSkuCode() != null && item.getDetails().getOrderDetails()
 								.getIssueQty() != null && item.getDetails().getOrderDetails().getDeliveredQty() != null && item.getDetails().getOrderDetails()
 								.getIsReturnIssue() && item.getDetails().getOrderDetails().getIssueQty().compareTo(
