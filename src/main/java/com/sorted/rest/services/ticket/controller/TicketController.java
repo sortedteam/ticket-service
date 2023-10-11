@@ -813,9 +813,9 @@ public class TicketController implements BaseController {
 				returnPickupBean.setItems(getMapper().mapAsList(ticket.getItems().stream()
 						.filter(item -> statusList.stream().anyMatch(status -> status.equals(item.getStatus())) && item.getDetails()
 								.getOrderDetails() != null && item.getDetails().getOrderDetails().getSkuCode() != null && item.getDetails().getOrderDetails()
-								.getIssueQty() != null && item.getDetails().getOrderDetails().getDeliveredQty() != null && item.getDetails().getOrderDetails()
-								.getIsReturnIssue() && item.getDetails().getOrderDetails().getIssueQty().compareTo(
-								BigDecimal.valueOf(item.getDetails().getOrderDetails().getDeliveredQty())
+								.getProductName() != null && item.getDetails().getOrderDetails().getIssueQty() != null && item.getDetails().getOrderDetails()
+								.getDeliveredQty() != null && item.getDetails().getOrderDetails().getIsReturnIssue() && item.getDetails().getOrderDetails()
+								.getIssueQty().compareTo(BigDecimal.valueOf(item.getDetails().getOrderDetails().getDeliveredQty())
 										.multiply(BigDecimal.valueOf(issueToDeliveredQtyPickupRatio)).doubleValue()) >= 0)
 						.map(item -> item.getDetails().getOrderDetails()).collect(Collectors.toList()), ReturnPickupItemDetailsBean.class));
 				if (CollectionUtils.isNotEmpty(returnPickupBean.getItems())) {
