@@ -54,6 +54,10 @@ public class OrderItemDetailsBean implements Serializable {
 
 	private Boolean isAutoRefundEligible = false;
 
+	private Double returnPickedQty;
+
+	private String returnPickerRemarks;
+
 	public static OrderItemDetailsBean newInstance() {
 		return new OrderItemDetailsBean();
 	}
