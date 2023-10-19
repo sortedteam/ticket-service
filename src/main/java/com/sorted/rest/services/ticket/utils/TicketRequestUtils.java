@@ -144,7 +144,7 @@ public class TicketRequestUtils {
 		_LOGGER.info("storeDataResponse ::"+storeDataResponse);
 		LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
 		if (orderResponseBean != null && orderResponseBean.getMetadata() == null || orderResponseBean.getMetadata()
-				.getDeliveryDetails() == null || (storeDataResponse != null && storeDataResponse.getOpenTime() == null)) {
+				.getDeliveryDetails() == null || storeDataResponse == null || storeDataResponse.getOpenTime() == null) {
 			return !currentTime.toLocalTime().isAfter(LocalTime.of(17, 0));
 		}
 		LocalDateTime deliveryCompletionTime = getDeliveryCompletionTime(orderResponseBean);
