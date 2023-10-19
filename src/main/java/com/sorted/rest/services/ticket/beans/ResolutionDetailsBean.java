@@ -15,6 +15,8 @@ public class ResolutionDetailsBean implements Serializable {
 
 	private String resolvedRemarks;
 
+	private UserDetail resolvedBy;
+
 	private OrderItemDetailsBean orderDetails;
 
 	//	todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases

@@ -52,6 +52,7 @@ public class TicketRequestUtils {
 			String storeId = requestTicket.getRequesterEntityId();
 			if (requestTicket.getMetadata().getStoreDetails() == null) {
 				ticketRequestBean.setStoreDataResponse(ticketClientService.getStoreDataFromId(storeId));
+				ticketRequestBean.setAmUserResponse(ticketClientService.getAmMappedToStore(storeId));
 				requestTicket.getMetadata().setStoreDetails(StoreDetailsBean.newInstance());
 			}
 			if (categoryRootLabel.equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {

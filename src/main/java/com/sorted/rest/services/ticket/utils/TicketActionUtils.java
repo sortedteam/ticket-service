@@ -146,7 +146,7 @@ public class TicketActionUtils {
 		//		}
 	}
 
-	public void populateTicketResolutionAsPerCategoryRoot(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems) {
+	public void populateTicketDetailsAsPerCategoryRoot(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems) {
 		TicketRequestBean ticketRequestBean = ticketRequestUtils.getTicketRequest();
 		String categoryRootLabel = requestTicket.getCategoryRoot().getLabel();
 		String entityType = requestTicket.getRequesterEntityType();
@@ -154,6 +154,7 @@ public class TicketActionUtils {
 			TicketMetadataBean ticketMetadata = requestTicket.getMetadata();
 			if (requestTicket.getMetadata().getStoreDetails().getStoreId() == null) {
 				ticketMetadata.setStoreDetails(mapper.mapSrcToDest(ticketRequestBean.getStoreDataResponse(), requestTicket.getMetadata().getStoreDetails()));
+				ticketMetadata.getStoreDetails().setAmUser(ticketRequestBean.getAmUserResponse());
 				requestTicket.setMetadata(ticketMetadata);
 			}
 			if (categoryRootLabel.equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
