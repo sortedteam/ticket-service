@@ -4,6 +4,7 @@ import com.sorted.rest.common.beans.ErrorBean;
 import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.common.utils.CollectionUtils;
+import com.sorted.rest.common.utils.ParamsUtils;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.params.service.ParamService;
 import com.sorted.rest.services.ticket.beans.*;
@@ -141,7 +142,8 @@ public class TicketRequestUtils {
 		LocalDateTime deliveryCompletionTime = getDeliveryCompletionTime(orderResponseBean);
 		LocalTime storeOpenTime = convertToLocalTime(storeDataResponse.getOpenTime(), DateTimeFormatter.ofPattern("HH:mm"));
 		LocalTime maxTime = deliveryCompletionTime.toLocalTime().isAfter(storeOpenTime) ? deliveryCompletionTime.toLocalTime() : storeOpenTime;
-		maxTime = maxTime.plusHours(3);
+		Integer bufferHours = Integer.valueOf(ParamsUtils.getParam("TICKET_BUFFER_HOURS", "3"));
+		maxTime = maxTime.plusHours(bufferHours);
 
 		return !currentTime.toLocalTime().isAfter(maxTime);
 	}
