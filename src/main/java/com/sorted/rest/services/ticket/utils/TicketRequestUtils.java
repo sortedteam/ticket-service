@@ -136,7 +136,8 @@ public class TicketRequestUtils {
 
 	private boolean validateTicketCreationWindow(FranchiseOrderResponseBean orderResponseBean, StoreDataResponse storeDataResponse) {
 		LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
-		if (orderResponseBean.getMetadata() == null || orderResponseBean.getMetadata().getDeliveryDetails() == null || storeDataResponse.getOpenTime() == null) {
+		if (orderResponseBean != null && orderResponseBean.getMetadata() == null || orderResponseBean.getMetadata()
+				.getDeliveryDetails() == null || (storeDataResponse != null && storeDataResponse.getOpenTime() == null)) {
 			return !currentTime.toLocalTime().isAfter(LocalTime.of(17, 0));
 		}
 		LocalDateTime deliveryCompletionTime = getDeliveryCompletionTime(orderResponseBean);
