@@ -23,5 +23,5 @@ public interface TicketAuthConsumerClient {
 	List<UserStoreMappingResponse> getUserStoreMappingFromUserId(@RequestParam(name = "userId") String userId);
 
 	@GetMapping("auth/am-store-mapping")
-	List<AmStoreMappingResponse> getAmMappedStores(@RequestParam String storeId, @RequestParam Boolean showUserDetails);
+	List<AmStoreMappingResponse> getAmMappedStores(@RequestParam String storeIds, @RequestParam Boolean showUserDetails);
 }
