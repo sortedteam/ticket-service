@@ -2,10 +2,13 @@ package com.sorted.rest.services.ticket.utils;
 
 import com.sorted.rest.common.beans.ErrorBean;
 import com.sorted.rest.common.exceptions.ValidationException;
+import com.sorted.rest.common.logging.AppLogger;
+import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.common.utils.CollectionUtils;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.params.service.ParamService;
+import com.sorted.rest.services.ticket.actions.AutomaticFullOrderRefundAction;
 import com.sorted.rest.services.ticket.beans.*;
 import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
@@ -36,6 +39,8 @@ public class TicketRequestUtils {
 
 	@Autowired
 	private UserUtils userUtils;
+
+	static AppLogger _LOGGER = LoggingManager.getLogger(TicketRequestUtils.class);
 
 	private static ThreadLocal<TicketRequestBean> MEMORY_THREAD_LOCAL = new ThreadLocal<>();
 
@@ -135,6 +140,8 @@ public class TicketRequestUtils {
 	}
 
 	private boolean validateTicketCreationWindow(FranchiseOrderResponseBean orderResponseBean, StoreDataResponse storeDataResponse) {
+		_LOGGER.info("orderResponseBean ::"+orderResponseBean);
+		_LOGGER.info("storeDataResponse ::"+storeDataResponse);
 		LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
 		if (orderResponseBean != null && orderResponseBean.getMetadata() == null || orderResponseBean.getMetadata()
 				.getDeliveryDetails() == null || (storeDataResponse != null && storeDataResponse.getOpenTime() == null)) {
