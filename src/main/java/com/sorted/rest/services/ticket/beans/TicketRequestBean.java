@@ -26,6 +26,8 @@ public class TicketRequestBean implements Serializable {
 
 	private StoreDataResponse storeDataResponse;
 
+	private UserDetail amUserResponse;
+
 	//	todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
 	//	private WalletStatementBean walletStatementBean;
 }
