@@ -25,4 +25,9 @@ public class StoreDataResponse implements Serializable {
 
 	private Boolean isActive;
 
+	@JsonProperty("open_time")
+	private String openTime;
+
+	private String deliveryOpenTime;
+
 }
