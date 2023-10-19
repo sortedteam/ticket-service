@@ -80,7 +80,7 @@ public class TicketRequestUtils {
 					UUID orderId = UUID.fromString(requestTicket.getReferenceId());
 					FranchiseOrderResponseBean orderResponseBean = ticketClientService.getFranchiseOrderInfo(orderId, storeId);
 					ticketRequestBean.setOrderResponse(orderResponseBean);
-					if (!validateTicketCreationWindow(orderResponseBean, ticketRequestBean.getStoreDataResponse())) {
+					if (validateTicketCreationWindow(orderResponseBean, ticketRequestBean.getStoreDataResponse())) {
 						throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket Creation window has been closed for this order", ""));
 					}
 
@@ -136,8 +136,11 @@ public class TicketRequestUtils {
 
 	private boolean validateTicketCreationWindow(FranchiseOrderResponseBean orderResponseBean, StoreDataResponse storeDataResponse) {
 		LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
-		if (orderResponseBean.getMetadata() == null || orderResponseBean.getMetadata().getDeliveryDetails() == null || storeDataResponse.getOpenTime() == null) {
-			return !currentTime.toLocalTime().isAfter(LocalTime.of(17, 0));
+		String ticketClosingHours = ParamsUtils.getParam("TICKET_CLOSING_HOURS", "17:00");
+		LocalTime ticketClosingTime = convertToLocalTime(ticketClosingHours, DateTimeFormatter.ofPattern("HH:mm"));
+		if (orderResponseBean.getMetadata() == null || orderResponseBean.getMetadata()
+				.getDeliveryDetails() == null || storeDataResponse == null || storeDataResponse.getOpenTime() == null) {
+			return currentTime.toLocalTime().isAfter(ticketClosingTime);
 		}
 		LocalDateTime deliveryCompletionTime = getDeliveryCompletionTime(orderResponseBean);
 		LocalTime storeOpenTime = convertToLocalTime(storeDataResponse.getOpenTime(), DateTimeFormatter.ofPattern("HH:mm"));
@@ -145,7 +148,7 @@ public class TicketRequestUtils {
 		Integer bufferHours = Integer.valueOf(ParamsUtils.getParam("TICKET_BUFFER_HOURS", "3"));
 		maxTime = maxTime.plusHours(bufferHours);
 
-		return !currentTime.toLocalTime().isAfter(maxTime);
+		return currentTime.toLocalTime().isAfter(maxTime);
 	}
 
 	private LocalDateTime getDeliveryCompletionTime(FranchiseOrderResponseBean orderResponseBean) {
