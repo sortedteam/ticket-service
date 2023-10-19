@@ -6,6 +6,7 @@ import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.common.utils.CollectionUtils;
+import com.sorted.rest.common.utils.ParamsUtils;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.params.service.ParamService;
 import com.sorted.rest.services.ticket.actions.AutomaticFullOrderRefundAction;
@@ -85,7 +86,7 @@ public class TicketRequestUtils {
 					UUID orderId = UUID.fromString(requestTicket.getReferenceId());
 					FranchiseOrderResponseBean orderResponseBean = ticketClientService.getFranchiseOrderInfo(orderId, storeId);
 					ticketRequestBean.setOrderResponse(orderResponseBean);
-					if (!validateTicketCreationWindow(orderResponseBean, ticketRequestBean.getStoreDataResponse())) {
+					if (validateTicketCreationWindow(orderResponseBean, ticketRequestBean.getStoreDataResponse())) {
 						throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket Creation window has been closed for this order", ""));
 					}
 
@@ -143,16 +144,19 @@ public class TicketRequestUtils {
 		_LOGGER.info("orderResponseBean ::"+orderResponseBean);
 		_LOGGER.info("storeDataResponse ::"+storeDataResponse);
 		LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
-		if (orderResponseBean != null && orderResponseBean.getMetadata() == null || orderResponseBean.getMetadata()
+		String ticketClosingHours = ParamsUtils.getParam("TICKET_CLOSING_HOURS", "17:00");
+		LocalTime ticketClosingTime = convertToLocalTime(ticketClosingHours, DateTimeFormatter.ofPattern("HH:mm"));
+		if (orderResponseBean.getMetadata() == null || orderResponseBean.getMetadata()
 				.getDeliveryDetails() == null || storeDataResponse == null || storeDataResponse.getOpenTime() == null) {
-			return !currentTime.toLocalTime().isAfter(LocalTime.of(17, 0));
+			return currentTime.toLocalTime().isAfter(ticketClosingTime);
 		}
 		LocalDateTime deliveryCompletionTime = getDeliveryCompletionTime(orderResponseBean);
 		LocalTime storeOpenTime = convertToLocalTime(storeDataResponse.getOpenTime(), DateTimeFormatter.ofPattern("HH:mm"));
 		LocalTime maxTime = deliveryCompletionTime.toLocalTime().isAfter(storeOpenTime) ? deliveryCompletionTime.toLocalTime() : storeOpenTime;
-		maxTime = maxTime.plusHours(3);
+		Integer bufferHours = Integer.valueOf(ParamsUtils.getParam("TICKET_BUFFER_HOURS", "3"));
+		maxTime = maxTime.plusHours(bufferHours);
 
-		return !currentTime.toLocalTime().isAfter(maxTime);
+		return currentTime.toLocalTime().isAfter(maxTime);
 	}
 
 	private LocalDateTime getDeliveryCompletionTime(FranchiseOrderResponseBean orderResponseBean) {
