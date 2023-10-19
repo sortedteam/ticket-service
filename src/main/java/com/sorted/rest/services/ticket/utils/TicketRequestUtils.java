@@ -2,11 +2,14 @@ package com.sorted.rest.services.ticket.utils;
 
 import com.sorted.rest.common.beans.ErrorBean;
 import com.sorted.rest.common.exceptions.ValidationException;
+import com.sorted.rest.common.logging.AppLogger;
+import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.common.utils.CollectionUtils;
 import com.sorted.rest.common.utils.ParamsUtils;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.params.service.ParamService;
+import com.sorted.rest.services.ticket.actions.AutomaticFullOrderRefundAction;
 import com.sorted.rest.services.ticket.beans.*;
 import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
@@ -38,6 +41,8 @@ public class TicketRequestUtils {
 	@Autowired
 	private UserUtils userUtils;
 
+	static AppLogger _LOGGER = LoggingManager.getLogger(TicketRequestUtils.class);
+
 	private static ThreadLocal<TicketRequestBean> MEMORY_THREAD_LOCAL = new ThreadLocal<>();
 
 	public void setTicketRequest(TicketRequestBean bean) {
@@ -61,6 +66,7 @@ public class TicketRequestUtils {
 			String storeId = requestTicket.getRequesterEntityId();
 			if (requestTicket.getMetadata().getStoreDetails() == null) {
 				ticketRequestBean.setStoreDataResponse(ticketClientService.getStoreDataFromId(storeId));
+				ticketRequestBean.setAmUserResponse(ticketClientService.getAmMappedToStore(storeId));
 				requestTicket.getMetadata().setStoreDetails(StoreDetailsBean.newInstance());
 			}
 			if (categoryRootLabel.equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
@@ -135,6 +141,8 @@ public class TicketRequestUtils {
 	}
 
 	private boolean validateTicketCreationWindow(FranchiseOrderResponseBean orderResponseBean, StoreDataResponse storeDataResponse) {
+		_LOGGER.info("orderResponseBean ::"+orderResponseBean);
+		_LOGGER.info("storeDataResponse ::"+storeDataResponse);
 		LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
 		String ticketClosingHours = ParamsUtils.getParam("TICKET_CLOSING_HOURS", "17:00");
 		LocalTime ticketClosingTime = convertToLocalTime(ticketClosingHours, DateTimeFormatter.ofPattern("HH:mm"));

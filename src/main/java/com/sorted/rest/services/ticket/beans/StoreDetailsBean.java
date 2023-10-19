@@ -24,6 +24,8 @@ public class StoreDetailsBean implements Serializable {
 
 	private BigDecimal refundPermissibilityFactor;
 
+	private UserDetail amUser;
+
 	public static StoreDetailsBean newInstance() {
 		return new StoreDetailsBean();
 	}

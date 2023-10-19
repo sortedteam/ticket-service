@@ -48,6 +48,7 @@ public class CancelTicketAction implements TicketActionsInterface {
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
 		item.getDetails().setResolvedRemarks(remarks);
+		item.getDetails().setResolvedBy(actionDetailsBean.getUserDetail());
 		item.setStatus(TicketStatus.CANCELLED);
 
 		if (item.getDetails().getOrderDetails() != null && item.getDetails().getOrderDetails().getRefundableAmount() != null && ticket.getMetadata()

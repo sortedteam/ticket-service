@@ -1,6 +1,7 @@
 package com.sorted.rest.services.ticket.clients;
 
 import com.sorted.rest.common.openfeign.FeignCustomConfiguration;
+import com.sorted.rest.services.ticket.beans.AmStoreMappingResponse;
 import com.sorted.rest.services.ticket.beans.UserServiceResponse;
 import com.sorted.rest.services.ticket.beans.UserStoreMappingResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -20,4 +21,7 @@ public interface TicketAuthConsumerClient {
 
 	@GetMapping(value = "/auth/internal/user-store-mapping")
 	List<UserStoreMappingResponse> getUserStoreMappingFromUserId(@RequestParam(name = "userId") String userId);
+
+	@GetMapping("auth/am-store-mapping")
+	List<AmStoreMappingResponse> getAmMappedStores(@RequestParam String storeIds, @RequestParam Boolean showUserDetails);
 }

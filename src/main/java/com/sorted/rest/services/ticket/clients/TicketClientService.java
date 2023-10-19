@@ -252,12 +252,13 @@ public class TicketClientService {
 	}
 
 	public void giveTargetCashbackForStoreIdAndDate(String requesterEntityId, Date deliveryDate) {
-		TargetCashbackCronRequest targetCashbackCronRequest =  new TargetCashbackCronRequest();
+		TargetCashbackCronRequest targetCashbackCronRequest = new TargetCashbackCronRequest();
 		targetCashbackCronRequest.setDate((new SimpleDateFormat("yyyy-MM-dd")).format(deliveryDate));
 		targetCashbackCronRequest.setStoreIds(List.of(requesterEntityId));
 		_LOGGER.info(String.format("Cashback Cron Triggered for store : %s ", requesterEntityId));
 		ticketOfferClient.runDailyCashbackCronForStoreIdAndDate(targetCashbackCronRequest);
 	}
+
 	public FranchiseOrderResponseBean cancelFranchiseOrderPostBilling(FranchiseOrderCancelPostBillingRequest request, String key, UUID orderId) {
 		try {
 			return ticketOrderClient.cancelFranchiseOrderPostBilling(request, key, orderId);
@@ -275,5 +276,22 @@ public class TicketClientService {
 			_LOGGER.error(String.format("Error while cancelling full order with request : %s ", request), e);
 			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while cancelling full order"));
 		}
+	}
+
+	public UserDetail getAmMappedToStore(String storeId) {
+		UserDetail response = null;
+		try {
+			List<AmStoreMappingResponse> amMappedStores = ticketAuthClient.getAmMappedStores(storeId, true);
+			if (amMappedStores == null || amMappedStores.isEmpty()) {
+				throw new ValidationException(new ErrorBean(Errors.NO_DATA_FOUND, "There are am mapped to this store :" + storeId));
+			}
+			if (amMappedStores.get(0).getAmUser() == null) {
+				throw new ValidationException(new ErrorBean(Errors.NO_DATA_FOUND, "Am user info not found for store :" + storeId));
+			}
+			response = mapper.mapSrcToDest(amMappedStores.get(0).getAmUser(), UserDetail.newInstance());
+		} catch (Exception e) {
+			_LOGGER.error("Error while fetching getMappedStores", e);
+		}
+		return response;
 	}
 }
