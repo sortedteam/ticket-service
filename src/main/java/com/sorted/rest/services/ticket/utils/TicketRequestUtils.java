@@ -1,5 +1,9 @@
 package com.sorted.rest.services.ticket.utils;
 
+import com.sorted.rest.common.beans.ErrorBean;
+import com.sorted.rest.common.exceptions.ValidationException;
+import com.sorted.rest.common.properties.Errors;
+import com.sorted.rest.common.utils.CollectionUtils;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.params.service.ParamService;
 import com.sorted.rest.services.ticket.beans.*;
@@ -14,6 +18,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -71,6 +79,9 @@ public class TicketRequestUtils {
 					UUID orderId = UUID.fromString(requestTicket.getReferenceId());
 					FranchiseOrderResponseBean orderResponseBean = ticketClientService.getFranchiseOrderInfo(orderId, storeId);
 					ticketRequestBean.setOrderResponse(orderResponseBean);
+					if (!validateTicketCreationWindow(orderResponseBean, ticketRequestBean.getStoreDataResponse())) {
+						throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket Creation window has been closed for your order", ""));
+					}
 
 					Map<String, FranchiseOrderItemResponseBean> orderItemSkuMap = new HashMap<>();
 					for (FranchiseOrderItemResponseBean orderItem : orderResponseBean.getOrderItems()) {
@@ -120,6 +131,45 @@ public class TicketRequestUtils {
 		ticketRequestBean.setInternalUserDetail(userUtils.getInternalUserDetail());
 		ticketRequestBean.setRequesterUserDetail(userUtils.getUserDetail(SessionUtils.getAuthUserId()));
 		setTicketRequest(ticketRequestBean);
+	}
+
+	private boolean validateTicketCreationWindow(FranchiseOrderResponseBean orderResponseBean, StoreDataResponse storeDataResponse) {
+		LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+
+		if (orderResponseBean.getMetadata() == null || orderResponseBean.getMetadata().getDeliveryDetails() == null) {
+			return currentTime.toLocalTime().isAfter(LocalTime.of(17, 0));
+		}
+
+		LocalDateTime deliveryCompletionTime = getDeliveryCompletionTime(orderResponseBean);
+		LocalDateTime storeOpenTime = convertToLocalDateTime(storeDataResponse.getOpenTime(), DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
+
+		LocalDateTime maxTime = deliveryCompletionTime.isAfter(storeOpenTime) ? deliveryCompletionTime : storeOpenTime;
+		maxTime = maxTime.plusHours(3);
+
+		return !currentTime.isAfter(maxTime);
+	}
+
+	private LocalDateTime getDeliveryCompletionTime(FranchiseOrderResponseBean orderResponseBean) {
+		if (orderResponseBean.getMetadata() != null && CollectionUtils.isNotEmpty(orderResponseBean.getMetadata().getDeliveryDetails())) {
+			List<FranchiseOrderDeliveryBean> deliveryDetails = orderResponseBean.getMetadata().getDeliveryDetails();
+			LocalDateTime deliveryCompletionTime = convertToLocalDateTime(deliveryDetails.get(0).getCompletedAt(),
+					DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
+			if (deliveryDetails.size() > 1) {
+				for (int i = 1; i < deliveryDetails.size(); i++) {
+					LocalDateTime formattedCompletionTime = convertToLocalDateTime(deliveryDetails.get(i).getCompletedAt(),
+							DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
+					if (formattedCompletionTime.isAfter(deliveryCompletionTime)) {
+						deliveryCompletionTime = formattedCompletionTime;
+					}
+				}
+			}
+			return deliveryCompletionTime;
+		}
+		return null;
+	}
+
+	private LocalDateTime convertToLocalDateTime(String completionTime, DateTimeFormatter formatter) {
+		return LocalDateTime.parse(completionTime, formatter);
 	}
 
 }
