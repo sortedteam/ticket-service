@@ -146,13 +146,13 @@ public class TicketController implements BaseController {
 		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
 		validateAndSetTicketCategories(requestTicket, categoryMap);
-//		TicketEntity existingTicket = getParentAndValidateForDuplicateTickets(requestTicket);
+		TicketEntity existingTicket = getParentAndValidateForDuplicateTickets(requestTicket);
 		List<TicketItemEntity> requestTicketItems = requestTicket.getItems();
-//		if (existingTicket != null) {
-//			requestTicket = existingTicket;
-//		} else {
-//			requestTicket.setItems(null);
-//		}
+		if (existingTicket != null) {
+			requestTicket = existingTicket;
+		} else {
+			requestTicket.setItems(null);
+		}
 		requestTicket.setHasNew(true);
 		populateNewTicketItems(requestTicketItems, TicketPlatform.PARTNER_APP);
 		populateTicketDetailsAndInvokeCreateOrUpdateActions(requestTicket, requestTicketItems);
