@@ -53,7 +53,7 @@ public class TicketRequestUtils {
 		MEMORY_THREAD_LOCAL.remove();
 	} // to do after API call finishes
 
-	public void populateTicketRequestAsPerCategoryRoot(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems) {
+	public void populateTicketRequestAsPerCategoryRoot(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems, Boolean isPartnerAppRequest) {
 		TicketRequestBean ticketRequestBean = new TicketRequestBean();
 		String categoryRootLabel = requestTicket.getCategoryRoot().getLabel();
 		String entityType = requestTicket.getRequesterEntityType();
@@ -80,7 +80,7 @@ public class TicketRequestUtils {
 					UUID orderId = UUID.fromString(requestTicket.getReferenceId());
 					FranchiseOrderResponseBean orderResponseBean = ticketClientService.getFranchiseOrderInfo(orderId, storeId);
 					ticketRequestBean.setOrderResponse(orderResponseBean);
-					if (validateTicketCreationWindow(orderResponseBean, ticketRequestBean.getStoreDataResponse())) {
+					if (isPartnerAppRequest && validateTicketCreationWindow(orderResponseBean, ticketRequestBean.getStoreDataResponse())) {
 						throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket Creation window has been closed for this order", ""));
 					}
 
