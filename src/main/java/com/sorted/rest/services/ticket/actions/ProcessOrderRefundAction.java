@@ -79,6 +79,7 @@ public class ProcessOrderRefundAction implements TicketActionsInterface {
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
 		item.getDetails().setResolvedRemarks(remarks);
+		item.getDetails().setResolvedBy(actionDetailsBean.getUserDetail());
 		item.setStatus(TicketStatus.CLOSED);
 
 		if (ticket.getMetadata().getOrderDetails() != null) {

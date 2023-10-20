@@ -3,7 +3,10 @@ package com.sorted.rest.services.ticket.actions;
 import com.sorted.rest.common.exceptions.ValidationException;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
-import com.sorted.rest.services.ticket.beans.*;
+import com.sorted.rest.services.ticket.beans.FranchiseOrderCancelPostBillingRequest;
+import com.sorted.rest.services.ticket.beans.FranchiseOrderResponseBean;
+import com.sorted.rest.services.ticket.beans.OrderItemDetailsBean;
+import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
 import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketCreateActions;
@@ -14,7 +17,6 @@ import com.sorted.rest.services.ticket.services.TicketHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -72,6 +74,7 @@ public class AutomaticOrderCancelAction implements TicketActionsInterface {
 			item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 			item.setAssignedAt(new Date());
 			item.getDetails().setResolvedRemarks(remarks);
+			item.getDetails().setResolvedBy(actionDetailsBean.getUserDetail());
 			item.setStatus(TicketStatus.CLOSED);
 		} catch (Exception e) {
 			_LOGGER.error("something went wrong while cancelling order automatically", e);

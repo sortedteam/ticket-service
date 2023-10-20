@@ -287,7 +287,7 @@ public class TicketController implements BaseController {
 	private void populateTicketDetailsAndInvokeCreateOrUpdateActions(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems, Boolean isPartnerAppRequest) {
 		try {
 			ticketRequestUtils.populateTicketRequestAsPerCategoryRoot(requestTicket, requestTicketItems, isPartnerAppRequest);
-			ticketActionUtils.populateTicketResolutionAsPerCategoryRoot(requestTicket, requestTicketItems);
+			ticketActionUtils.populateTicketDetailsAsPerCategoryRoot(requestTicket, requestTicketItems);
 			Boolean hasNew = requestTicket.getHasNew(), hasUpdatedDraft = requestTicket.getHasUpdatedDraft();
 			if (requestTicket.getId() == null) {
 				requestTicket.setLastAddedAt(new Date());
