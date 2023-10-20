@@ -117,7 +117,7 @@ public class TicketController implements BaseController {
 		}
 		requestTicket.setHasNew(true);
 		populateNewTicketItems(requestTicketItems, TicketPlatform.IMS);
-		populateTicketDetailsAndInvokeCreateOrUpdateActions(requestTicket, requestTicketItems);
+		populateTicketDetailsAndInvokeCreateOrUpdateActions(requestTicket, requestTicketItems, Boolean.FALSE);
 		ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
 	}
 
@@ -155,7 +155,7 @@ public class TicketController implements BaseController {
 		}
 		requestTicket.setHasNew(true);
 		populateNewTicketItems(requestTicketItems, TicketPlatform.PARTNER_APP);
-		populateTicketDetailsAndInvokeCreateOrUpdateActions(requestTicket, requestTicketItems);
+		populateTicketDetailsAndInvokeCreateOrUpdateActions(requestTicket, requestTicketItems, Boolean.TRUE);
 		ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
 	}
 
@@ -284,9 +284,9 @@ public class TicketController implements BaseController {
 		return status;
 	}
 
-	private void populateTicketDetailsAndInvokeCreateOrUpdateActions(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems) {
+	private void populateTicketDetailsAndInvokeCreateOrUpdateActions(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems, Boolean isPartnerAppRequest) {
 		try {
-			ticketRequestUtils.populateTicketRequestAsPerCategoryRoot(requestTicket, requestTicketItems);
+			ticketRequestUtils.populateTicketRequestAsPerCategoryRoot(requestTicket, requestTicketItems, isPartnerAppRequest);
 			ticketActionUtils.populateTicketDetailsAsPerCategoryRoot(requestTicket, requestTicketItems);
 			Boolean hasNew = requestTicket.getHasNew(), hasUpdatedDraft = requestTicket.getHasUpdatedDraft();
 			if (requestTicket.getId() == null) {
@@ -368,7 +368,7 @@ public class TicketController implements BaseController {
 			item.getDetails().setDescription(updateTicketBean.getDescription());
 		}
 		ticket.setHasUpdatedDraft(true);
-		populateTicketDetailsAndInvokeCreateOrUpdateActions(ticket, Collections.singletonList(item));
+		populateTicketDetailsAndInvokeCreateOrUpdateActions(ticket, Collections.singletonList(item), Boolean.FALSE);
 		ticket = ticketService.saveTicketWithUpdatedItems(ticket);
 		return getItemBean(ticket, updateTicketBean.getItemId());
 	}
@@ -450,7 +450,7 @@ public class TicketController implements BaseController {
 
 	private void populateTicketDetailsAndInvokeUpdateActions(TicketEntity requestTicket, TicketItemEntity requestItem, UpdateTicketBean updateTicketBean) {
 		try {
-			ticketRequestUtils.populateTicketRequestAsPerCategoryRoot(requestTicket, Collections.singletonList(requestItem));
+			ticketRequestUtils.populateTicketRequestAsPerCategoryRoot(requestTicket, Collections.singletonList(requestItem), Boolean.FALSE);
 			ticketActionUtils.invokeTicketUpdateAction(requestItem, requestTicket, updateTicketBean);
 			ticketRequestUtils.clearTicketRequest();
 		} catch (Exception e) {
@@ -606,7 +606,7 @@ public class TicketController implements BaseController {
 
 		ticket.setHasNew(!insertTicketItems.isEmpty());
 		if (ticket.getHasNew() || ticket.getId() == null) {
-			populateTicketDetailsAndInvokeCreateOrUpdateActions(ticket, insertTicketItems);
+			populateTicketDetailsAndInvokeCreateOrUpdateActions(ticket, insertTicketItems, Boolean.FALSE);
 			ticket.addTicketItems(insertTicketItems);
 		}
 
