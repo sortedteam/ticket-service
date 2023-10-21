@@ -1,4 +1,3 @@
-/*
 package com.sorted.rest.services.ticket.main;
 
 import org.springframework.boot.SpringApplication;
@@ -32,4 +31,3 @@ public class TicketServiceApplication {
 		application.run(args);
 	}
 }
- */

@@ -1,12 +1,5 @@
 package com.sorted.rest.services.ticket.utils;
 
-import com.sorted.rest.common.beans.ErrorBean;
-import com.sorted.rest.common.exceptions.ValidationException;
-import com.sorted.rest.common.logging.AppLogger;
-import com.sorted.rest.common.logging.LoggingManager;
-import com.sorted.rest.common.properties.Errors;
-import com.sorted.rest.common.utils.CollectionUtils;
-import com.sorted.rest.common.utils.ParamsUtils;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.params.service.ParamService;
 import com.sorted.rest.services.ticket.actions.AutomaticFullOrderRefundAction;
@@ -22,10 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,8 +29,6 @@ public class TicketRequestUtils {
 
 	@Autowired
 	private UserUtils userUtils;
-
-	static AppLogger _LOGGER = LoggingManager.getLogger(TicketRequestUtils.class);
 
 	private static ThreadLocal<TicketRequestBean> MEMORY_THREAD_LOCAL = new ThreadLocal<>();
 
@@ -58,7 +45,7 @@ public class TicketRequestUtils {
 		MEMORY_THREAD_LOCAL.remove();
 	} // to do after API call finishes
 
-	public void populateTicketRequestAsPerCategoryRoot(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems, Boolean isPartnerAppRequest) {
+	public void populateTicketRequestAsPerCategoryRoot(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems) {
 		TicketRequestBean ticketRequestBean = new TicketRequestBean();
 		String categoryRootLabel = requestTicket.getCategoryRoot().getLabel();
 		String entityType = requestTicket.getRequesterEntityType();
@@ -86,10 +73,6 @@ public class TicketRequestUtils {
 					UUID orderId = UUID.fromString(requestTicket.getReferenceId());
 					FranchiseOrderResponseBean orderResponseBean = ticketClientService.getFranchiseOrderInfo(orderId, storeId);
 					ticketRequestBean.setOrderResponse(orderResponseBean);
-					if (isPartnerAppRequest && validateTicketCreationWindow(orderResponseBean, ticketRequestBean.getStoreDataResponse())) {
-						throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket Creation window has been closed for this order", ""));
-					}
-
 					Map<String, FranchiseOrderItemResponseBean> orderItemSkuMap = new HashMap<>();
 					for (FranchiseOrderItemResponseBean orderItem : orderResponseBean.getOrderItems()) {
 						orderItemSkuMap.put(orderItem.getSkuCode(), orderItem);
@@ -138,52 +121,6 @@ public class TicketRequestUtils {
 		ticketRequestBean.setInternalUserDetail(userUtils.getInternalUserDetail());
 		ticketRequestBean.setRequesterUserDetail(userUtils.getUserDetail(SessionUtils.getAuthUserId()));
 		setTicketRequest(ticketRequestBean);
-	}
-
-	private boolean validateTicketCreationWindow(FranchiseOrderResponseBean orderResponseBean, StoreDataResponse storeDataResponse) {
-		_LOGGER.info("orderResponseBean ::"+orderResponseBean);
-		_LOGGER.info("storeDataResponse ::"+storeDataResponse);
-		LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
-		String ticketClosingHours = ParamsUtils.getParam("TICKET_CLOSING_HOURS", "17:00");
-		LocalTime ticketClosingTime = convertToLocalTime(ticketClosingHours, DateTimeFormatter.ofPattern("HH:mm"));
-		if (orderResponseBean.getMetadata() == null || orderResponseBean.getMetadata()
-				.getDeliveryDetails() == null || storeDataResponse == null || storeDataResponse.getOpenTime() == null) {
-			return currentTime.toLocalTime().isAfter(ticketClosingTime);
-		}
-		LocalDateTime deliveryCompletionTime = getDeliveryCompletionTime(orderResponseBean);
-		LocalTime storeOpenTime = convertToLocalTime(storeDataResponse.getOpenTime(), DateTimeFormatter.ofPattern("HH:mm"));
-		LocalTime maxTime = deliveryCompletionTime.toLocalTime().isAfter(storeOpenTime) ? deliveryCompletionTime.toLocalTime() : storeOpenTime;
-		Integer bufferHours = Integer.valueOf(ParamsUtils.getParam("TICKET_BUFFER_HOURS", "3"));
-		maxTime = maxTime.plusHours(bufferHours);
-
-		return currentTime.toLocalTime().isAfter(maxTime);
-	}
-
-	private LocalDateTime getDeliveryCompletionTime(FranchiseOrderResponseBean orderResponseBean) {
-		if (orderResponseBean.getMetadata() != null && CollectionUtils.isNotEmpty(orderResponseBean.getMetadata().getDeliveryDetails())) {
-			List<FranchiseOrderDeliveryBean> deliveryDetails = orderResponseBean.getMetadata().getDeliveryDetails();
-			LocalDateTime deliveryCompletionTime = convertToLocalDateTime(deliveryDetails.get(0).getCompletedAt(),
-					DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
-			if (deliveryDetails.size() > 1) {
-				for (int i = 1; i < deliveryDetails.size(); i++) {
-					LocalDateTime formattedCompletionTime = convertToLocalDateTime(deliveryDetails.get(i).getCompletedAt(),
-							DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
-					if (formattedCompletionTime.isAfter(deliveryCompletionTime)) {
-						deliveryCompletionTime = formattedCompletionTime;
-					}
-				}
-			}
-			return deliveryCompletionTime;
-		}
-		return null;
-	}
-
-	private LocalDateTime convertToLocalDateTime(String completionTime, DateTimeFormatter formatter) {
-		return LocalDateTime.parse(completionTime, formatter);
-	}
-
-	private LocalTime convertToLocalTime(String completionTime, DateTimeFormatter formatter) {
-		return LocalTime.parse(completionTime, formatter);
 	}
 
 }

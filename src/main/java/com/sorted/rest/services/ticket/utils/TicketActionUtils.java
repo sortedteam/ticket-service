@@ -6,6 +6,8 @@ import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.common.utils.CollectionUtils;
+import com.sorted.rest.common.utils.DateUtils;
+import com.sorted.rest.common.utils.ParamsUtils;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.actions.*;
@@ -20,6 +22,10 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -151,6 +157,10 @@ public class TicketActionUtils {
 		String categoryRootLabel = requestTicket.getCategoryRoot().getLabel();
 		String entityType = requestTicket.getRequesterEntityType();
 		if (entityType.equals(EntityType.STORE.toString())) {
+			if (requestTicket.getHasNew() && requestTicketItems.get(0).getPlatform().equals(TicketPlatform.PARTNER_APP.name()) && validateTicketCreationWindow(
+					ticketRequestBean.getOrderResponse(), ticketRequestBean.getStoreDataResponse())) {
+				throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket Creation window has been closed for this order", ""));
+			}
 			TicketMetadataBean ticketMetadata = requestTicket.getMetadata();
 			if (requestTicket.getMetadata().getStoreDetails().getStoreId() == null) {
 				ticketMetadata.setStoreDetails(mapper.mapSrcToDest(ticketRequestBean.getStoreDataResponse(), requestTicket.getMetadata().getStoreDetails()));
@@ -370,4 +380,42 @@ public class TicketActionUtils {
 			ticketHistoryService.addTicketHistory(ticketId, item.getId(), TicketUpdateActions.STORE_RETURN_DATA_UPDATED.toString(), actionDetailsBean);
 		}
 	}
+
+	private boolean validateTicketCreationWindow(FranchiseOrderResponseBean orderResponseBean, StoreDataResponse storeDataResponse) {
+		LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+		String ticketClosingHours = ParamsUtils.getParam("TICKET_CLOSING_HOURS", "17:00");
+		LocalTime ticketClosingTime = DateUtils.convertToLocalTime(ticketClosingHours, DateTimeFormatter.ofPattern(DateUtils.TIME_FORMAT_WITH_COLON));
+		if (orderResponseBean.getMetadata() == null || orderResponseBean.getMetadata()
+				.getDeliveryDetails() == null || storeDataResponse == null || storeDataResponse.getOpenTime() == null) {
+			return currentTime.toLocalTime().isAfter(ticketClosingTime);
+		}
+		LocalDateTime deliveryCompletionTime = getDeliveryCompletionTime(orderResponseBean);
+		LocalTime storeOpenTime = DateUtils.convertToLocalTime(storeDataResponse.getOpenTime(), DateTimeFormatter.ofPattern(DateUtils.TIME_FORMAT_WITH_COLON));
+		LocalTime maxTime = deliveryCompletionTime.toLocalTime().isAfter(storeOpenTime) ? deliveryCompletionTime.toLocalTime() : storeOpenTime;
+		Integer bufferHours = Integer.valueOf(ParamsUtils.getParam("TICKET_BUFFER_HOURS", "3"));
+		maxTime = maxTime.plusHours(bufferHours);
+
+		return currentTime.toLocalTime().isAfter(maxTime);
+	}
+
+	private LocalDateTime getDeliveryCompletionTime(FranchiseOrderResponseBean orderResponseBean) {
+		if (orderResponseBean.getMetadata() != null && CollectionUtils.isNotEmpty(orderResponseBean.getMetadata().getDeliveryDetails())) {
+			List<FranchiseOrderDeliveryBean> deliveryDetails = orderResponseBean.getMetadata().getDeliveryDetails();
+			LocalDateTime deliveryCompletionTime = DateUtils.convertToLocalDateTime(deliveryDetails.get(0).getCompletedAt(),
+					DateTimeFormatter.ofPattern(DateUtils.DATE_MM_TIME_FMT));
+
+			if (deliveryDetails.size() > 1) {
+				for (int i = 1; i < deliveryDetails.size(); i++) {
+					LocalDateTime formattedCompletionTime = DateUtils.convertToLocalDateTime(deliveryDetails.get(i).getCompletedAt(),
+							DateTimeFormatter.ofPattern(DateUtils.DATE_MM_TIME_FMT));
+					if (formattedCompletionTime.isAfter(deliveryCompletionTime)) {
+						deliveryCompletionTime = formattedCompletionTime;
+					}
+				}
+			}
+			return deliveryCompletionTime;
+		}
+		return null;
+	}
+
 }
