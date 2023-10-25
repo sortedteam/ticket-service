@@ -384,13 +384,13 @@ public class TicketActionUtils {
 	private boolean validateTicketCreationWindow(FranchiseOrderResponseBean orderResponseBean, StoreDataResponse storeDataResponse) {
 		LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
 		String ticketClosingHours = ParamsUtils.getParam("TICKET_CLOSING_HOURS", "17:00");
-		LocalTime ticketClosingTime = DateUtils.convertToLocalTime(ticketClosingHours, DateTimeFormatter.ofPattern(DateUtils.TIME_FORMAT_WITH_COLON));
+		LocalTime ticketClosingTime = DateUtils.convertToLocalTime(ticketClosingHours, DateUtils.TIME_FORMAT_WITH_COLON);
 		if (orderResponseBean.getMetadata() == null || orderResponseBean.getMetadata()
 				.getDeliveryDetails() == null || storeDataResponse == null || storeDataResponse.getOpenTime() == null) {
 			return currentTime.toLocalTime().isAfter(ticketClosingTime);
 		}
 		LocalDateTime deliveryCompletionTime = getDeliveryCompletionTime(orderResponseBean);
-		LocalTime storeOpenTime = DateUtils.convertToLocalTime(storeDataResponse.getOpenTime(), DateTimeFormatter.ofPattern(DateUtils.TIME_FORMAT_WITH_COLON));
+		LocalTime storeOpenTime = DateUtils.convertToLocalTime(storeDataResponse.getOpenTime(), DateUtils.TIME_FORMAT_WITH_COLON);
 		LocalTime maxTime = deliveryCompletionTime.toLocalTime().isAfter(storeOpenTime) ? deliveryCompletionTime.toLocalTime() : storeOpenTime;
 		Integer bufferHours = Integer.valueOf(ParamsUtils.getParam("TICKET_BUFFER_HOURS", "3"));
 		maxTime = maxTime.plusHours(bufferHours);
@@ -401,13 +401,12 @@ public class TicketActionUtils {
 	private LocalDateTime getDeliveryCompletionTime(FranchiseOrderResponseBean orderResponseBean) {
 		if (orderResponseBean.getMetadata() != null && CollectionUtils.isNotEmpty(orderResponseBean.getMetadata().getDeliveryDetails())) {
 			List<FranchiseOrderDeliveryBean> deliveryDetails = orderResponseBean.getMetadata().getDeliveryDetails();
-			LocalDateTime deliveryCompletionTime = DateUtils.convertToLocalDateTime(deliveryDetails.get(0).getCompletedAt(),
-					DateTimeFormatter.ofPattern(DateUtils.DATE_MM_TIME_FMT));
+			LocalDateTime deliveryCompletionTime = DateUtils.convertToLocalDateTime(deliveryDetails.get(0).getCompletedAt(), DateUtils.DATE_MM_TIME_FMT);
 
 			if (deliveryDetails.size() > 1) {
 				for (int i = 1; i < deliveryDetails.size(); i++) {
 					LocalDateTime formattedCompletionTime = DateUtils.convertToLocalDateTime(deliveryDetails.get(i).getCompletedAt(),
-							DateTimeFormatter.ofPattern(DateUtils.DATE_MM_TIME_FMT));
+							DateUtils.DATE_MM_TIME_FMT);
 					if (formattedCompletionTime.isAfter(deliveryCompletionTime)) {
 						deliveryCompletionTime = formattedCompletionTime;
 					}
