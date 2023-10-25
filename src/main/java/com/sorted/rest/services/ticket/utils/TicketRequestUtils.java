@@ -72,7 +72,6 @@ public class TicketRequestUtils {
 					UUID orderId = UUID.fromString(requestTicket.getReferenceId());
 					FranchiseOrderResponseBean orderResponseBean = ticketClientService.getFranchiseOrderInfo(orderId, storeId);
 					ticketRequestBean.setOrderResponse(orderResponseBean);
-
 					Map<String, FranchiseOrderItemResponseBean> orderItemSkuMap = new HashMap<>();
 					for (FranchiseOrderItemResponseBean orderItem : orderResponseBean.getOrderItems()) {
 						orderItemSkuMap.put(orderItem.getSkuCode(), orderItem);
