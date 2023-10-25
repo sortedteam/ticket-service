@@ -47,6 +47,7 @@ public class CloseTicketAction implements TicketActionsInterface {
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
 		item.getDetails().setResolvedRemarks(remarks);
+		item.getDetails().setResolvedBy(actionDetailsBean.getUserDetail());
 		item.setStatus(TicketStatus.CLOSED);
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
