@@ -283,7 +283,7 @@ public class TicketClientService {
 		try {
 			List<AmStoreMappingResponse> amMappedStores = ticketAuthClient.getAmMappedStores(storeId, true);
 			if (amMappedStores == null || amMappedStores.isEmpty()) {
-				throw new ValidationException(new ErrorBean(Errors.NO_DATA_FOUND, "There are am mapped to this store :" + storeId));
+				throw new ValidationException(new ErrorBean(Errors.NO_DATA_FOUND, "There are no am mapped to this store :" + storeId));
 			}
 			if (amMappedStores.get(0).getAmUser() == null) {
 				throw new ValidationException(new ErrorBean(Errors.NO_DATA_FOUND, "Am user info not found for store :" + storeId));
