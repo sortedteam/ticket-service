@@ -25,7 +25,6 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -157,8 +156,9 @@ public class TicketActionUtils {
 		String categoryRootLabel = requestTicket.getCategoryRoot().getLabel();
 		String entityType = requestTicket.getRequesterEntityType();
 		if (entityType.equals(EntityType.STORE.toString())) {
-			if (requestTicket.getHasNew() && requestTicketItems.get(0).getPlatform().equals(TicketPlatform.PARTNER_APP.name()) && validateTicketCreationWindow(
-					ticketRequestBean.getOrderResponse(), ticketRequestBean.getStoreDataResponse())) {
+			if (categoryRootLabel.equals(TicketCategoryRoot.ORDER_ISSUE.toString()) && requestTicket.getHasNew() && requestTicketItems.get(0).getPlatform()
+					.equals(TicketPlatform.PARTNER_APP.name()) && validateTicketCreationWindow(ticketRequestBean.getOrderResponse(),
+					ticketRequestBean.getStoreDataResponse())) {
 				throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket Creation window has been closed for this order", ""));
 			}
 			TicketMetadataBean ticketMetadata = requestTicket.getMetadata();
