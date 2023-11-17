@@ -89,7 +89,8 @@ public class TicketConstants {
 
 		NEW_TICKET_CREATED("New Ticket Created"), DRAFT_TICKET_CREATED("Draft Ticket Created"), ESCALATE_TO_CUSTOMERCARE(
 				"Ticket escalated to customer care executive"), ESCALATE_TO_WAREHOUSE("Ticket escalated to warehouse executive"), AUTOMATIC_ORDER_REFUND(
-				"Automatic refund initiated"), AUTOMATIC_FULL_ORDER_REFUND("Automatic full order refund initiated"), AUTOMATIC_ORDER_CANCEL("Automatic Order cancelled with remarks initiated");
+				"Automatic refund initiated"), AUTOMATIC_FULL_ORDER_REFUND("Automatic full order refund initiated"), AUTOMATIC_ORDER_CANCEL(
+				"Automatic Order cancelled with remarks initiated");
 
 		private String remarks;
 
@@ -105,11 +106,8 @@ public class TicketConstants {
 	public enum TicketUpdateActions {
 
 		DRAFT_TICKET_UPDATED("Draft Ticket Updated"), STORE_RETURN_DATA_UPDATED("Store Return Data Updated"), PROCESS_ORDER_REFUND(
-				"Ticket closed after generating refund for the order for quantity %s against issue raised for %s %s with remarks %s"), ONLY_ADD_REMARKS(
-				"Ticket updated with remarks %s"), CLOSE_WITH_REMARKS("Ticket closed with remarks %s"), CANCEL_WITH_REMARKS(
-				"Ticket cancelled with remarks %s"), PROCESS_FULL_ORDER_REFUND(
-				"Ticket closed after generating refund for the complete order with remarks %s"), CHANGE_ISSUE_CATEGORY(
-				"Ticket issue category updated with remarks %s");
+				"Successfully refunded with remarks %s"), ONLY_ADD_REMARKS("%s"), CLOSE_WITH_REMARKS("%s"), CANCEL_WITH_REMARKS(
+				"%s"), PROCESS_FULL_ORDER_REFUND("Full order refunded with remarks %s"), CHANGE_ISSUE_CATEGORY("Issue category updated with remarks %s");
 
 		private String remarks;
 
