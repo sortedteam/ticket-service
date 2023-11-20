@@ -203,6 +203,7 @@ public class TicketActionUtils {
 							orderItemDetailsBean.setWhId(orderItemResponseBean.getWhId());
 							orderItemDetailsBean.setSkuCode(orderItemResponseBean.getSkuCode());
 							orderItemDetailsBean.setProductName(orderItemResponseBean.getProductName());
+							orderItemDetailsBean.setImageUrl(orderItemResponseBean.getImageUrl());
 							orderItemDetailsBean.setFinalItemAmount(orderItemResponseBean.getFinalAmount());
 							orderItemDetailsBean.setItemStatus(orderItemResponseBean.getStatus().toString());
 							orderItemDetailsBean.setProrataAmount(orderItemResponseBean.getProrataAmount());
