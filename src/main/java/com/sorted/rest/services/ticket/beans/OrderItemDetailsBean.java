@@ -18,6 +18,8 @@ public class OrderItemDetailsBean implements Serializable {
 
 	private String productName;
 
+	private String imageUrl;
+
 	private UUID orderId;
 
 	private Double finalItemAmount;
