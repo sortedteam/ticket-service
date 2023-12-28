@@ -47,8 +47,8 @@ public class TicketRequestUtils {
 	public void populateTicketRequestAsPerCategoryRoot(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems) {
 		TicketRequestBean ticketRequestBean = new TicketRequestBean();
 		String categoryRootLabel = requestTicket.getCategoryRoot().getLabel();
-		String entityType = requestTicket.getRequesterEntityType();
-		if (entityType.equals(EntityType.STORE.toString())) {
+		EntityType entityType = requestTicket.getRequesterEntityType();
+		if (entityType.equals(EntityType.STORE)) {
 			String storeId = requestTicket.getRequesterEntityId();
 			if (requestTicket.getMetadata().getStoreDetails() == null) {
 				ticketRequestBean.setStoreDataResponse(ticketClientService.getStoreDataFromId(storeId));

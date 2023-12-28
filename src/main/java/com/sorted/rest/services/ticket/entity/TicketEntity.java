@@ -5,6 +5,7 @@ import com.sorted.rest.common.utils.CollectionUtils;
 import com.sorted.rest.common.websupport.base.BaseEntity;
 import com.sorted.rest.services.ticket.beans.TicketMetadataBean;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
+import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import lombok.Data;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.OrderBy;
@@ -30,7 +31,8 @@ public class TicketEntity extends BaseEntity {
 	private Long id;
 
 	@Column(nullable = false)
-	private String requesterEntityType;
+	@Enumerated(EnumType.STRING)
+	private EntityType requesterEntityType;
 
 	@Column(nullable = false)
 	private String requesterEntityId;

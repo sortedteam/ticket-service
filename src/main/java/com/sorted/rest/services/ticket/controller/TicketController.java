@@ -89,18 +89,12 @@ public class TicketController implements BaseController {
 	@Transactional(propagation = Propagation.REQUIRED)
 	public void createTicketsForIms(@Valid @RequestBody ImsCreateTicketRequest createTicketBean) {
 		_LOGGER.info(String.format("createTicketsForIms:: request %s", createTicketBean));
-		if (EntityType.fromString(createTicketBean.getRequesterEntityType()) == null) {
-			throw new ValidationException(
-					ErrorBean.withError(Errors.INVALID_REQUEST, String.format("Invalid Entity Type : %s", createTicketBean.getRequesterEntityType()),
-							"invalidEntityType"));
-		}
-
 		TicketEntity requestTicket = getMapper().mapSrcToDest(createTicketBean, TicketEntity.newInstance());
 		if (requestTicket == null) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "No data given to create ticket", null));
 		}
 
-		if (requestTicket.getRequesterEntityType().equals(EntityType.STORE.toString())) {
+		if (requestTicket.getRequesterEntityType().equals(EntityType.STORE)) {
 			requestTicket.setRequesterEntityCategory(getStoreCategoryForTicket(requestTicket.getRequesterEntityId(), requestTicket.getRequesterEntityType()));
 		}
 
@@ -137,7 +131,7 @@ public class TicketController implements BaseController {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "No data given to create ticket", null));
 		}
 
-		String requesterEntityType = EntityType.STORE.toString();
+		EntityType requesterEntityType = EntityType.STORE;
 		requestTicket.setRequesterEntityId(requesterEntityId);
 		requestTicket.setRequesterEntityType(requesterEntityType);
 		requestTicket.setRequesterEntityCategory(getStoreCategoryForTicket(requesterEntityId, requesterEntityType));
@@ -200,7 +194,7 @@ public class TicketController implements BaseController {
 	}
 */
 
-	private String getStoreCategoryForTicket(String storeId, String entityType) {
+	private String getStoreCategoryForTicket(String storeId, EntityType entityType) {
 		List<String> storeCategoryForTicketParam = Arrays.stream(paramService.getParam("STORE_CATEGORY_FOR_TICKET", "Good|Good,Bad,Ugly").split("\\|"))
 				.collect(Collectors.toList());
 		return ticketClientService.getFilteredOrDefaultAudience(entityType, storeId,
@@ -227,7 +221,7 @@ public class TicketController implements BaseController {
 
 	private TicketEntity getParentAndValidateForDuplicateTickets(TicketEntity requestTicket) {
 		TicketEntity dbEntity = null;
-		if (requestTicket.getRequesterEntityType().equals(EntityType.STORE.toString())) {
+		if (requestTicket.getRequesterEntityType().equals(EntityType.STORE)) {
 			if (requestTicket.getCategoryRoot().getLabel().equals(TicketCategoryRoot.ORDER_ISSUE.toString())) {
 				if (StringUtils.isEmpty(requestTicket.getReferenceId())) {
 					throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Ticket reference id can not be empty", "referenceIdNotFound"));
@@ -632,8 +626,8 @@ public class TicketController implements BaseController {
 		TicketEntity ticket = TicketEntity.newInstance();
 		ticket.setReferenceId(request.getOrderId());
 		ticket.setRequesterEntityId(request.getStoreId());
-		ticket.setRequesterEntityType(EntityType.STORE.toString());
-		ticket.setRequesterEntityCategory(getStoreCategoryForTicket(request.getStoreId(), EntityType.STORE.toString()));
+		ticket.setRequesterEntityType(EntityType.STORE);
+		ticket.setRequesterEntityCategory(getStoreCategoryForTicket(request.getStoreId(), EntityType.STORE));
 		ticket.setCategoryRoot(category);
 		return ticket;
 	}
@@ -783,7 +777,7 @@ public class TicketController implements BaseController {
 	@GetMapping(path = "/tickets/internal/return-pickup")
 	public ResponseEntity<List<ReturnPickupBean>> fetchTicketsInternalForReturnPickup() {
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getTicketCategoryByLabels(
-				Arrays.asList(TicketCategoryRoot.ORDER_ISSUE.toString()));
+				Arrays.asList(TicketCategoryRoot.ORDER_ISSUE.toString()), EntityType.STORE);
 		if (CollectionUtils.isEmpty(ticketCategoryEntities)) {
 			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, "Any relevant issue ticket category root not found", null));
 		}

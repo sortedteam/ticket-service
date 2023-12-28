@@ -72,6 +72,9 @@ public class TicketActionUtils {
 	private ChangeIssueCategoryAction changeIssueCategoryAction;
 
 	@Autowired
+	private ProcessConsumerOrderRefundAction processConsumerOrderRefundAction;
+
+	@Autowired
 	private BaseMapper<?, ?> mapper;
 
 	public void invokeTicketCreateAction(TicketItemEntity item, Long ticketId) {
@@ -154,8 +157,8 @@ public class TicketActionUtils {
 	public void populateTicketDetailsAsPerCategoryRoot(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems) {
 		TicketRequestBean ticketRequestBean = ticketRequestUtils.getTicketRequest();
 		String categoryRootLabel = requestTicket.getCategoryRoot().getLabel();
-		String entityType = requestTicket.getRequesterEntityType();
-		if (entityType.equals(EntityType.STORE.toString())) {
+		EntityType entityType = requestTicket.getRequesterEntityType();
+		if (entityType.equals(EntityType.STORE)) {
 			if (categoryRootLabel.equals(TicketCategoryRoot.ORDER_ISSUE.toString()) && requestTicket.getHasNew() && requestTicketItems.get(0).getPlatform()
 					.equals(TicketPlatform.PARTNER_APP.name()) && validateTicketCreationWindow(ticketRequestBean.getOrderResponse(),
 					ticketRequestBean.getStoreDataResponse())) {
@@ -174,7 +177,7 @@ public class TicketActionUtils {
 					OrderDetailsBean orderDetailsBean = OrderDetailsBean.newInstance();
 					orderDetailsBean.setOrderId(orderResponseBean.getId());
 					orderDetailsBean.setDisplayOrderId(orderResponseBean.getDisplayOrderId());
-					orderDetailsBean.setOrderStatus(orderResponseBean.getStatus().toString()); // status updated On Get
+					orderDetailsBean.setOrderStatus(orderResponseBean.getStatus()); // status updated On Get
 					orderDetailsBean.setFinalOrderBillAmount(orderResponseBean.getFinalBillAmount());
 					orderDetailsBean.setChallanUrl(orderResponseBean.getChallanUrl());
 					orderDetailsBean.setDeliveryDate(orderResponseBean.getDeliveryDate());
@@ -288,6 +291,11 @@ public class TicketActionUtils {
 			ticketAction = processFullOrderRefundAction;
 			processFullOrderRefundAction.setAttachments(updateTicketBean.getAttachments());
 			processFullOrderRefundAction.setRemarks(updateTicketBean.getRemarks());
+		} else if (action.equals(TicketUpdateActions.PROCESS_CONSUMER_ORDER_REFUND.toString())) {
+			ticketAction = processConsumerOrderRefundAction;
+			processConsumerOrderRefundAction.setAttachments(updateTicketBean.getAttachments());
+			processConsumerOrderRefundAction.setResolvedQuantity(updateTicketBean.getResolvedQuantity());
+			processConsumerOrderRefundAction.setRemarks(updateTicketBean.getRemarks());
 		} else {
 			_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 		}

@@ -28,4 +28,8 @@ public interface TicketOrderClient {
 	@PostMapping("/orders/franchise/{orderId}/cancel/post-delivery")
 	FranchiseOrderResponseBean cancelFranchiseOrderPostBilling(@RequestBody FranchiseOrderCancelPostBillingRequest request, @RequestParam String key,
 			@PathVariable UUID orderId);
+
+	@PostMapping("/orders/consumer/ims/refund")
+	ConsumerOrderResponseBean imsConsumerFranchiseRefundOrder(@RequestBody ImsConsumerOrderRefundBean request, @RequestParam String key);
+
 }
