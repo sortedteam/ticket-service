@@ -98,7 +98,7 @@ public class TicketController implements BaseController {
 			requestTicket.setRequesterEntityCategory(getStoreCategoryForTicket(requestTicket.getRequesterEntityId(), requestTicket.getRequesterEntityType()));
 		}
 
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getAllTicketCategories(createTicketBean.getRequesterEntityType());
 		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
 		validateAndSetTicketCategories(requestTicket, categoryMap);
@@ -136,7 +136,7 @@ public class TicketController implements BaseController {
 		requestTicket.setRequesterEntityType(requesterEntityType);
 		requestTicket.setRequesterEntityCategory(getStoreCategoryForTicket(requesterEntityId, requesterEntityType));
 
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getAllTicketCategories(requesterEntityType);
 		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
 		validateAndSetTicketCategories(requestTicket, categoryMap);
@@ -161,22 +161,17 @@ public class TicketController implements BaseController {
 	@Transactional(propagation = Propagation.REQUIRED)
 	public void createTicketsForMiddleMileApp(@Valid @RequestBody MiddleMileAppCreateTicketRequest createTicketBean) {
 		_LOGGER.info(String.format("createTicketsForMiddleMileApp:: request %s", createTicketBean));
-		if (EntityType.fromString(createTicketBean.getRequesterEntityType()) == null) {
-			throw new ValidationException(
-					ErrorBean.withError(Errors.INVALID_REQUEST, String.format("Invalid Entity Type : %s", createTicketBean.getRequesterEntityType()),
-							"invalidEntityType"));
-		}
 
 		TicketEntity requestTicket = getMapper().mapSrcToDest(createTicketBean, TicketEntity.newInstance());
 		if (requestTicket == null) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "No data given to create ticket", null));
 		}
 
-		if (requestTicket.getRequesterEntityType().equals(EntityType.STORE.toString())) {
+		if (requestTicket.getRequesterEntityType().equals(EntityType.STORE)) {
 			requestTicket.setRequesterEntityCategory(getStoreCategoryForTicket(requestTicket.getRequesterEntityId(), requestTicket.getRequesterEntityType()));
 		}
 
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getAllTicketCategories(createTicketBean.getRequesterEntityType());
 		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
 		validateAndSetTicketCategories(requestTicket, categoryMap);
@@ -463,7 +458,7 @@ public class TicketController implements BaseController {
 			@RequestParam(required = false) Boolean hasPending, @RequestParam(required = false) Boolean hasClosed,
 			@RequestParam(required = false) Integer categoryLeafParentId, @RequestParam(defaultValue = "false") Boolean showOnlyMappedStores)
 			throws ParseException {
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllWithoutActive();
 
 		Map<String, SortDirection> sort;
 		if (sortBy != null) {
@@ -552,7 +547,7 @@ public class TicketController implements BaseController {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Order id not given", null));
 		}
 
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.findAllRecords();
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getAllTicketCategories(EntityType.STORE);
 		Map<String, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
 				.collect(Collectors.toMap(TicketCategoryEntity::getLabel, Function.identity(), (o1, o2) -> o1, HashMap::new));
 		if (!categoryMap.containsKey(TicketCategoryRoot.ORDER_ISSUE.toString()) || !categoryMap.containsKey(

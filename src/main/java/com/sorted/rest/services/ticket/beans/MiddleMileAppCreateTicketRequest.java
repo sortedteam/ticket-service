@@ -1,9 +1,11 @@
 package com.sorted.rest.services.ticket.beans;
 
+import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import lombok.Data;
 import lombok.ToString;
 
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Data
@@ -12,8 +14,8 @@ public class MiddleMileAppCreateTicketRequest extends CreateTicketBean implement
 
 	private static final long serialVersionUID = -7538803140039235801L;
 
-	@NotEmpty
-	private String requesterEntityType;
+	@NotNull
+	private EntityType requesterEntityType;
 
 	@NotEmpty
 	private String requesterEntityId;

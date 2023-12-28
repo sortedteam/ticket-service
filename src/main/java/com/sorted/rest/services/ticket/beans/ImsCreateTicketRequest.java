@@ -1,9 +1,9 @@
 package com.sorted.rest.services.ticket.beans;
 
+import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import lombok.Data;
 import lombok.ToString;
 
-import javax.persistence.metamodel.EntityType;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
