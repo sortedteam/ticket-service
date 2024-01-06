@@ -2,6 +2,7 @@ package com.sorted.rest.services.ticket.entity;
 
 import com.sorted.rest.common.websupport.base.BaseEntity;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
+import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import lombok.Data;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Type;
@@ -51,6 +52,10 @@ public class TicketCategoryEntity extends BaseEntity {
 
 	@Column
 	private Integer filterGroup;
+
+	@Column(nullable = false)
+	@Enumerated(EnumType.STRING)
+	private EntityType entityType;
 
 	public static TicketCategoryEntity newInstance() {
 		return new TicketCategoryEntity();

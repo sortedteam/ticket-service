@@ -6,6 +6,7 @@ import com.sorted.rest.common.websupport.base.BaseController;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.beans.TicketCategoryNode;
 import com.sorted.rest.services.ticket.beans.TicketCategoryViewBean;
+import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import com.sorted.rest.services.ticket.entity.TicketCategoryEntity;
 import com.sorted.rest.services.ticket.services.TicketCategoryService;
 import io.swagger.annotations.Api;
@@ -36,13 +37,13 @@ public class TicketCategoryController implements BaseController {
 	@ApiOperation(value = "List all Ticket Categories", nickname = "getVisibleTicketCategories")
 	@GetMapping("/tickets/categories")
 	public ResponseEntity<List<TicketCategoryNode>> getVisibleTicketCategories(@RequestParam(required = false) String label,
-			@RequestParam(defaultValue = "true") Boolean showOnlyVisible) {
+			@RequestParam(defaultValue = "true") Boolean showOnlyVisible, @RequestParam(defaultValue = "STORE") EntityType entityType) {
 		List<TicketCategoryNode> ticketCategoryNodes = new ArrayList<>();
 		List<TicketCategoryEntity> ticketCategoryEntities;
 		if (showOnlyVisible) {
-			ticketCategoryEntities = ticketCategoryService.getVisibleTicketCategories();
+			ticketCategoryEntities = ticketCategoryService.getVisibleTicketCategories(entityType);
 		} else {
-			ticketCategoryEntities = ticketCategoryService.findAllRecords();
+			ticketCategoryEntities = ticketCategoryService.getAllTicketCategories(entityType);
 		}
 
 		if (label == null) {
@@ -58,9 +59,11 @@ public class TicketCategoryController implements BaseController {
 
 	@ApiOperation(value = "get leaf filters", nickname = "getAllLeafFilters")
 	@GetMapping(path = "/tickets/categories/leaf-filter")
-	public ResponseEntity<List<TicketCategoryViewBean>> getAllLeafFilters(@RequestParam Integer filterGroup) {
+	public ResponseEntity<List<TicketCategoryViewBean>> getAllLeafFilters(@RequestParam Integer filterGroup,
+			@RequestParam(defaultValue = "STORE") EntityType entityType) {
 		Map<String, Object> filters = new HashMap<>();
 		filters.put("filterGroup", filterGroup);
+		filters.put("entityType", entityType);
 		return ResponseEntity.ok(getMapper().mapAsList(ticketCategoryService.findAllRecords(filters), TicketCategoryViewBean.class));
 	}
 

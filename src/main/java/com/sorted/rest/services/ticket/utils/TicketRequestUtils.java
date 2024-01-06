@@ -1,5 +1,8 @@
 package com.sorted.rest.services.ticket.utils;
 
+import com.sorted.rest.common.beans.ErrorBean;
+import com.sorted.rest.common.exceptions.ValidationException;
+import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.params.service.ParamService;
 import com.sorted.rest.services.ticket.actions.AutomaticFullOrderRefundAction;
@@ -48,8 +51,8 @@ public class TicketRequestUtils {
 	public void populateTicketRequestAsPerCategoryRoot(TicketEntity requestTicket, List<TicketItemEntity> requestTicketItems) {
 		TicketRequestBean ticketRequestBean = new TicketRequestBean();
 		String categoryRootLabel = requestTicket.getCategoryRoot().getLabel();
-		String entityType = requestTicket.getRequesterEntityType();
-		if (entityType.equals(EntityType.STORE.toString())) {
+		EntityType entityType = requestTicket.getRequesterEntityType();
+		if (entityType.equals(EntityType.STORE)) {
 			String storeId = requestTicket.getRequesterEntityId();
 			if (requestTicket.getMetadata().getStoreDetails() == null) {
 				ticketRequestBean.setStoreDataResponse(ticketClientService.getStoreDataFromId(storeId));
@@ -116,6 +119,31 @@ public class TicketRequestUtils {
 				//					WalletStatementBean walletStatementBean = clientService.fetchWalletStatementById(Integer.parseInt(ticket.getReferenceId()));
 				//					ticketRequestBean.setWalletStatementBean(walletStatementBean);
 				//				}
+			}
+		} else if (entityType.equals(EntityType.USER)) {
+			String consumerUserId = requestTicket.getRequesterEntityId();
+			if (requestTicket.getMetadata().getConsumerDetails() == null) {
+				UUID consumerUserUuid;
+				try {
+					consumerUserUuid = UUID.fromString(consumerUserId);
+				} catch (IllegalArgumentException e) {
+					throw new ValidationException(
+							ErrorBean.withError(Errors.INVALID_REQUEST, "For consumer tickets requester user id must be convertable to UUID", null));
+				}
+				ticketRequestBean.setConsumerDetail(userUtils.getUserDetail(consumerUserUuid));
+				requestTicket.getMetadata().setConsumerDetails(UserDetail.newInstance());
+			}
+			if (categoryRootLabel.equals(TicketCategoryRoot.CONSUMER_ORDER_ISSUE.toString())) {
+				if (requestTicket.getHasNew()) {
+					UUID orderId = UUID.fromString(requestTicket.getReferenceId());
+					ConsumerOrderResponseBean orderResponseBean = ticketClientService.getConsumerOrderDetails(orderId);
+					ticketRequestBean.setConsumerOrderResponse(orderResponseBean);
+					Map<String, ConsumerOrderItemResponseBean> orderItemSkuMap = new HashMap<>();
+					for (ConsumerOrderItemResponseBean orderItem : orderResponseBean.getOrderItems()) {
+						orderItemSkuMap.put(orderItem.getSkuCode(), orderItem);
+					}
+					ticketRequestBean.setConsumerOrderItemSkuMap(orderItemSkuMap);
+				}
 			}
 		}
 		ticketRequestBean.setInternalUserDetail(userUtils.getInternalUserDetail());

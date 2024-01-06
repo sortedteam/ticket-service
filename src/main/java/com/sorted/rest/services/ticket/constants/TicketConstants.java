@@ -39,26 +39,7 @@ public class TicketConstants {
 
 	public enum EntityType {
 
-		//USER(1),
-		STORE(2);
-
-		private final int value;
-
-		EntityType(int value) {
-			this.value = value;
-		}
-
-		public int getValue() {
-			return value;
-		}
-
-		public static EntityType fromString(String val) {
-			for (EntityType value : EntityType.values()) {
-				if (value.toString().equals(val))
-					return value;
-			}
-			return null;
-		}
+		USER, STORE;
 	}
 
 	public enum TicketResolutionTeam {
@@ -77,12 +58,12 @@ public class TicketConstants {
 	}
 
 	public enum TicketCategoryRoot {
-		ORDER_ISSUE, OTHER_ISSUES //other issues contains all non orders
+		ORDER_ISSUE, OTHER_ISSUES, CONSUMER_ORDER_ISSUE, CONSUMER_OTHER_ISSUES //other issues contains all non orders
 	}
 
 	public enum TicketPlatform {
 
-		PARTNER_APP, MIDDLE_MILE_APP, IMS, STORE_RETURN
+		PARTNER_APP, MIDDLE_MILE_APP, IMS, STORE_RETURN, CONSUMER_APP
 	}
 
 	public enum TicketCreateActions {
@@ -107,7 +88,9 @@ public class TicketConstants {
 
 		DRAFT_TICKET_UPDATED("Draft Ticket Updated"), STORE_RETURN_DATA_UPDATED("Store Return Data Updated"), PROCESS_ORDER_REFUND(
 				"Successfully refunded with remarks %s"), ONLY_ADD_REMARKS("%s"), CLOSE_WITH_REMARKS("%s"), CANCEL_WITH_REMARKS(
-				"%s"), PROCESS_FULL_ORDER_REFUND("Full order refunded with remarks %s"), CHANGE_ISSUE_CATEGORY("Issue category updated with remarks %s");
+				"%s"), PROCESS_FULL_ORDER_REFUND("Full order  refunded with remarks %s"), CHANGE_ISSUE_CATEGORY(
+				"Issue category updated with remarks %s"), PROCESS_CONSUMER_ORDER_REFUND(
+				"Successfully refunded with remarks %s"), PROCESS_FULL_CONSUMER_ORDER_REFUND("Full order  refunded with remarks %s");
 
 		private String remarks;
 
