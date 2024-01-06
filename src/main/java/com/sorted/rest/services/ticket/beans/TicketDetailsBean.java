@@ -15,6 +15,8 @@ public class TicketDetailsBean implements Serializable {
 
 	private OrderDetailsRequestBean orderDetails;
 
+	private ConsumerOrderDetailsRequestBean consumerOrderDetails;
+
 	//	todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
 	//	private PaymentDetailsRequestBean paymentDetails;
 

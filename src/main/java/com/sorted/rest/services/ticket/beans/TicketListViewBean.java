@@ -1,6 +1,7 @@
 package com.sorted.rest.services.ticket.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -13,7 +14,7 @@ public class TicketListViewBean implements Serializable {
 
 	private Long id;
 
-	private String requesterEntityType;
+	private EntityType requesterEntityType;
 
 	private String requesterEntityId;
 

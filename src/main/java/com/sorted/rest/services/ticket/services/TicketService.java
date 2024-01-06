@@ -16,6 +16,7 @@ import com.sorted.rest.common.websupport.base.BaseService;
 import com.sorted.rest.services.common.upload.UploadService;
 import com.sorted.rest.services.ticket.beans.TicketCategoryNode;
 import com.sorted.rest.services.ticket.clients.TicketClientService;
+import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketCategoryRoot;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
 import com.sorted.rest.services.ticket.entity.TicketCategoryEntity;
@@ -167,17 +168,18 @@ public class TicketService implements BaseService<TicketEntity> {
 		return tickets;
 	}
 
-	public Map<String, Object> getFilters(String requesterEntityId, List<String> requesterEntityIds, String requesterEntityCategory, Boolean orderRelated,
-			String lastAddedOn, Boolean hasDraft, Boolean hasPending, Boolean hasClosed, List<TicketCategoryEntity> ticketCategoryEntities)
-			throws ParseException {
+	public Map<String, Object> getFilters(EntityType requesterEntityType, String requesterEntityId, List<String> requesterEntityIds,
+			String requesterEntityCategory, Boolean orderRelated, String lastAddedOn, Boolean hasDraft, Boolean hasPending, Boolean hasClosed,
+			List<TicketCategoryEntity> ticketCategoryEntities) throws ParseException {
 		Map<String, Object> filters = new HashMap<>();
+		filters.put("requesterEntityType", requesterEntityType);
 		if (!requesterEntityIds.isEmpty()) {
 			filters.put("requesterEntityId", requesterEntityIds);
 		}
 		if (requesterEntityCategory != null) {
 			filters.put("requesterEntityCategory", requesterEntityCategory);
 		}
-		List<Integer> categoryRootIds = getCategoryRoots(ticketCategoryEntities, orderRelated);
+		List<Integer> categoryRootIds = getCategoryRoots(ticketCategoryEntities, orderRelated, requesterEntityType);
 		filters.remove("orderRelated");
 		filters.put("categoryRootId", categoryRootIds);
 
@@ -204,15 +206,24 @@ public class TicketService implements BaseService<TicketEntity> {
 		return filters;
 	}
 
-	private List<Integer> getCategoryRoots(List<TicketCategoryEntity> ticketCategoryEntities, Boolean orderRelated) {
-		TicketCategoryNode categoryNode = ticketCategoryService.getTicketCategoryNodeByLabel(ticketCategoryEntities,
-				orderRelated ? TicketCategoryRoot.ORDER_ISSUE.toString() : TicketCategoryRoot.OTHER_ISSUES.toString());
+	private List<Integer> getCategoryRoots(List<TicketCategoryEntity> ticketCategoryEntities, Boolean orderRelated, EntityType entityType) {
+		String ticketCategoryRoot = null;
+		if (entityType.equals(EntityType.STORE)) {
+			ticketCategoryRoot = orderRelated ? TicketCategoryRoot.ORDER_ISSUE.toString() : TicketCategoryRoot.OTHER_ISSUES.toString();
+		} else if (entityType.equals(EntityType.USER)) {
+			ticketCategoryRoot = orderRelated ? TicketCategoryRoot.CONSUMER_ORDER_ISSUE.toString() : TicketCategoryRoot.CONSUMER_OTHER_ISSUES.toString();
+		}
 		List<Integer> categoryRootIds = new ArrayList<>();
-		if (orderRelated) {
-			categoryRootIds.add(categoryNode.getId());
-		} else {
-			for (TicketCategoryNode child : categoryNode.getChildren()) {
-				categoryRootIds.add(child.getId());
+		if (ticketCategoryRoot != null) {
+			TicketCategoryNode categoryNode = ticketCategoryService.getTicketCategoryNodeByLabel(ticketCategoryEntities,
+					orderRelated ? TicketCategoryRoot.ORDER_ISSUE.toString() : TicketCategoryRoot.OTHER_ISSUES.toString());
+
+			if (orderRelated) {
+				categoryRootIds.add(categoryNode.getId());
+			} else {
+				for (TicketCategoryNode child : categoryNode.getChildren()) {
+					categoryRootIds.add(child.getId());
+				}
 			}
 		}
 		if (categoryRootIds.isEmpty()) {
@@ -235,24 +246,25 @@ public class TicketService implements BaseService<TicketEntity> {
 		return Pair.of(fromDate, toDate);
 	}
 
-	public List<TicketEntity> getCategoryLeafFilteredTickets(String requesterEntityId, List<String> requesterEntityIds, String requesterEntityCategory,
-			Boolean orderRelated, String lastAddedOn, Boolean hasDraft, Boolean hasPending, Boolean hasClosed,
+	public List<TicketEntity> getCategoryLeafFilteredTickets(EntityType entityType, String requesterEntityId, List<String> requesterEntityIds,
+			String requesterEntityCategory, Boolean orderRelated, String lastAddedOn, Boolean hasDraft, Boolean hasPending, Boolean hasClosed,
 			List<TicketCategoryEntity> ticketCategoryEntities, Integer categoryLeafParent) throws ParseException {
 		Pair<Date, Date> lastAddedDates = getFilterDates(lastAddedOn);
-		List<Integer> categoryRootsIn = getCategoryRoots(ticketCategoryEntities, orderRelated);
+		List<Integer> categoryRootsIn = getCategoryRoots(ticketCategoryEntities, orderRelated, entityType);
 		Boolean skipCheckRequesterEntity = requesterEntityIds.isEmpty();
 		Boolean skipCheckDates = requesterEntityId != null;
 		requesterEntityIds.add("dummy_string");
-		return ticketRepository.findCustomWithCategoryLeafFilter(skipCheckRequesterEntity, skipCheckDates, requesterEntityIds, requesterEntityCategory,
-				lastAddedDates.getLeft(), lastAddedDates.getRight(), hasDraft, hasPending, hasClosed, categoryRootsIn, categoryLeafParent);
+		return ticketRepository.findCustomWithCategoryLeafFilter(entityType.toString(), skipCheckRequesterEntity, skipCheckDates, requesterEntityIds,
+				requesterEntityCategory, lastAddedDates.getLeft(), lastAddedDates.getRight(), hasDraft, hasPending, hasClosed, categoryRootsIn,
+				categoryLeafParent);
 	}
 
-	public List<TicketEntity> getOrderRelatedFilteredTickets(Date createdFrom, Date createdTo, Integer categoryRootId, String storeId, String skuCode) {
+	public List<TicketEntity> getStoreOrderRelatedFilteredTickets(Date createdFrom, Date createdTo, Integer categoryRootId, String storeId, String skuCode) {
 		if (skuCode == null) {
 			skuCode = "dummy_string";
 		}
-		return ticketRepository.findCustomOrderRelated(createdFrom, createdTo, List.of(TicketStatus.IN_PROGRESS, TicketStatus.CLOSED), categoryRootId, storeId,
-				skuCode);
+		return ticketRepository.findCustomOrderRelated(EntityType.STORE, createdFrom, createdTo, List.of(TicketStatus.IN_PROGRESS, TicketStatus.CLOSED),
+				categoryRootId, storeId, skuCode);
 	}
 
 	@Override
@@ -265,7 +277,7 @@ public class TicketService implements BaseService<TicketEntity> {
 		return ticketRepository;
 	}
 
-	public List<String> getPendingRefundTickets(List<String> orderIds) {
-		return ticketRepository.getPendingTickets(orderIds);
+	public List<String> getPendingStoreRefundTickets(List<String> orderIds) {
+		return ticketRepository.getPendingStoreTickets(orderIds);
 	}
 }

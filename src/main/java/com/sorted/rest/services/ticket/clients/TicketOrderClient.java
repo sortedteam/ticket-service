@@ -29,7 +29,16 @@ public interface TicketOrderClient {
 	FranchiseOrderResponseBean cancelFranchiseOrderPostBilling(@RequestBody FranchiseOrderCancelPostBillingRequest request, @RequestParam String key,
 			@PathVariable UUID orderId);
 
-	@PostMapping("/orders/consumer/ims/refund")
-	ConsumerOrderResponseBean imsConsumerFranchiseRefundOrder(@RequestBody ImsConsumerOrderRefundBean request, @RequestParam String key);
+	@GetMapping("/orders/{id}/internal")
+	ConsumerOrderResponseBean getConsumerOrderDetails(@PathVariable UUID id);
+
+	@GetMapping("/orders/display-ids")
+	List<ConsumerOrderListBean> getConsumerOrderByDisplayIds(@RequestParam Set<String> ids);
+
+	@PostMapping("/orders/ims/refund")
+	ConsumerOrderResponseBean imsConsumerRefundOrder(@RequestBody ImsConsumerOrderRefundBean request, @RequestParam String key);
+
+	@PostMapping("/orders/ims/refund/all")
+	ConsumerOrderResponseBean imsConsumerRefundAllOrder(@RequestBody ImsConsumerOrderRefundAllBean request, @RequestParam String key);
 
 }

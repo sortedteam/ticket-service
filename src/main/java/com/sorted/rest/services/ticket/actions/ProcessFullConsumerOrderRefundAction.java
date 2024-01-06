@@ -7,8 +7,7 @@ import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.ticket.beans.ConsumerOrderResponseBean;
-import com.sorted.rest.services.ticket.beans.ImsConsumerOrderRefundBean;
-import com.sorted.rest.services.ticket.beans.ImsConsumerOrderRefundItemBean;
+import com.sorted.rest.services.ticket.beans.ImsConsumerOrderRefundAllBean;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
 import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
@@ -22,14 +21,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 @Component
-public class ProcessConsumerOrderRefundAction implements TicketActionsInterface {
+public class ProcessFullConsumerOrderRefundAction implements TicketActionsInterface {
 
-	static AppLogger _LOGGER = LoggingManager.getLogger(ProcessConsumerOrderRefundAction.class);
+	static AppLogger _LOGGER = LoggingManager.getLogger(ProcessFullConsumerOrderRefundAction.class);
 
 	@Autowired
 	private TicketHistoryService ticketHistoryService;
@@ -38,8 +36,6 @@ public class ProcessConsumerOrderRefundAction implements TicketActionsInterface 
 	private TicketClientService ticketClientService;
 
 	private String remarks;
-
-	private Double resolvedQuantity;
 
 	private List<String> attachments;
 
@@ -51,30 +47,20 @@ public class ProcessConsumerOrderRefundAction implements TicketActionsInterface 
 		remarks = ticketRemarks;
 	}
 
-	public void setResolvedQuantity(Double quantity) {
-		if (quantity == null || quantity.compareTo(0d) != 1) {
-			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Refund Order can not be processed with quantity less than zero", null));
-		}
-		resolvedQuantity = quantity;
-	}
-
 	@Override
 	public Boolean isApplicable(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
 		if (!SessionUtils.getAuthUserRoles().contains(UserRoles.CCMANAGER.toString())) {
-			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Refund Order can only be processed by Customer Care Manager.", null));
+			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Refund Order can only be processed by Partner Care Manager.", null));
 		}
-		return item.getDetails().getConsumerOrderDetails() != null && item.getDetails().getConsumerOrderDetails().getOrderId() != null && item.getDetails()
-				.getConsumerOrderDetails().getSkuCode() != null && item.getDetails().getConsumerOrderDetails().getIssueQty() != null && item.getDetails()
-				.getConsumerOrderDetails().getUom() != null;
+		return item.getDetails().getConsumerOrderDetails() != null && item.getDetails().getConsumerOrderDetails().getOrderId() != null;
 	}
 
 	@Override
 	public Boolean apply(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		ConsumerOrderResponseBean refundResponse = ticketClientService.imsProcessConsumerRefundOrder(createRefundBean(item, ticket.getId()),
+		ConsumerOrderResponseBean refundResponse = ticketClientService.imsProcessConsumerRefundAllOrder(createRefundAllBean(item, ticket.getId()),
 				generateClientKeyForRefund(ticket.getId(), item.getId()));
 		item.getDetails().getConsumerOrderDetails().setRefundAmount(refundResponse.getFinalBillAmount());
-		item.getDetails().getConsumerOrderDetails().setResolvedQty(resolvedQuantity);
-		setRemarks(String.format(TicketUpdateActions.PROCESS_CONSUMER_ORDER_REFUND.getRemarks(), remarks));
+		setRemarks(String.format(TicketUpdateActions.PROCESS_FULL_CONSUMER_ORDER_REFUND.getRemarks(), remarks));
 		item.setAssignedTeam(TicketConstants.CLOSED_TICKET_ASSIGNED_TEAM);
 		item.setAssignedAt(new Date());
 		item.setRemarks(remarks);
@@ -95,16 +81,12 @@ public class ProcessConsumerOrderRefundAction implements TicketActionsInterface 
 		return true;
 	}
 
-	private ImsConsumerOrderRefundBean createRefundBean(TicketItemEntity item, Long ticketId) {
-		ImsConsumerOrderRefundItemBean imsConsumerOrderRefundItemBean = ImsConsumerOrderRefundItemBean.newInstance();
-		imsConsumerOrderRefundItemBean.setSkuCode(item.getDetails().getOrderDetails().getSkuCode());
-		imsConsumerOrderRefundItemBean.setRefundQuantity(resolvedQuantity);
-		ImsConsumerOrderRefundBean imsConsumerOrderRefundBean = ImsConsumerOrderRefundBean.newInstance();
-		imsConsumerOrderRefundBean.setTicketId(ticketId);
-		imsConsumerOrderRefundBean.setTicketItemId(item.getId());
-		imsConsumerOrderRefundBean.setParentOrderId(item.getDetails().getOrderDetails().getOrderId());
-		imsConsumerOrderRefundBean.setRefundOrderItems(Collections.singletonList(imsConsumerOrderRefundItemBean));
-		return imsConsumerOrderRefundBean;
+	private ImsConsumerOrderRefundAllBean createRefundAllBean(TicketItemEntity item, Long ticketId) {
+		ImsConsumerOrderRefundAllBean imsConsumerOrderRefundAllBean = ImsConsumerOrderRefundAllBean.newInstance();
+		imsConsumerOrderRefundAllBean.setTicketId(ticketId);
+		imsConsumerOrderRefundAllBean.setTicketItemId(item.getId());
+		imsConsumerOrderRefundAllBean.setParentOrderId(item.getDetails().getOrderDetails().getOrderId());
+		return imsConsumerOrderRefundAllBean;
 	}
 
 	private String generateClientKeyForRefund(Long ticketId, Long ticketItemId) {

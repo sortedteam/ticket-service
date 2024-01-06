@@ -102,6 +102,10 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 		return findAllRecords(filters);
 	}
 
+	public List<TicketCategoryEntity> getAllTicketCategoriesWithoutActive(EntityType entityType) {
+		return ticketCategoryRepository.findAllByEntityType(entityType);
+	}
+
 	@Override
 	public Class<TicketCategoryEntity> getEntity() {
 		return TicketCategoryEntity.class;
