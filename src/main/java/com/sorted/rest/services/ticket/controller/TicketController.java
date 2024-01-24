@@ -938,6 +938,26 @@ public class TicketController implements BaseController {
 		return ResponseEntity.ok(ticketBeans);
 	}
 
+	@ApiOperation(value = "fetch ticket by reference id", nickname = "fetchTicketByReferenceId")
+	@GetMapping(path = "/tickets/reference-id/{id}")
+	public ResponseEntity<TicketBean> fetchTicketByReferenceId(@PathVariable String id) {
+		TicketEntity ticket = ticketService.findByReferenceIdAndCategoryRootId(id, null).get(0);
+		if (ticket == null) {
+			throw new ValidationException(
+					ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No data found for ticket with reference id : %s", id), null));
+		}
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getAllTicketCategoriesWithoutActive(ticket.getRequesterEntityType());
+		TicketBean ticketBean = getMapper().mapSrcToDest(ticket, TicketBean.newInstance());
+		List<TicketBean> ticketBeans = new ArrayList<>();
+		ticketBeans.add(ticketBean);
+		updateOrderDetailsFromClient(ticketBeans);
+		for (TicketItemBean itemBean : ticketBean.getItems()) {
+			setTicketActionsAndCategory(itemBean, ticketBean.getCategoryRootId(), ticketCategoryEntities);
+			setTicketCategoryDesc(itemBean);
+		}
+		return ResponseEntity.ok(ticketBean);
+	}
+
 	@Override
 	public BaseMapper<?, ?> getMapper() {
 		return mapper;
