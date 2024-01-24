@@ -147,7 +147,9 @@ public class TicketService implements BaseService<TicketEntity> {
 		if (referenceId != null) {
 			Map<String, Object> filters = new HashMap();
 			filters.put("referenceId", referenceId);
-			filters.put("categoryRootId", categoryRootId);
+			if (categoryRootId != null) {
+				filters.put("categoryRootId", categoryRootId);
+			}
 			tickets = findAllRecords(filters);
 		}
 		if (tickets.isEmpty()) {
