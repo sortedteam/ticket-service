@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 @ApiModel(description = "Ticket Details Bean")
 @Data
@@ -12,6 +13,8 @@ public class TicketDetailsBean implements Serializable {
 	private static final long serialVersionUID = 2102504245219017738L;
 
 	private String description;
+
+	private List<String> tags;
 
 	private OrderDetailsRequestBean orderDetails;
 

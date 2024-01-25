@@ -13,4 +13,6 @@ public class ConsumerOrderAdditionalDiscount implements Serializable {
 
 	private Double offerDiscount;
 
+	private Double deliveryDiscount;
+
 }
