@@ -16,20 +16,12 @@ public class ConsumerOrderItemResponseBean implements Serializable {
 
 	private static final long serialVersionUID = 2102504245219017738L;
 
-	@ApiModelProperty(value = "Order Item Id", allowEmptyValue = false)
-	@NotNull
 	private UUID id;
 
-	@ApiModelProperty(value = "Order Item's Order Id", allowEmptyValue = false)
-	@NotNull
 	private UUID orderId;
 
-	@ApiModelProperty(value = "Order Item sku code", allowEmptyValue = false)
-	@NotNull
 	private String skuCode;
 
-	@ApiModelProperty(value = "Order Item product name", allowEmptyValue = false)
-	@NotNull
 	private String productName;
 
 	@ApiModelProperty(value = "Order Item uom", allowEmptyValue = false)

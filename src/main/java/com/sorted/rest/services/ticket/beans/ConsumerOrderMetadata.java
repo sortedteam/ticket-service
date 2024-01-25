@@ -35,4 +35,8 @@ public class ConsumerOrderMetadata implements Serializable {
 	private String orderSlot;
 
 	private List<String> failureReason;
+
+	private Boolean gracePeriodAllowed = false;
+
+	private BigDecimal orderPlacedAmount = null;
 }

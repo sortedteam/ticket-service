@@ -9,8 +9,10 @@ public class ConsumerOrderExtraFeeDetail implements Serializable {
 
 	private static final long serialVersionUID = -8555500226457969536L;
 
-	private Double deliveryCharge = 0.0;
+	private Double deliveryCharge;
 
-	private Double packingCharge = 0.0;
+	private Double packingCharge;
+
+	private Double slotCharges;
 
 }
