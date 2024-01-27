@@ -78,6 +78,12 @@ public class TicketActionUtils {
 	private ProcessFullConsumerOrderRefundAction processFullConsumerOrderRefundAction;
 
 	@Autowired
+	private AutomaticConsumerOrderRefundAction automaticConsumerOrderRefundAction;
+
+	@Autowired
+	private AutomaticFullConsumerOrderRefundAction automaticFullConsumerOrderRefundAction;
+
+	@Autowired
 	private BaseMapper<?, ?> mapper;
 
 	public void invokeTicketCreateAction(TicketItemEntity item, Long ticketId) {
@@ -131,6 +137,14 @@ public class TicketActionUtils {
 				ticketAction = automaticOrderCancelAction;
 				automaticOrderCancelAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(),
 						TicketCreateActions.AUTOMATIC_ORDER_CANCEL.getRemarks());
+			} else if (action.equals(TicketCreateActions.AUTOMATIC_CONSUMER_ORDER_REFUND.toString())) {
+				ticketAction = automaticConsumerOrderRefundAction;
+				automaticConsumerOrderRefundAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(),
+						TicketCreateActions.AUTOMATIC_CONSUMER_ORDER_REFUND.getRemarks());
+			} else if (action.equals(TicketCreateActions.AUTOMATIC_FULL_CONSUMER_ORDER_REFUND.toString())) {
+				ticketAction = automaticFullConsumerOrderRefundAction;
+				automaticFullConsumerOrderRefundAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(),
+						TicketCreateActions.AUTOMATIC_FULL_CONSUMER_ORDER_REFUND.getRemarks());
 			} else {
 				_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 				continue;
@@ -275,7 +289,10 @@ public class TicketActionUtils {
 					orderDetailsBean.setOrderStatus(orderResponseBean.getStatus()); // status updated On Get
 					orderDetailsBean.setFinalOrderBillAmount(orderResponseBean.getFinalBillAmount());
 					orderDetailsBean.setDeliveryDate(orderResponseBean.getDeliveryDate());
-					orderDetailsBean.setDeliverySlot(orderResponseBean.getMetadata().getOrderSlot());
+					if (orderResponseBean.getMetadata() != null) {
+						orderDetailsBean.setDeliverySlot(orderResponseBean.getMetadata().getOrderSlot());
+						orderDetailsBean.setContactDetail(orderResponseBean.getMetadata().getContactDetail());
+					}
 					orderDetailsBean.setTotalRefundableAmount(0d);
 					orderDetailsBean.setTotalRefundAmount(0d);
 					ticketMetadata.setConsumerOrderDetails(orderDetailsBean);

@@ -5,7 +5,6 @@ import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.UUID;
 
 @ApiModel(description = "Order Response Bean")
@@ -26,21 +25,9 @@ public class ConsumerOrderListBean extends BaseBean implements Serializable {
 
 	private Double estimatedBillAmount;
 
-	private Double amountReceived;
-
-	private Integer itemCount;
-
-	private String shippingMethod;
-
-	private String paymentMethod;
-
 	private String status;
 
-	private ConsumerPaymentDetail paymentDetail;
-
-	private Long deliveryAddress;
-
-	private Date submittedAt;
+	private Long deliveryAddress; // only address not id
 
 	private ConsumerOrderMetadata metadata;
 
