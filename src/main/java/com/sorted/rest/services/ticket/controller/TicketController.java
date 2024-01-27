@@ -919,8 +919,7 @@ public class TicketController implements BaseController {
 
 		List<TicketEntity> tickets = ticketService.findAllRecords(filters, sort);
 		if (tickets == null || tickets.isEmpty()) {
-			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND,
-					String.format("No tickets found for storeId : %s for the last : %d days", requesterEntityId, sinceDays), null));
+			throw new ValidationException(ErrorBean.withError(Errors.NO_DATA_FOUND, String.format("No tickets found for the last : %d days", sinceDays), null));
 		}
 
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getAllTicketCategoriesWithoutActive(requesterEntityType);

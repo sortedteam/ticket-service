@@ -71,7 +71,9 @@ public class TicketConstants {
 		NEW_TICKET_CREATED("New Ticket Created"), DRAFT_TICKET_CREATED("Draft Ticket Created"), ESCALATE_TO_CUSTOMERCARE(
 				"Ticket escalated to customer care executive"), ESCALATE_TO_WAREHOUSE("Ticket escalated to warehouse executive"), AUTOMATIC_ORDER_REFUND(
 				"Automatic refund initiated"), AUTOMATIC_FULL_ORDER_REFUND("Automatic full order refund initiated"), AUTOMATIC_ORDER_CANCEL(
-				"Automatic Order cancelled with remarks initiated");
+				"Automatic Order cancelled with remarks initiated"), AUTOMATIC_CONSUMER_ORDER_REFUND(
+				"Automatic consumer order refund initiated"), AUTOMATIC_FULL_CONSUMER_ORDER_REFUND("Automatic full consumer order refund initiated"),
+		;
 
 		private String remarks;
 
