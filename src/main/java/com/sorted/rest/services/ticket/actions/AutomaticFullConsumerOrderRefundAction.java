@@ -2,7 +2,7 @@ package com.sorted.rest.services.ticket.actions;
 
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
-import com.sorted.rest.services.ticket.beans.OrderItemDetailsBean;
+import com.sorted.rest.services.ticket.beans.ConsumerOrderItemDetailsBean;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
@@ -41,12 +41,12 @@ public class AutomaticFullConsumerOrderRefundAction implements TicketActionsInte
 	public Boolean isApplicable(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
 		if (ticket.getMetadata().getConsumerOrderDetails() != null && ticket.getMetadata().getConsumerOrderDetails()
 				.getOrderId() != null && ticket.getMetadata().getConsumerOrderDetails().getFinalOrderBillAmount() != null) {
-			OrderItemDetailsBean orderItemDetailsBean = OrderItemDetailsBean.newInstance();
+			ConsumerOrderItemDetailsBean orderItemDetailsBean = ConsumerOrderItemDetailsBean.newInstance();
 			orderItemDetailsBean.setProductName(TicketConstants.FULL_ORDER_REFUND_PRODUCT_NAME);
 			orderItemDetailsBean.setOrderId(ticket.getMetadata().getConsumerOrderDetails().getOrderId());
 			orderItemDetailsBean.setRefundableAmount(ticket.getMetadata().getConsumerOrderDetails().getFinalOrderBillAmount());
-			orderItemDetailsBean.setIsReturnIssue(true);
-			item.getDetails().setOrderDetails(orderItemDetailsBean);
+			orderItemDetailsBean.setIsRefundIssue(true);
+			item.getDetails().setConsumerOrderDetails(orderItemDetailsBean);
 
 			ticket.getMetadata().getConsumerOrderDetails().setTotalRefundableAmount(BigDecimal.valueOf(
 					ticket.getMetadata().getConsumerOrderDetails().getTotalRefundableAmount() != null ?
