@@ -85,7 +85,7 @@ public class ProcessFullConsumerOrderRefundAction implements TicketActionsInterf
 		ImsConsumerOrderRefundAllBean imsConsumerOrderRefundAllBean = ImsConsumerOrderRefundAllBean.newInstance();
 		imsConsumerOrderRefundAllBean.setTicketId(ticketId);
 		imsConsumerOrderRefundAllBean.setTicketItemId(item.getId());
-		imsConsumerOrderRefundAllBean.setParentOrderId(item.getDetails().getOrderDetails().getOrderId());
+		imsConsumerOrderRefundAllBean.setParentOrderId(item.getDetails().getConsumerOrderDetails().getOrderId());
 		return imsConsumerOrderRefundAllBean;
 	}
 

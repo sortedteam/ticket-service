@@ -97,12 +97,12 @@ public class ProcessConsumerOrderRefundAction implements TicketActionsInterface 
 
 	private ImsConsumerOrderRefundBean createRefundBean(TicketItemEntity item, Long ticketId) {
 		ImsConsumerOrderRefundItemBean imsConsumerOrderRefundItemBean = ImsConsumerOrderRefundItemBean.newInstance();
-		imsConsumerOrderRefundItemBean.setSkuCode(item.getDetails().getOrderDetails().getSkuCode());
+		imsConsumerOrderRefundItemBean.setSkuCode(item.getDetails().getConsumerOrderDetails().getSkuCode());
 		imsConsumerOrderRefundItemBean.setRefundQuantity(resolvedQuantity);
 		ImsConsumerOrderRefundBean imsConsumerOrderRefundBean = ImsConsumerOrderRefundBean.newInstance();
 		imsConsumerOrderRefundBean.setTicketId(ticketId);
 		imsConsumerOrderRefundBean.setTicketItemId(item.getId());
-		imsConsumerOrderRefundBean.setParentOrderId(item.getDetails().getOrderDetails().getOrderId());
+		imsConsumerOrderRefundBean.setParentOrderId(item.getDetails().getConsumerOrderDetails().getOrderId());
 		imsConsumerOrderRefundBean.setRefundOrderItems(Collections.singletonList(imsConsumerOrderRefundItemBean));
 		return imsConsumerOrderRefundBean;
 	}
