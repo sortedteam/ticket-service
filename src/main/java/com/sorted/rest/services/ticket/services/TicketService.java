@@ -217,8 +217,7 @@ public class TicketService implements BaseService<TicketEntity> {
 		}
 		List<Integer> categoryRootIds = new ArrayList<>();
 		if (ticketCategoryRoot != null) {
-			TicketCategoryNode categoryNode = ticketCategoryService.getTicketCategoryNodeByLabel(ticketCategoryEntities,
-					orderRelated ? TicketCategoryRoot.ORDER_ISSUE.toString() : TicketCategoryRoot.OTHER_ISSUES.toString());
+			TicketCategoryNode categoryNode = ticketCategoryService.getTicketCategoryNodeByLabel(ticketCategoryEntities, ticketCategoryRoot);
 
 			if (orderRelated) {
 				categoryRootIds.add(categoryNode.getId());
