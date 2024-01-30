@@ -96,6 +96,8 @@ public class TicketController implements BaseController {
 
 		if (requestTicket.getRequesterEntityType().equals(EntityType.STORE)) {
 			requestTicket.setRequesterEntityCategory(getStoreCategoryForTicket(requestTicket.getRequesterEntityId(), requestTicket.getRequesterEntityType()));
+		} else if (requestTicket.getRequesterEntityType().equals(EntityType.USER)) {
+			requestTicket.setRequesterEntityCategory(TicketConstants.DEFAULT_USER_CATEGORY);
 		}
 
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getAllTicketCategories(createTicketBean.getRequesterEntityType());
@@ -881,7 +883,7 @@ public class TicketController implements BaseController {
 		EntityType requesterEntityType = EntityType.USER;
 		requestTicket.setRequesterEntityId(requesterEntityId);
 		requestTicket.setRequesterEntityType(requesterEntityType);
-		requestTicket.setRequesterEntityCategory(null);
+		requestTicket.setRequesterEntityCategory(TicketConstants.DEFAULT_USER_CATEGORY);
 
 		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getAllTicketCategories(requesterEntityType);
 		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()

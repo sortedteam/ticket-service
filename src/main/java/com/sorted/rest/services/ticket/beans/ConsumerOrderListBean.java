@@ -27,8 +27,6 @@ public class ConsumerOrderListBean extends BaseBean implements Serializable {
 
 	private String status;
 
-	private Long deliveryAddress; // only address not id
-
 	private ConsumerOrderMetadata metadata;
 
 	public static ConsumerOrderListBean newInstance() {
