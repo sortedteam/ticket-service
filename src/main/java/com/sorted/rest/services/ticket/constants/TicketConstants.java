@@ -32,6 +32,8 @@ public class TicketConstants {
 
 	public static final String FULL_ORDER_REFUND_PRODUCT_NAME = "Full Order";
 
+	public static final String DEFAULT_USER_CATEGORY = "Good";
+
 	public enum TicketStatus {
 
 		DRAFT, IN_PROGRESS, CLOSED, CANCELLED
