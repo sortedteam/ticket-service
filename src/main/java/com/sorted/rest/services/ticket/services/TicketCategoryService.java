@@ -3,6 +3,7 @@ package com.sorted.rest.services.ticket.services;
 import com.sorted.rest.common.dbsupport.crud.BaseCrudRepository;
 import com.sorted.rest.common.websupport.base.BaseService;
 import com.sorted.rest.services.ticket.beans.TicketCategoryNode;
+import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import com.sorted.rest.services.ticket.entity.TicketCategoryEntity;
 import com.sorted.rest.services.ticket.repository.TicketCategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +25,16 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 		return getTicketCategoryNodeLabel(ticketCategoryEntities, label);
 	}
 
-	public List<TicketCategoryEntity> getVisibleTicketCategories() {
+	public List<TicketCategoryEntity> getVisibleTicketCategories(EntityType entityType) {
 		Map<String, Object> filters = new HashMap<>();
 		filters.put("appVisible", 1);
+		filters.put("entityType", entityType);
+		return findAllRecords(filters);
+	}
+
+	public List<TicketCategoryEntity> getAllTicketCategories(EntityType entityType) {
+		Map<String, Object> filters = new HashMap<>();
+		filters.put("entityType", entityType);
 		return findAllRecords(filters);
 	}
 
@@ -87,10 +95,15 @@ public class TicketCategoryService implements BaseService<TicketCategoryEntity> 
 		return leafNode;
 	}
 
-	public List<TicketCategoryEntity> getTicketCategoryByLabels(List<String> labels) {
+	public List<TicketCategoryEntity> getTicketCategoryByLabels(List<String> labels, EntityType entityType) {
 		Map<String, Object> filters = new HashMap<>();
 		filters.put("label", labels);
+		filters.put("entityType", entityType);
 		return findAllRecords(filters);
+	}
+
+	public List<TicketCategoryEntity> getAllTicketCategoriesWithoutActive(EntityType entityType) {
+		return ticketCategoryRepository.findAllByEntityType(entityType);
 	}
 
 	@Override

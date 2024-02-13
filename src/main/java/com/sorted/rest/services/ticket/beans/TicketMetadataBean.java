@@ -15,6 +15,10 @@ public class TicketMetadataBean implements Serializable {
 
 	private StoreDetailsBean storeDetails;
 
+	private UserDetail consumerDetails;
+
+	private ConsumerOrderDetailsBean consumerOrderDetails;
+
 	public static TicketMetadataBean newInstance() {
 		return new TicketMetadataBean();
 	}

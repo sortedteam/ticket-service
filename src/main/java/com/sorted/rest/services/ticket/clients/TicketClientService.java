@@ -10,6 +10,7 @@ import com.sorted.rest.common.properties.Errors;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.beans.*;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
+import com.sorted.rest.services.ticket.constants.TicketConstants.EntityType;
 import feign.FeignException.FeignClientException;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,13 +65,13 @@ public class TicketClientService {
 		}
 	}
 
-	public String getFilteredOrDefaultAudience(String entityType, String entityId, List<String> superset, String defaultAudience) {
+	public String getFilteredOrDefaultAudience(EntityType entityType, String entityId, List<String> superset, String defaultAudience) {
 		String audience = null;
 		try {
-			audience = ticketWidgetClient.getFilteredAudience(TicketConstants.TICKET_RAISING_USER_USERTYPE, entityType, entityId, superset);
+			audience = ticketWidgetClient.getFilteredAudience(TicketConstants.TICKET_RAISING_USER_USERTYPE, entityType.toString(), entityId, superset);
 		} catch (Exception e) {
-			_LOGGER.error(String.format("Error while fetching filteredOrDefault audience for %s : %s from subset : %s with default : %s", entityType, entityId,
-					superset, defaultAudience), e);
+			_LOGGER.error(String.format("Error while fetching filteredOrDefault audience for %s : %s from subset : %s with default : %s", entityType.toString(),
+					entityId, superset, defaultAudience), e);
 		}
 		return audience == null ? defaultAudience : audience;
 	}
@@ -293,5 +294,77 @@ public class TicketClientService {
 			_LOGGER.error("Error while fetching getMappedStores", e);
 		}
 		return response;
+	}
+
+	public ConsumerOrderResponseBean getConsumerOrderDetails(UUID orderId) {
+		try {
+			return ticketOrderClient.getConsumerOrderDetails(orderId);
+		} catch (FeignClientException f) {
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
+			}
+			throw new ValidationException(error);
+		} catch (Exception e) {
+			_LOGGER.error(String.format("Error while getting Consumer Order Info for orderId : %s", orderId), e);
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data"));
+		}
+	}
+
+	public List<ConsumerOrderListBean> getConsumerOrderByDisplayIds(Set<String> ids) {
+		try {
+			return ticketOrderClient.getConsumerOrderByDisplayIds(ids);
+		} catch (FeignClientException f) {
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data by display ids", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
+			}
+			throw new ValidationException(error);
+		} catch (Exception e) {
+			_LOGGER.error(String.format("Error while getting Franchise Order Info for displayOrderIds : %s", ids), e);
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while fetching order data by display ids"));
+		}
+	}
+
+	public ConsumerOrderResponseBean imsProcessConsumerRefundOrder(ImsConsumerOrderRefundBean request, String key) {
+		try {
+			return ticketOrderClient.imsConsumerRefundOrder(request, key);
+		} catch (FeignClientException f) {
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing consumer order refund", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
+			}
+			throw new ValidationException(error);
+		} catch (Exception e) {
+			_LOGGER.error(String.format("Error while refunding with request : %s ", request), e);
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing consumer order refund"));
+		}
+	}
+
+	public ConsumerOrderResponseBean imsProcessConsumerRefundAllOrder(ImsConsumerOrderRefundAllBean request, String key) {
+		try {
+			return ticketOrderClient.imsConsumerRefundAllOrder(request, key);
+		} catch (FeignClientException f) {
+			ErrorBean error = new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing consumer order refund", null);
+			try {
+				error = mapper.getJacksonMapper().readValue(f.contentUTF8(), ErrorBean.class);
+				error.setCode(Errors.SERVER_EXCEPTION);
+			} catch (JsonProcessingException e) {
+				_LOGGER.error("Error while converting feign client error bean ", e);
+			}
+			throw new ValidationException(error);
+		} catch (Exception e) {
+			_LOGGER.error(String.format("Error while refunding with request : %s ", request), e);
+			throw new ServerException(new ErrorBean(Errors.SERVER_EXCEPTION, "Something went wrong while processing consumer order refund"));
+		}
 	}
 }

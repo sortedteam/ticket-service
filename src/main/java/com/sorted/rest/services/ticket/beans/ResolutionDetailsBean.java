@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 @ApiModel(description = "Resolution Details Bean")
 @Data
@@ -13,11 +14,15 @@ public class ResolutionDetailsBean implements Serializable {
 
 	private String description;
 
+	private List<String> tags;
+
 	private String resolvedRemarks;
 
 	private UserDetail resolvedBy;
 
 	private OrderItemDetailsBean orderDetails;
+
+	private ConsumerOrderItemDetailsBean consumerOrderDetails;
 
 	//	todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
 	//	private PaymentDetailsBean paymentDetails;

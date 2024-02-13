@@ -28,6 +28,12 @@ public class TicketRequestBean implements Serializable {
 
 	private UserDetail amUserResponse;
 
+	private UserDetail consumerDetail;
+
+	private ConsumerOrderResponseBean consumerOrderResponse;
+
+	private Map<String, ConsumerOrderItemResponseBean> consumerOrderItemSkuMap;
+
 	//	todo: tickets for PAYMENT_ISSUE with referenceId not allowed in V1, add in subsequent releases
 	//	private WalletStatementBean walletStatementBean;
 }
