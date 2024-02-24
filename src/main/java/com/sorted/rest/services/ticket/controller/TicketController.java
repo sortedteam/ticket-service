@@ -890,8 +890,8 @@ public class TicketController implements BaseController {
 		ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
 	}
 
-	@ApiOperation(value = "create tickets for consumer app", nickname = "createTicketsForConsumerApp")
-	@PostMapping(path = "/tickets/consumer-app")
+	@ApiOperation(value = "create tickets for delivery app", nickname = "createTicketsForDeliveryApp")
+	@PostMapping(path = "/tickets/delivery-app")
 	@ResponseStatus(HttpStatus.CREATED)
 	@Transactional(propagation = Propagation.REQUIRED)
 	public void createTicketsForDeliveryApp(@Valid @RequestBody ConsumerAppCreateTicketRequest createTicketBean) {
