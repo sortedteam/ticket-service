@@ -65,7 +65,7 @@ public class TicketConstants {
 
 	public enum TicketPlatform {
 
-		PARTNER_APP, MIDDLE_MILE_APP, IMS, STORE_RETURN, CONSUMER_APP
+		PARTNER_APP, MIDDLE_MILE_APP, IMS, STORE_RETURN, CONSUMER_APP, DELIVERY_APP
 	}
 
 	public enum TicketCreateActions {
