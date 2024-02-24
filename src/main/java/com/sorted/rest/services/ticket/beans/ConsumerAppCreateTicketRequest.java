@@ -11,6 +11,8 @@ public class ConsumerAppCreateTicketRequest extends CreateTicketBean implements 
 
 	private static final long serialVersionUID = -7538803140039235801L;
 
+	private String customerId;
+
 	public static ConsumerAppCreateTicketRequest newInstance() {
 		return new ConsumerAppCreateTicketRequest();
 	}
