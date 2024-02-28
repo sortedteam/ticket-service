@@ -3,6 +3,7 @@ package com.sorted.rest.services.ticket.actions;
 import com.sorted.rest.common.logging.AppLogger;
 import com.sorted.rest.common.logging.LoggingManager;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
+import com.sorted.rest.services.ticket.constants.TicketConstants.TicketPlatform;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
 import com.sorted.rest.services.ticket.services.TicketHistoryService;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+
+import static com.sorted.rest.services.ticket.constants.TicketConstants.DELIVERY_APP_AUTO_REFUND_REMARKS;
 
 @Component
 public class AutomaticConsumerOrderRefundAction implements TicketActionsInterface {
@@ -26,6 +29,9 @@ public class AutomaticConsumerOrderRefundAction implements TicketActionsInterfac
 	private String remarks;
 
 	private List<String> attachments;
+
+	@Autowired
+	private ProcessConsumerOrderRefundAction processConsumerOrderRefundAction;
 
 	public void setAttachments(List<String> ticketAttachments) {
 		attachments = ticketAttachments;
@@ -49,7 +55,7 @@ public class AutomaticConsumerOrderRefundAction implements TicketActionsInterfac
 			item.getDetails().getConsumerOrderDetails()
 					.setIssueQty(BigDecimal.valueOf(item.getDetails().getConsumerOrderDetails().getIssueQty()).setScale(3, RoundingMode.FLOOR).doubleValue());
 			if (item.getDetails().getConsumerOrderDetails().getProrataAmount() != null && item.getDetails().getConsumerOrderDetails()
-					.getDeliveredQty() != null && item.getDetails().getConsumerOrderDetails().getDeliveredQty().compareTo(0d) == 1) {
+					.getDeliveredQty() != null && item.getDetails().getConsumerOrderDetails().getDeliveredQty().compareTo(0d) > 0) {
 				item.getDetails().getConsumerOrderDetails().setRefundableAmount(
 						BigDecimal.valueOf(item.getDetails().getConsumerOrderDetails().getProrataAmount())
 								.multiply(BigDecimal.valueOf(item.getDetails().getConsumerOrderDetails().getIssueQty()))
@@ -75,6 +81,14 @@ public class AutomaticConsumerOrderRefundAction implements TicketActionsInterfac
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
 		ticketHistoryService.addTicketHistory(ticket.getId(), item.getId(), action, actionDetailsBean);
+		if (item.getPlatform().equals(TicketPlatform.DELIVERY_APP.toString())) {
+			TicketActionsInterface ticketAction = processConsumerOrderRefundAction;
+			processConsumerOrderRefundAction.setResolvedQuantity(item.getDetails().getConsumerOrderDetails().getIssueQty());
+			processConsumerOrderRefundAction.setRemarks(DELIVERY_APP_AUTO_REFUND_REMARKS);
+			if (ticketAction.isApplicable(item, ticket, action, actionDetailsBean)) {
+				ticketAction.apply(item, ticket, action, actionDetailsBean);
+			}
+		}
 		return true;
 	}
 }

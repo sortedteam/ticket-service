@@ -12,6 +12,7 @@ import com.sorted.rest.services.ticket.beans.ImsConsumerOrderRefundItemBean;
 import com.sorted.rest.services.ticket.beans.TicketActionDetailsBean;
 import com.sorted.rest.services.ticket.clients.TicketClientService;
 import com.sorted.rest.services.ticket.constants.TicketConstants;
+import com.sorted.rest.services.ticket.constants.TicketConstants.TicketPlatform;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketStatus;
 import com.sorted.rest.services.ticket.constants.TicketConstants.TicketUpdateActions;
 import com.sorted.rest.services.ticket.constants.TicketConstants.UserRoles;
@@ -60,7 +61,7 @@ public class ProcessConsumerOrderRefundAction implements TicketActionsInterface 
 
 	@Override
 	public Boolean isApplicable(TicketItemEntity item, TicketEntity ticket, String action, TicketActionDetailsBean actionDetailsBean) {
-		if (!SessionUtils.getAuthUserRoles().contains(UserRoles.CCMANAGER.toString())) {
+		if (!SessionUtils.getAuthUserRoles().contains(UserRoles.CCMANAGER.toString()) && !item.getPlatform().equals(TicketPlatform.DELIVERY_APP.toString())) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "Refund Order can only be processed by Customer Care Manager.", null));
 		}
 		return item.getDetails().getConsumerOrderDetails() != null && item.getDetails().getConsumerOrderDetails().getOrderId() != null && item.getDetails()

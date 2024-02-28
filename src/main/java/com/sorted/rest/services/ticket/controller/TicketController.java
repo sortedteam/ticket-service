@@ -874,21 +874,9 @@ public class TicketController implements BaseController {
 		if (requesterEntityId == null) {
 			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "User id not given", null));
 		}
-
-		TicketEntity requestTicket = getMapper().mapSrcToDest(createTicketBean, TicketEntity.newInstance());
-		if (requestTicket == null) {
-			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "No data given to create ticket", null));
-		}
-
 		EntityType requesterEntityType = EntityType.USER;
-		requestTicket.setRequesterEntityId(requesterEntityId);
-		requestTicket.setRequesterEntityType(requesterEntityType);
-		requestTicket.setRequesterEntityCategory(TicketConstants.DEFAULT_USER_CATEGORY);
-
-		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getAllTicketCategories(requesterEntityType);
-		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
-				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
-		validateAndSetTicketCategories(requestTicket, categoryMap);
+		TicketEntity requestTicket = prepareTicketEntity(requesterEntityType, createTicketBean, requesterEntityId);
+		fetchAllCategoriesAndValidate(requesterEntityType, requestTicket);
 		TicketEntity existingTicket = getParentAndValidateForDuplicateTickets(requestTicket);
 		List<TicketItemEntity> requestTicketItems = requestTicket.getItems();
 		if (existingTicket != null) {
@@ -900,6 +888,50 @@ public class TicketController implements BaseController {
 		populateNewTicketItems(requestTicketItems, TicketPlatform.CONSUMER_APP);
 		populateTicketDetailsAndInvokeCreateOrUpdateActions(requestTicket, requestTicketItems);
 		ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
+	}
+
+	@ApiOperation(value = "create tickets for delivery app", nickname = "createTicketsForDeliveryApp")
+	@PostMapping(path = "/tickets/delivery-app")
+	@ResponseStatus(HttpStatus.CREATED)
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void createTicketsForDeliveryApp(@Valid @RequestBody ConsumerAppCreateTicketRequest createTicketBean) {
+		_LOGGER.info(String.format("createTicketsForDeliveryApp:: request %s", createTicketBean));
+		String requesterEntityId = createTicketBean.getCustomerId();
+		if (requesterEntityId == null) {
+			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "User id not given", null));
+		}
+		EntityType requesterEntityType = EntityType.USER;
+		TicketEntity requestTicket = prepareTicketEntity(requesterEntityType, createTicketBean, requesterEntityId);
+		fetchAllCategoriesAndValidate(requesterEntityType, requestTicket);
+		TicketEntity existingTicket = getParentAndValidateForDuplicateTickets(requestTicket);
+		List<TicketItemEntity> requestTicketItems = requestTicket.getItems();
+		if (existingTicket != null) {
+			requestTicket = existingTicket;
+		} else {
+			requestTicket.setItems(null);
+		}
+		requestTicket.setHasNew(true);
+		populateNewTicketItems(requestTicketItems, TicketPlatform.DELIVERY_APP);
+		populateTicketDetailsAndInvokeCreateOrUpdateActions(requestTicket, requestTicketItems);
+		ticketService.saveTicketWithItems(requestTicket, requestTicketItems);
+	}
+
+	private void fetchAllCategoriesAndValidate(EntityType requesterEntityType, TicketEntity requestTicket) {
+		List<TicketCategoryEntity> ticketCategoryEntities = ticketCategoryService.getAllTicketCategories(requesterEntityType);
+		Map<Integer, TicketCategoryEntity> categoryMap = ticketCategoryEntities.stream()
+				.collect(Collectors.toMap(TicketCategoryEntity::getId, Function.identity(), (o1, o2) -> o1, HashMap::new));
+		validateAndSetTicketCategories(requestTicket, categoryMap);
+	}
+
+	private TicketEntity prepareTicketEntity(EntityType requesterEntityType, ConsumerAppCreateTicketRequest createTicketBean, String requesterEntityId) {
+		TicketEntity requestTicket = getMapper().mapSrcToDest(createTicketBean, TicketEntity.newInstance());
+		if (requestTicket == null) {
+			throw new ValidationException(ErrorBean.withError(Errors.INVALID_REQUEST, "No data given to create ticket", null));
+		}
+		requestTicket.setRequesterEntityId(requesterEntityId);
+		requestTicket.setRequesterEntityType(requesterEntityType);
+		requestTicket.setRequesterEntityCategory(TicketConstants.DEFAULT_USER_CATEGORY);
+		return requestTicket;
 	}
 
 	@ApiOperation(value = "fetch tickets for consumer app", nickname = "fetchTicketsForConsumerApp")

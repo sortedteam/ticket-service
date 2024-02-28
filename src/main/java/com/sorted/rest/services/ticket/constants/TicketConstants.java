@@ -34,6 +34,8 @@ public class TicketConstants {
 
 	public static final String DEFAULT_USER_CATEGORY = "Good";
 
+	public static final String DELIVERY_APP_AUTO_REFUND_REMARKS = "Refund has been given by delivery person";
+
 	public enum TicketStatus {
 
 		DRAFT, IN_PROGRESS, CLOSED, CANCELLED
@@ -65,7 +67,7 @@ public class TicketConstants {
 
 	public enum TicketPlatform {
 
-		PARTNER_APP, MIDDLE_MILE_APP, IMS, STORE_RETURN, CONSUMER_APP
+		PARTNER_APP, MIDDLE_MILE_APP, IMS, STORE_RETURN, CONSUMER_APP, DELIVERY_APP
 	}
 
 	public enum TicketCreateActions {
