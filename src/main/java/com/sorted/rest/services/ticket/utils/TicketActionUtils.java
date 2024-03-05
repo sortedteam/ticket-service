@@ -165,10 +165,11 @@ public class TicketActionUtils {
 				continue;
 			}
 			if (ticketAction.isApplicable(item, ticket, action, actionDetailsBean)) {
-				if (ticketAction.apply(item, ticket, action, actionDetailsBean)) {
-					terminate = true;
-					break;
-				}
+				ticketAction.apply(item, ticket, action, actionDetailsBean);
+//				if (ticketAction.apply(item, ticket, action, actionDetailsBean)) {
+////					terminate = false;
+////					break;
+//				}
 			}
 		}
 		//		todo: tickets escalation not allowed in V1, add in subsequent releases
