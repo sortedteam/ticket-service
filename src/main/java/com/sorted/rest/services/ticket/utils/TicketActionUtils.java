@@ -12,6 +12,7 @@ import com.sorted.rest.common.utils.SessionUtils;
 import com.sorted.rest.services.common.mapper.BaseMapper;
 import com.sorted.rest.services.ticket.actions.*;
 import com.sorted.rest.services.ticket.beans.*;
+import com.sorted.rest.services.ticket.constants.TicketConstants;
 import com.sorted.rest.services.ticket.constants.TicketConstants.*;
 import com.sorted.rest.services.ticket.entity.TicketEntity;
 import com.sorted.rest.services.ticket.entity.TicketItemEntity;
@@ -145,15 +146,30 @@ public class TicketActionUtils {
 				ticketAction = automaticFullConsumerOrderRefundAction;
 				automaticFullConsumerOrderRefundAction.setTeamAndRemarks(TicketResolutionTeam.CUSTOMERCARE.toString(),
 						TicketCreateActions.AUTOMATIC_FULL_CONSUMER_ORDER_REFUND.getRemarks());
-			} else {
+			} else if (action.equals(TicketCreateActions.PROCESS_CONSUMER_ORDER_REFUND.toString())) {
+				ticketAction = processConsumerOrderRefundAction;
+				Double resolvedQty = Double.valueOf(0);
+				if (item.getDetails() != null && item.getDetails().getConsumerOrderDetails() != null && item.getDetails().getConsumerOrderDetails()
+						.getIssueQty() != null) {
+					resolvedQty = item.getDetails().getConsumerOrderDetails().getIssueQty();
+				} else {
+					_LOGGER.info(String.format("Issue qty could not find consumer order details for ticket item id : %s", item.getId()));
+				}
+				processConsumerOrderRefundAction.setResolvedQuantity(resolvedQty);
+				processConsumerOrderRefundAction.setRemarks(TicketConstants.IMS_APP_AUTO_REFUND_REMARKS);
+			} else if (action.equals(TicketCreateActions.PROCESS_FULL_CONSUMER_ORDER_REFUND.toString())) {
+				ticketAction = processFullConsumerOrderRefundAction;
+				processConsumerOrderRefundAction.setRemarks(TicketConstants.IMS_APP_AUTO_REFUND_REMARKS);
+			}else {
 				_LOGGER.info(String.format("Invalid ticketAction : %s ", action));
 				continue;
 			}
 			if (ticketAction.isApplicable(item, ticket, action, actionDetailsBean)) {
-				if (ticketAction.apply(item, ticket, action, actionDetailsBean)) {
-					terminate = true;
-					break;
-				}
+				ticketAction.apply(item, ticket, action, actionDetailsBean);
+//				if (ticketAction.apply(item, ticket, action, actionDetailsBean)) {
+////					terminate = false;
+////					break;
+//				}
 			}
 		}
 		//		todo: tickets escalation not allowed in V1, add in subsequent releases

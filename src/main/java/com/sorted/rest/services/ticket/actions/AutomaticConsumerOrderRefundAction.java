@@ -81,14 +81,15 @@ public class AutomaticConsumerOrderRefundAction implements TicketActionsInterfac
 		actionDetailsBean.setRemarks(remarks);
 		actionDetailsBean.setAttachments(attachments);
 		ticketHistoryService.addTicketHistory(ticket.getId(), item.getId(), action, actionDetailsBean);
-		if (item.getPlatform().equals(TicketPlatform.DELIVERY_APP.toString())) {
+		//commented as we have enable auto refund at creation
+		/*if (item.getPlatform().equals(TicketPlatform.DELIVERY_APP.toString())) {
 			TicketActionsInterface ticketAction = processConsumerOrderRefundAction;
 			processConsumerOrderRefundAction.setResolvedQuantity(item.getDetails().getConsumerOrderDetails().getIssueQty());
 			processConsumerOrderRefundAction.setRemarks(DELIVERY_APP_AUTO_REFUND_REMARKS);
 			if (ticketAction.isApplicable(item, ticket, action, actionDetailsBean)) {
 				ticketAction.apply(item, ticket, action, actionDetailsBean);
 			}
-		}
+		}*/
 		return true;
 	}
 }
