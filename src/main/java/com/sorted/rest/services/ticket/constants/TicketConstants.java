@@ -36,6 +36,8 @@ public class TicketConstants {
 
 	public static final String DELIVERY_APP_AUTO_REFUND_REMARKS = "Refund has been given by delivery person";
 
+	public static final String IMS_APP_AUTO_REFUND_REMARKS = "Refund has been given by CC team";
+
 	public enum TicketStatus {
 
 		DRAFT, IN_PROGRESS, CLOSED, CANCELLED
@@ -76,8 +78,10 @@ public class TicketConstants {
 				"Ticket escalated to customer care executive"), ESCALATE_TO_WAREHOUSE("Ticket escalated to warehouse executive"), AUTOMATIC_ORDER_REFUND(
 				"Automatic refund initiated"), AUTOMATIC_FULL_ORDER_REFUND("Automatic full order refund initiated"), AUTOMATIC_ORDER_CANCEL(
 				"Automatic Order cancelled with remarks initiated"), AUTOMATIC_CONSUMER_ORDER_REFUND(
-				"Automatic consumer order refund initiated"), AUTOMATIC_FULL_CONSUMER_ORDER_REFUND("Automatic full consumer order refund initiated"),
-		;
+				"Automatic consumer order refund initiated"), AUTOMATIC_FULL_CONSUMER_ORDER_REFUND(
+				"Automatic full consumer order refund initiated"), PROCESS_CONSUMER_ORDER_REFUND(
+				"Successfully refunded with remarks %s"), PROCESS_FULL_CONSUMER_ORDER_REFUND("Full order  refunded with remarks %s");
+
 
 		private String remarks;
 
